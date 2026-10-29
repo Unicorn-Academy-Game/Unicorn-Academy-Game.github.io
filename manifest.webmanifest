@@ -1,0 +1,20 @@
+{
+  "id": "/",
+  "name": "Unicorn Academy",
+  "short_name": "Unicorns",
+  "description": "A magical day with your unicorn friends.",
+  "lang": "en",
+  "dir": "ltr",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["fullscreen", "standalone"],
+  "background_color": "#0e1c16",
+  "theme_color": "#1e3a2c",
+  "categories": ["games", "kids"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
