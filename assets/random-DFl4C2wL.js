@@ -1,0 +1,1 @@
+var e=(e,t)=>Math.min(e-1,Math.floor(t()*e)),t=(t,n,r)=>t+e(n-t+1,r),n=(t,n)=>t[e(t.length,n)];function r(t,n){let r=[...t];for(let t=r.length-1;t>0;t--){let i=e(t+1,n);[r[t],r[i]]=[r[i],r[t]]}return r}export{n,r,t};

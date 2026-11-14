@@ -1,0 +1,1 @@
+import{t as e}from"./clips-W6NOF21M.js";var t=`play.memory.start`,n=`play.memory.done`,r=[...Object.entries({[t]:`Turn over two cards. Find two that are the same.`,[n]:`You found every pair!`}).map(([e,t])=>({id:e,text:t})),...e];export{t as n,r,n as t};

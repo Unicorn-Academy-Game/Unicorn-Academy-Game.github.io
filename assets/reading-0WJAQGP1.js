@@ -1,0 +1,1 @@
+function e(e,t){let n=-1/0;e.addEventListener(`pointerdown`,e=>{e.pointerType===`mouse`&&e.button!==0||!e.isPrimary||(n=performance.now(),t())}),e.addEventListener(`click`,()=>{performance.now()-n<700||t()})}export{e as t};
