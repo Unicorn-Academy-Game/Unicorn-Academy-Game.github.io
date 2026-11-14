@@ -1,6 +1,6 @@
-# Unicorn Academy
+# Unicorn Academy the Fan Game
 
-A small pixel-art unicorn sandbox for young children, playable in the browser and offline once loaded.
+A free pixel-art game about a herd of unicorn friends, for young children. It plays in the browser and works offline once it has loaded.
 
 **Play:** https://unicorn-academy-game.github.io/
 
