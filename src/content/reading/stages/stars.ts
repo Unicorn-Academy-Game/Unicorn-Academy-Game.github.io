@@ -1,0 +1,128 @@
+import type { StageSource } from '../types';
+
+/**
+ * The Stars, stages 64 to 71: aw and au, the vowel and r sounds, and the sounds of er, ir and ur.
+ */
+export const STARS: readonly StageSource[] = [
+  {
+    title: 'Saw and Paw',
+    teaches: ['aw', 'au', 'a:aw'],
+    words: 'saw paw claw draw straw crawl lawn yawn dawn fawn jaw raw',
+    tricky: 'water',
+    lines: [
+      'I saw a fawn on the lawn, and it ran to the pond.',
+      'The baby can crawl and yawn, and then it can nap.',
+      'It is dawn and the sun is up.',
+      'Can I have the water in the jug?',
+      'The cat has a paw on the lawn.',
+      'I saw a baby crawl on the straw.',
+      'The fawn can yawn at dawn.',
+    ],
+  },
+  {
+    title: 'Ball and Call',
+    teaches: [],
+    words:
+      'haul cause=c.au.s:z.e:- pause=p.au.s:z.e:- launch all=a:aw.ll ball=b.a:aw.ll call=c.a:aw.ll fall=f.a:aw.ll hall=h.a:aw.ll wall=w.a:aw.ll tall=t.a:aw.ll small=s.m.a:aw.ll',
+    tricky: 'walk talk',
+    lines: [
+      'I can draw a tall tree, and I can draw a small cat.',
+      'The ball fell off the wall, and the pup ran to get it.',
+      'Call Dad and say it is time to eat.',
+      'All of the cake is gone.',
+      'Dad will haul the straw in the truck.',
+      'Let us launch the boat on the lake.',
+      'I can walk and talk to Dad.',
+    ],
+  },
+  {
+    title: 'Car and Star',
+    teaches: ['ar'],
+    words: 'car star far jar arm farm barn yard park card hard',
+    tricky: 'warm heart',
+    lines: [
+      'A star is far up in the sky.',
+      'The farm has a red barn, and the barn is big.',
+      'We can park the car by the barn.',
+      'You have a warm heart.',
+      'I can park the car in the yard.',
+      'The jar is far from the barn.',
+      'Dad has a hard job on the farm.',
+    ],
+  },
+  {
+    title: 'Art and Cart',
+    teaches: [],
+    words: 'art cart march sharp scarf start smart chart gar|den car|pet mar|ket par|ty',
+    lines: [
+      'The car is in the yard, and the cart is by the barn.',
+      'The jar is on the cart, and the card is in the jar.',
+      'Start the car and drive to the park.',
+      'The scarf is warm, and it is red.',
+      'We can march in the party, and we can sing a song.',
+      'Mom and Dad are at the market.',
+      'The smart dog can march in the park.',
+    ],
+  },
+  {
+    title: 'Fork and Corn',
+    teaches: ['or', 'ore'],
+    words: 'for fork corn horn born cord storm short sport fort porch',
+    tricky: 'door',
+    lines: [
+      'The porch is by the door.',
+      'A pig was born on the farm.',
+      'The fork is for corn.',
+      'A horn is on the fort.',
+      'The sport is a fun game.',
+      'The storm is not far from the fort.',
+      'A short cord is on the porch.',
+    ],
+  },
+  {
+    title: 'Horse and Store',
+    teaches: [],
+    words: 'north torn worn horse=h.or.s.e:- more store shore snore wore chore score be|fore',
+    tricky: 'four',
+    lines: [
+      'I can see a horse by the barn, and it can run so fast.',
+      'The horse can run on the shore, and I can run with it.',
+      'We have corn for lunch, and we have more corn in the bag.',
+      'Can I have more corn, Mom?',
+      'The store has a red door, and I can see it from the shore.',
+      'Come in before the rain.',
+      'The torn sock has a hole, and I wore it on my foot.',
+      'I do my chore before lunch.',
+    ],
+  },
+  {
+    title: 'Bird and Girl',
+    teaches: ['er', 'ir', 'ur', 'air', 'are'],
+    words: 'her fern bird girl first third stir shirt skirt dirt turn fur curl surf sis|ter let|ter',
+    tricky: 'wear',
+    lines: [
+      'The bird is in the nest, and the nest is in the tree.',
+      'The cat has soft fur and can sit on my lap.',
+      'I got a letter from my sister.',
+      'You can wear a pink shirt.',
+      'The girl has a pink skirt.',
+      'Stir the dirt and plant a fern.',
+      'The bird can turn and fly.',
+    ],
+  },
+  {
+    title: 'Chair and Hair',
+    teaches: [],
+    words: 'un|der af|ter flow|er air hair chair pair fair stair care share rare bare dare square stare',
+    tricky: 'pear bear',
+    lines: [
+      'I can sit on the chair, and my sister can sit on the stair.',
+      'The flower is under the tree, and the bee is on the flower.',
+      'Her hair is long and soft.',
+      'The bird sat on the stair, and the girl sat by it.',
+      'The bird flew to the flower.',
+      'The pear is on the chair.',
+      'Share the pear with the bear.',
+    ],
+  },
+];

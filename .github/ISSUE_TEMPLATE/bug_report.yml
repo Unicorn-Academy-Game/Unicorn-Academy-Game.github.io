@@ -1,0 +1,34 @@
+name: Something is broken
+description: The game does something it should not, or fails to do something it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for taking the time. Please do not put a child's name, a photo or a saved world in this report.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: How to make it happen again
+      description: The place, what you tapped, and how long it took to go wrong.
+  - type: input
+    id: device
+    attributes:
+      label: Device and browser
+      placeholder: iPhone 13, Safari 18 / Fire HD 10, Silk / laptop, Firefox 140
+    validations:
+      required: true
+  - type: dropdown
+    id: how
+    attributes:
+      label: How you opened the game
+      options:
+        - In the browser tab
+        - Added to the home screen
+        - Offline, from the home screen

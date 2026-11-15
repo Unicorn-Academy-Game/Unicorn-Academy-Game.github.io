@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023"],
+    "types": []
+  },
+  "include": ["src/domain/**/*.ts", "src/learning/**/*.ts", "src/shared/**/*.ts", "src/content/**/*.ts"]
+}

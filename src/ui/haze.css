@@ -1,0 +1,14 @@
+/* Over the world and under everything else. Taps go through it to the game. */
+.sky-haze {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.4s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sky-haze {
+    transition: none;
+  }
+}

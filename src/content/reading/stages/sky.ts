@@ -1,0 +1,130 @@
+import type { StageSource } from '../types';
+
+/**
+ * The Sky, stages 56 to 63: the vowel sounds that are made of two letters. Each stage is one sound,
+ * because a child who is shown oo, ow and aw together reads them all as one. A letter group that
+ * says two sounds (oo in moon and in book, ow in cow and in snow) says its new one in the stage
+ * that teaches it, and the stage says which, so a word cannot be cut with the wrong one.
+ */
+export const SKY: readonly StageSource[] = [
+  {
+    title: 'Moon and Spoon',
+    teaches: ['oo', 'ue', 'ew'],
+    words: 'moon spoon room zoo too boot food pool cool tooth roof hoop goose=g.oo.s.e:- broom soon',
+    lines: [
+      'The moon is up in the sky.',
+      'I can see the moon from my room, and it is big and bright.',
+      'We can swim in the cool pool, and then we can eat a snack.',
+      'The goose can fly to the zoo.',
+      'Mom has a broom in the room.',
+      'I can see a goose at the zoo.',
+      'The food is on the spoon.',
+    ],
+  },
+  {
+    title: 'Blue and Glue',
+    teaches: [],
+    words: 'noon scoop stool bloom blue glue true clue grew flew chew drew crew blew new',
+    tricky: 'your school',
+    lines: [
+      'The sky is blue and the moon is big.',
+      'I have a new blue boot, and Dad has a new red boot.',
+      'Soon it will be noon, and we can eat lunch in the sun.',
+      'The goose flew to the moon, and then it came back.',
+      'Brush your tooth and go to bed.',
+      'Dad grew a bloom in the sun.',
+      'I drew a blue moon on the roof.',
+      'The crew flew to my school.',
+    ],
+  },
+  {
+    title: 'Book and Wood',
+    teaches: ['oo:uu', 'ie:ee'],
+    prefer: { oo: 'uu' },
+    words: 'book look cook hook foot good wood wool',
+    tricky: 'pull',
+    lines: [
+      'I look at a good book, and then I can go to bed.',
+      'Dad can cook a good lunch, and I can help him.',
+      'Put your foot in the boot.',
+      'It is good to look at a book.',
+      'Pull the wool up the hill.',
+      'Look at the good book.',
+      'Dad can cook food on the wood.',
+    ],
+  },
+  {
+    title: 'Took and Shook',
+    teaches: [],
+    prefer: { oo: 'uu' },
+    words: 'took shook hood stood brook woof nook cookie=c.oo.k.ie:ee',
+    tricky: 'full',
+    lines: [
+      'A frog sat by the brook, and a duck sat by the frog.',
+      'I took my book to the zoo, and I took my cookie too.',
+      'I can give a cookie to my pup.',
+      'She stood on the wood by the brook.',
+      'The jug is full of good food.',
+      'The pup shook the wet wool.',
+      'I stood by the nook and took a book.',
+    ],
+  },
+  {
+    title: 'Cow and Town',
+    teaches: ['ow:ow', 'ou'],
+    words: 'cow now how wow down town brown clown crown owl howl out loud',
+    lines: [
+      'The cow is brown and the pig is pink.',
+      'A clown sat down in the town, and the cow sat by him.',
+      'The king has a big crown, and the queen has a green dress.',
+      'Wow, the clown can jump up and down!',
+      'The sun is out and the sky is blue.',
+      'The brown owl sat on a tree.',
+      'How did the clown get down?',
+    ],
+  },
+  {
+    title: 'Cloud and House',
+    teaches: [],
+    words: 'cloud house=h.ou.s.e:- mouse=m.ou.s.e:- south count round sound ground found shout mouth couch proud',
+    tricky: 'know around',
+    lines: [
+      'The mouse is in the house, and the cat is on the couch.',
+      'The brown cow went around the town.',
+      'We found a mouse by the couch, and it ran out of the house.',
+      'I am proud of my brown cow.',
+      'I know that the owl is in the tree.',
+      'The cloud is round and white.',
+      'The mouse is on the ground.',
+    ],
+  },
+  {
+    title: 'Coin and Oil',
+    teaches: ['oi', 'oy'],
+    words: 'oil coin boil soil foil join point moist spoil noise=n.oi.s:z.e:-',
+    lines: [
+      'I got a coin in the soil, and I put it in my bag.',
+      'The noise is loud, but I am not sad.',
+      'Mom put oil in the pan, and then she will boil it.',
+      'The soil is moist, so we dig in it.',
+      'I can point at the coin.',
+      'Dad put foil on the dish.',
+      'The soil is moist and brown.',
+    ],
+  },
+  {
+    title: 'Boy and Toy',
+    teaches: [],
+    words: 'boy toy joy en|joy oink coil',
+    tricky: 'only also',
+    lines: [
+      'The boy has a toy, and I have a coin.',
+      'The boy can join the band, and the band is loud.',
+      'The pig can oink, and I can too.',
+      'I enjoy my toy in the sun.',
+      'The boy can only count to ten.',
+      'I also have a coin and a toy.',
+      'The boy can enjoy a good book.',
+    ],
+  },
+];

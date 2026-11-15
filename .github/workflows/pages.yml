@@ -1,0 +1,50 @@
+name: Publish to GitHub Pages
+
+# The game is a static site. Every push to main is checked, built and published, and nothing else hosts it.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The audio checks measure loudness with ffmpeg, and the picture checks read WebP files with dwebp.
+      - name: Install ffmpeg and webp
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg webp
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      # A build that does not play from a folder, offline, is not published.
+      - name: Try the build the way it will be published
+        run: pnpm exec playwright install --with-deps chromium && pnpm smoke
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

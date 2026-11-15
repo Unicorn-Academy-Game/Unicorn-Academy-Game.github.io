@@ -1,0 +1,14 @@
+# What tools/voice needs, as it was when the voice was made. Python 3.12. Install it in a virtual environment outside the repo.
+#   python3.12 -m venv /tmp/ua-voice/.venv && /tmp/ua-voice/.venv/bin/pip install -r tools/voice/requirements.txt
+# The models themselves are not packages. They are downloaded from Hugging Face at the revisions pinned in speak.py and judge.py.
+kokoro==0.9.4
+misaki[en]==0.9.4
+torch==2.15.0
+transformers==5.22.1
+faster-whisper==1.2.1
+huggingface_hub==2.4.0
+numpy==2.5.4
+scipy==1.18.1
+soundfile==0.14.0
+praat-parselmouth==0.4.7
+matplotlib==3.11.2

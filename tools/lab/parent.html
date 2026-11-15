@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <title>Parent controls lab</title>
+    <style>
+      /* A stand-in for the game behind the controls, bright enough to see what shows through. */
+      #stage {
+        position: fixed;
+        inset: 0;
+        background: linear-gradient(180deg, #7fd1ff 0%, #b8f2c4 55%, #4f9d62 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <div id="ui"></div>
+    <script type="module" src="./parent.ts"></script>
+  </body>
+</html>

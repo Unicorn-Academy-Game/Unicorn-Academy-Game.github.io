@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <title>Reading computer lab</title>
+    <style>
+      /* A stand-in for the world behind the screen, with a few shapes so it is clear what the screen does to what is under it. */
+      #stage {
+        position: fixed;
+        inset: 0;
+        background:
+          radial-gradient(circle at 20% 70%, #f6b8e6 0 8%, transparent 8.5%),
+          radial-gradient(circle at 78% 30%, #ffe27a 0 6%, transparent 6.5%),
+          linear-gradient(180deg, #7fd1ff 0%, #b8f2c4 55%, #4f9d62 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <div id="ui"></div>
+    <script type="module" src="./reading.ts"></script>
+  </body>
+</html>

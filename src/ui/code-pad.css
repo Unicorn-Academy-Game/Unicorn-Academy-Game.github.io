@@ -1,0 +1,301 @@
+/*
+ * The manor door's secret word. The pad is laid out by the room it is given: `.codepad` is a size
+ * container, so `cqw` and `cqh` are what is left of the screen after the notch and the margins,
+ * whichever way the screen is held. There are three shapes, and every one of them keeps every key
+ * on the screen.
+ *   - Upright on a phone, the word is above the letters, and the letters wrap to seven in a row.
+ *   - On anything else that is not wide, the word is above the letters, in rows of nine and ten.
+ *   - On a wide screen, the word and its hint are on the left and the letters on the right.
+ * A key is as big as the room allows, up to what a thumb likes.
+ *
+ * Nothing the card is made of may depend on what has been typed or which hint is showing, because
+ * the keys would move under a finger. The word takes the room the keys give it, and a longer word
+ * has narrower boxes.
+ */
+
+[data-codepad="true"] .guide {
+  visibility: hidden;
+}
+
+.codepad,
+#ui .codepad {
+  pointer-events: auto;
+}
+
+.codepad {
+  container: pad / size;
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  place-items: center;
+  padding: calc(var(--safe-top) + 8px) calc(var(--safe-right) + 8px) calc(var(--safe-bottom) + 8px)
+    calc(var(--safe-left) + 8px);
+  background: radial-gradient(ellipse at 50% 30%, rgb(70 30 90 / 0.5), rgb(20 10 36 / 0.82) 85%);
+  font-family: var(--font);
+  color: #fff;
+  -webkit-user-select: none;
+  user-select: none;
+  animation: overlay-in 320ms ease-out both;
+}
+
+.codepad-card {
+  --gap: 5px;
+  /*
+   * The most keys in a row: the first two rows have nine and the last has eight letters, Back and
+   * Go.
+   */
+  --cols: 10;
+  --rows: 3;
+  /*
+   * What is not keys, down the card: its border and padding, the word and its hint, and the gaps.
+   */
+  --spent: 176px;
+  /*
+   * A key is as tall as the screen has room for, up to what suits a thumb. The width of the room
+   * holds it back (--width, below).
+   */
+  --key: clamp(28px, calc((100cqh - var(--spent)) / var(--rows)), 54px);
+  /* What the card keeps for itself across, which is its border and its padding. */
+  --chrome: 44px;
+  --width: min(var(--key), calc((100cqw - var(--chrome) - (var(--cols) - 1) * var(--gap)) / var(--cols)));
+  /* What the word and its hint may take across. */
+  --room: calc(var(--cols) * var(--width) + (var(--cols) - 1) * var(--gap));
+  --box: min(clamp(26px, 9cqh, 42px), calc((var(--room) - 7 * 5px) / 8));
+  position: relative;
+  display: grid;
+  gap: 10px 18px;
+  align-items: center;
+  justify-items: center;
+  max-width: 100%;
+  padding: 14px 18px 16px;
+  border-radius: 26px;
+  background: linear-gradient(180deg, #3b2060, #261540);
+  border: 4px solid #ff9a3c;
+  box-shadow:
+    0 5px 0 rgb(38 24 61 / 0.7),
+    0 14px 34px rgb(0 0 0 / 0.5),
+    inset 0 0 0 3px rgb(255 215 94 / 0.25);
+}
+
+.codepad-talk {
+  /* How wide it is comes from the card, never from the words and boxes in it. */
+  contain: inline-size;
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  justify-self: stretch;
+  text-align: center;
+}
+
+.codepad-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0 8px;
+}
+
+.codepad-title h2 {
+  margin: 0;
+  /*
+   * On a narrow card the close button hangs over the corner, so the title keeps to a share of the
+   * card's width.
+   */
+  font-size: min(clamp(20px, 6.3cqh, 30px), calc(var(--room) / 10.5));
+  line-height: 1.1;
+  color: var(--sun);
+  text-shadow: 0 2px 0 var(--ink);
+}
+
+.codepad-lock svg {
+  display: block;
+  width: clamp(28px, 8.4cqh, 42px);
+  height: auto;
+}
+
+.codepad-hint {
+  margin: 0;
+  min-height: 2.4em;
+  font-size: clamp(14px, 4.4cqh, 19px);
+  font-weight: 500;
+  line-height: 1.2;
+  color: #fff3d6;
+  text-wrap: balance;
+}
+
+.codepad-boxes {
+  display: grid;
+  grid-template-columns: repeat(var(--n, 8), minmax(0, var(--box)));
+  justify-content: center;
+  gap: 5px;
+}
+
+.codepad-boxes[data-shake="true"] {
+  animation: codepad-shake 420ms ease-in-out;
+}
+
+.codepad-box {
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  height: calc(var(--box) * 1.24);
+  border-radius: 10px;
+  background: rgb(0 0 0 / 0.35);
+  border: 3px solid rgb(255 255 255 / 0.5);
+  /*
+   * A letter fills its box, and a box that has been made narrower for a longer word has a smaller
+   * letter.
+   */
+  font-size: min(calc(var(--box) * 0.8), calc((var(--room) - (var(--n, 8) - 1) * 5px) / var(--n, 8) - 6px));
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 0 var(--ink);
+}
+
+.codepad-box[data-state="typed"] {
+  background: rgb(255 154 60 / 0.35);
+  border-color: #ffd75e;
+}
+
+.codepad-box[data-state="ghost"] {
+  color: rgb(255 255 255 / 0.35);
+  border-style: dashed;
+}
+
+.codepad-box[data-state="right"] {
+  background: rgb(95 227 215 / 0.4);
+  border-color: var(--aqua);
+  animation: basket-pop 420ms cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+.codepad-keys {
+  display: grid;
+  gap: var(--gap);
+  justify-content: center;
+}
+
+.codepad-row {
+  display: flex;
+  gap: var(--gap);
+  justify-content: center;
+}
+
+.codepad-key {
+  width: var(--width);
+  height: var(--width);
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #7a4cc9, #5a34a0);
+  border: 3px solid #fff;
+  box-shadow: 0 3px 0 rgb(38 24 61 / 0.7);
+  font-family: var(--font);
+  font-size: calc(var(--width) * 0.5);
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 0 var(--ink);
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.codepad-key:active {
+  translate: 0 2px;
+  box-shadow: 0 1px 0 rgb(38 24 61 / 0.7);
+}
+
+.codepad-back {
+  background: linear-gradient(180deg, #e0709c, #b84878);
+}
+
+.codepad-go {
+  background: linear-gradient(180deg, #ffb347, #ff8a1f);
+  font-size: calc(var(--width) * 0.42);
+}
+
+/*
+ * It hangs over the card's corner by less than the room's margin, so it is on the screen when the
+ * card is as wide as the screen.
+ */
+.codepad-shut {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  background: var(--glass);
+  background-color: #3b2060;
+  border: 3px solid rgb(255 255 255 / 0.9);
+  box-shadow: 0 3px 0 rgb(38 24 61 / 0.55);
+  font-family: var(--font);
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+}
+
+/*
+ * Upright on a phone: the letters wrap to seven in a row, which is four rows, and the last has Back
+ * and Go in it.
+ */
+@container pad (max-aspect-ratio: 129 / 100) and (max-width: 629px) {
+  .codepad-card {
+    --cols: 7;
+    --rows: 4;
+    --spent: 184px;
+  }
+
+  .codepad-keys {
+    grid-template-columns: repeat(7, var(--width));
+  }
+
+  .codepad-row {
+    display: contents;
+  }
+}
+
+/*
+ * A wide screen: the word on the left, with what its eight boxes need or a third of the room if
+ * that is less, and the letters on the right.
+ */
+@container pad (min-aspect-ratio: 13 / 10) and (min-width: 800px) {
+  .codepad-card {
+    --talk: min(calc(8 * clamp(26px, 9cqh, 42px) + 7 * 5px), 35cqw);
+    --room: var(--talk);
+    --chrome: calc(44px + 18px + var(--talk));
+    --spent: 60px;
+    grid-template-columns: var(--talk) auto;
+  }
+}
+
+@keyframes codepad-shake {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  20% {
+    translate: -9px 0;
+  }
+  45% {
+    translate: 8px 0;
+  }
+  70% {
+    translate: -5px 0;
+  }
+  88% {
+    translate: 3px 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .codepad-boxes[data-shake="true"],
+  .codepad-box[data-state="right"] {
+    animation: none;
+  }
+}

@@ -1,0 +1,369 @@
+/*
+ * The screens of the memory and maths tables. They sit in the reading computer's monitor
+ * (`reading.css` has the rim, the glass and the big buttons), and this file is what is inside it.
+ * Sizes follow the height of the screen first, because the game is played on a phone held sideways.
+ * No colour here says wrong: two cards that are not the same turn back down, and a choice that is
+ * not the one rests.
+ */
+
+.table-game {
+  /*
+   * The round buttons of the top bar. They are as big as a finger likes when there is room, and no
+   * smaller than a thumb across.
+   */
+  --pill: clamp(44px, min(calc(10 * var(--vh)), 14vw), 58px);
+}
+
+.play-tools {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: clamp(6px, 1.6vw, 14px);
+  min-width: 0;
+}
+
+.play-sizes {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 1vw, 10px);
+}
+
+.play-sizes[hidden] {
+  display: none;
+}
+
+.play-size {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  min-width: var(--pill);
+  height: var(--pill);
+  padding: 0 8px;
+  border-radius: 26px;
+  border: 3px solid rgb(255 255 255 / 0.6);
+  background: rgb(255 255 255 / 0.12);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  box-shadow: 0 3px 0 rgb(38 24 61 / 0.6);
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    background 160ms ease;
+}
+
+.play-size:active {
+  transform: translateY(2px) scale(0.96);
+}
+
+.play-size[aria-pressed="true"] {
+  border-color: #fff;
+  background: var(--lit);
+  color: var(--ink);
+}
+
+.play-size-n {
+  font-size: clamp(16px, calc(4.2 * var(--vh)), 23px);
+  line-height: 1;
+}
+
+.play-size-stars {
+  display: flex;
+  height: clamp(8px, calc(2.2 * var(--vh)), 12px);
+}
+
+.play-size-stars svg {
+  display: block;
+  width: auto;
+  height: 100%;
+}
+
+.play-hear {
+  flex: none;
+  width: var(--pill);
+  height: var(--pill);
+  padding: 0;
+  cursor: pointer;
+}
+
+.play-hear[hidden] {
+  display: none;
+}
+
+.table-game .read-level {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/*
+ * Where there is little room across, the name of the game goes, since the sizes say what this is.
+ */
+@media (max-width: 720px) {
+  .table-game .read-head {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .table-game .read-where {
+    display: none;
+  }
+}
+
+/*
+ * On a narrow screen held upright the buttons that are always there take the right of the first
+ * row, so the sizes go on a row of their own.
+ */
+@media (max-width: 720px) and (min-height: 540px) {
+  .table-game .read-head {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "close"
+      "tools";
+    padding-right: 12px;
+  }
+
+  .table-game .read-close {
+    grid-area: close;
+  }
+
+  .table-game .play-tools {
+    grid-area: tools;
+    justify-content: center;
+  }
+}
+
+.play-body {
+  flex-direction: column;
+}
+
+.mem-board {
+  --cols: 3;
+  --rows: 2;
+  --gap: clamp(6px, calc(2 * var(--vh)), 16px);
+  container: board / size;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--rows), minmax(0, 1fr));
+  gap: var(--gap);
+  padding: clamp(6px, calc(2 * var(--vh)), 18px) clamp(10px, 2.4vw, 28px) clamp(10px, calc(3 * var(--vh)), 26px);
+}
+
+/*
+ * Held sideways the board is a wide strip, and the cards are two rows. A few of them are kept
+ * together in the middle.
+ */
+.mem-board[data-pairs="3"] {
+  --cols: 3;
+  align-self: center;
+  width: min(100%, 520px);
+}
+
+.mem-board[data-pairs="4"] {
+  --cols: 4;
+  align-self: center;
+  width: min(100%, 680px);
+}
+
+.mem-board[data-pairs="6"] {
+  --cols: 6;
+}
+
+.mem-board[data-pairs="8"] {
+  --cols: 8;
+}
+
+/* Held upright there is more height than width, so there are fewer across and more rows. */
+@media (max-aspect-ratio: 1 / 1) {
+  .mem-board[data-pairs="3"] {
+    --cols: 2;
+    --rows: 3;
+  }
+
+  .mem-board[data-pairs="4"] {
+    --cols: 2;
+    --rows: 4;
+  }
+
+  .mem-board[data-pairs="6"] {
+    --cols: 3;
+    --rows: 4;
+  }
+
+  .mem-board[data-pairs="8"] {
+    --cols: 4;
+    --rows: 4;
+  }
+}
+
+/*
+ * A card is as big as its place allows while it is still the shape of a card, and it is in the
+ * middle of its place.
+ */
+.mem-card {
+  --across: calc((100cqw - (var(--cols) - 1) * var(--gap)) / var(--cols));
+  --down: calc((100cqh - (var(--rows) - 1) * var(--gap)) / var(--rows));
+  position: relative;
+  justify-self: center;
+  align-self: center;
+  width: min(var(--across), calc(var(--down) * 5 / 6));
+  height: min(var(--down), calc(var(--across) * 6 / 5));
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  perspective: 900px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.mem-card:focus-visible {
+  outline: 4px solid var(--sun);
+  outline-offset: 3px;
+  border-radius: 18px;
+}
+
+.mem-card[data-state="paired"] {
+  cursor: default;
+}
+
+.mem-flip {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  transition: transform 420ms cubic-bezier(0.3, 0.8, 0.3, 1);
+}
+
+.mem-card[data-state="up"] .mem-flip,
+.mem-card[data-state="paired"] .mem-flip {
+  transform: rotateY(180deg);
+}
+
+.mem-card:active:not([data-state="paired"]) .mem-flip {
+  scale: 0.96;
+}
+
+.mem-back,
+.mem-face {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: clamp(10px, calc(2.6 * var(--vh)), 18px);
+  border: 3px solid #fff;
+  box-shadow: 0 4px 0 rgb(38 24 61 / 0.6);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.mem-back {
+  background:
+    radial-gradient(circle at 24% 20%, rgb(255 255 255 / 0.35) 0 2px, transparent 3px),
+    radial-gradient(circle at 78% 74%, rgb(255 255 255 / 0.3) 0 2px, transparent 3px),
+    radial-gradient(circle at 30% 24%, #b78dff, #6a3fd0 72%);
+}
+
+.mem-back svg {
+  display: block;
+  width: 46%;
+  height: auto;
+}
+
+.mem-face {
+  transform: rotateY(180deg);
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: 2%;
+  padding: 7% 4% 5%;
+  background: var(--tile);
+  color: var(--ink);
+}
+
+.mem-picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 0 rgb(38 24 61 / 0.28));
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+.mem-word {
+  font-size: clamp(13px, calc(3.4 * var(--vh)), 25px);
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.mem-card[data-state="paired"] .mem-face {
+  border-color: var(--sun);
+  box-shadow:
+    0 0 0 3px rgb(255 215 94 / 0.6),
+    0 4px 0 rgb(38 24 61 / 0.6);
+  animation: mem-pop 560ms ease-out both;
+}
+
+@keyframes mem-pop {
+  40% {
+    scale: 1.12;
+  }
+}
+
+.table-game[data-calm="true"] .mem-flip {
+  transition: none;
+}
+
+.table-game[data-calm="true"] .mem-face,
+.table-game[data-calm="true"] .play-won-stars svg {
+  animation: none;
+}
+
+.play-won-title {
+  margin: 0;
+  font-size: clamp(26px, calc(8.4 * var(--vh)), 52px);
+  font-weight: 700;
+  text-shadow: 0 3px 0 rgb(38 24 61 / 0.6);
+}
+
+.play-won-stars {
+  display: flex;
+  gap: clamp(6px, 1.6vw, 16px);
+}
+
+.play-won-stars svg {
+  display: block;
+  width: clamp(44px, calc(14 * var(--vh)), 96px);
+  height: auto;
+  animation: play-star 700ms cubic-bezier(0.2, 0.9, 0.3, 1.3) both;
+}
+
+.play-won-stars svg:nth-child(2) {
+  animation-delay: 160ms;
+}
+
+.play-won-stars svg:nth-child(3) {
+  animation-delay: 320ms;
+}
+
+@keyframes play-star {
+  from {
+    scale: 0;
+    rotate: -40deg;
+  }
+}
+
+.play-won-count {
+  margin: 0;
+  font-size: clamp(18px, calc(5 * var(--vh)), 30px);
+  font-weight: 600;
+  color: var(--tint);
+}

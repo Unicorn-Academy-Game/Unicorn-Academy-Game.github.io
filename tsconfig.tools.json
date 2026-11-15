@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["node", "vite/client"],
+    // Vite is moving to read its config with Node itself, which needs the extension on what the config imports.
+    "allowImportingTsExtensions": true
+  },
+  "include": [
+    "tools/**/*.ts",
+    "tests/**/*.ts",
+    "assets/**/*.ts",
+    "vite.config.ts",
+    "vitest.config.ts",
+    "playwright.config.ts"
+  ],
+  "exclude": ["assets/source/_scratch"]
+}

@@ -1,0 +1,19 @@
+/*
+ * Low-end mode, for the surfaces drawn over the game. `main.ts` sets `data-profile="low"` on the
+ * page before anything shows. A surface that blurs what is behind it has the browser blur the
+ * game's picture again behind it on every frame the picture changes. A small GPU feels that
+ * (inferred, not measured on a tablet). The same surface a little more solid reads the same.
+ *
+ * The selectors are more specific than the rules they override, so the order the sheets load in
+ * does not matter.
+ */
+
+:root[data-profile="low"] {
+  --glass: rgb(18 30 26 / 0.78);
+}
+
+:root[data-profile="low"]
+  :is(.round, .finder, .basket, .codepad-shut, .wonder-stars, .parent, .layer, .bookchip, .start-options) {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}

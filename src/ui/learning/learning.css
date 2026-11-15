@@ -1,0 +1,843 @@
+/*
+ * The spell card and, below it, everything else learning draws. The sizes follow the height of the
+ * screen first, because the game is played on a phone held sideways, and then the width, so a long
+ * word and a wide keyboard still fit. Nothing here is red: a key that is not the next letter nudges
+ * and a key that is faded rests.
+ */
+
+[data-spellcard="true"] .guide {
+  visibility: hidden;
+}
+
+.spell,
+#ui .spell {
+  pointer-events: auto;
+}
+
+.spell {
+  --gap: 5px;
+  /*
+   * How big a key is: by the height of the screen, and held back by how wide a row of them can be.
+   */
+  --key: clamp(40px, calc(12.6 * var(--vh)), 68px);
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: grid;
+  /*
+   * One cell exactly as big as the room, so the card's own max-height and width are a share of the
+   * room and not of what is in the card.
+   */
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  place-items: center;
+  padding: calc(var(--safe-top) + 16px) calc(var(--safe-right) + 16px) calc(var(--safe-bottom) + 12px)
+    calc(var(--safe-left) + 16px);
+  background: radial-gradient(ellipse at 50% 30%, rgb(70 30 90 / 0.5), rgb(20 10 36 / 0.84) 85%);
+  font-family: var(--font);
+  color: #fff;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  animation: overlay-in 320ms ease-out both;
+}
+
+.spell-card {
+  --art: clamp(92px, calc(36 * var(--vh)), 196px);
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px 20px;
+  align-items: center;
+  justify-items: center;
+  width: min(100%, 900px);
+  max-height: 100%;
+  padding: 14px 18px 16px;
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 12% 18%, rgb(255 255 255 / 0.1) 0 2px, transparent 3px),
+    radial-gradient(circle at 78% 12%, rgb(255 255 255 / 0.1) 0 2px, transparent 3px),
+    radial-gradient(circle at 90% 70%, rgb(255 255 255 / 0.08) 0 2px, transparent 3px),
+    linear-gradient(180deg, #3f2268, #261540);
+  border: 4px solid var(--sun);
+  box-shadow:
+    0 5px 0 rgb(38 24 61 / 0.7),
+    0 14px 34px rgb(0 0 0 / 0.5),
+    inset 0 0 0 3px rgb(255 215 94 / 0.18);
+  outline: none;
+}
+
+/* A phone held sideways has the picture on the left, and the word and the keys on the right. */
+@media (min-aspect-ratio: 13 / 10) {
+  .spell-card {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+}
+
+/*
+ * A narrow screen gives its margins to the keys, since a row of keys is only as wide as the screen
+ * lets it be.
+ */
+@media (max-width: 640px) {
+  .spell {
+    padding-left: calc(var(--safe-left) + 8px);
+    padding-right: calc(var(--safe-right) + 8px);
+  }
+
+  .spell-card {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  /* The close button hangs over the corner of the card, and the card is nearer the edge now. */
+  .spell .spell-shut {
+    right: -6px;
+  }
+
+  /* Ten keys across a phone held upright are narrow, so they sit closer. */
+  .spell-keys[data-layout="qwerty"] {
+    --gap: 4px;
+  }
+}
+
+/* The smallest phone held sideways: the picture gives up a little room too. */
+@media (min-aspect-ratio: 13 / 10) and (max-width: 640px) {
+  .spell-card {
+    --art: clamp(92px, calc(33 * var(--vh)), 196px);
+    column-gap: 12px;
+  }
+}
+
+.spell-shut,
+.book-shut {
+  position: absolute;
+  top: -14px;
+  right: -14px;
+  z-index: 4;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  background: #3b2060;
+  border: 3px solid rgb(255 255 255 / 0.9);
+  box-shadow: 0 3px 0 rgb(38 24 61 / 0.55);
+  cursor: pointer;
+}
+
+/* The finger can land a little outside the round button and still close it. */
+.spell-shut::before,
+.book-shut::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border-radius: 50%;
+}
+
+.spell-shut svg,
+.book-shut svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.spell-art {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+}
+
+@media (min-aspect-ratio: 13 / 10) {
+  .spell-art {
+    flex-direction: column;
+    gap: 10px;
+  }
+}
+
+.spell-pic {
+  position: relative;
+  flex: none;
+}
+
+.spell-frame {
+  position: relative;
+  width: var(--art);
+  height: var(--art);
+  display: grid;
+  place-items: center;
+  flex: none;
+  border-radius: 24px;
+  background: radial-gradient(circle at 50% 32%, #fffbe8 0%, #bfe6ff 52%, #8cc8f2 100%);
+  border: 4px solid #fff;
+  box-shadow:
+    0 4px 0 rgb(38 24 61 / 0.6),
+    inset 0 0 0 3px rgb(38 24 61 / 0.14);
+  overflow: hidden;
+}
+
+.spell-picture {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 0 rgb(38 24 61 / 0.28));
+  pointer-events: none;
+}
+
+/*
+ * A friend is shown the way the finder shows her: head and horn in a round frame, which hides where
+ * her portrait was cut.
+ */
+.spell-frame[data-kind="portrait"] {
+  border-radius: 50%;
+}
+
+.spell-frame[data-kind="portrait"] .spell-picture {
+  width: 100%;
+  height: auto;
+  align-self: start;
+  margin-top: 4%;
+}
+
+.spell-tools {
+  display: flex;
+  gap: 12px;
+}
+
+@media (max-aspect-ratio: 129 / 100) {
+  .spell-tools {
+    flex-direction: column;
+  }
+
+  /*
+   * A phone held upright is short of height, and the picture is the one part of the card that can
+   * be small. It takes what the word, the keys and the words above them leave, down to a small
+   * picture, so a short screen never squeezes what the player types on. The box is a container so
+   * the picture and its badge can be as tall as it turns out to be.
+   */
+  .spell-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .spell-art {
+    container: art / size;
+    flex: 0 1 var(--art);
+    width: 100%;
+    min-height: 64px;
+  }
+
+  .spell-pic {
+    width: 100cqh;
+    height: 100cqh;
+  }
+
+  .spell-pic .spell-frame {
+    width: 100%;
+    height: 100%;
+  }
+
+  .spell-work {
+    flex: none;
+  }
+}
+
+/*
+ * The buttons beside a small picture sit side by side, since two of them one above the other are
+ * taller than it.
+ */
+@container art (max-height: 123px) {
+  .spell-tools {
+    flex-direction: row;
+  }
+}
+
+.spell-tool {
+  width: 56px;
+  height: 56px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #7a4cc9, #5a34a0);
+  border: 3px solid #fff;
+  box-shadow: 0 3px 0 rgb(38 24 61 / 0.7);
+  cursor: pointer;
+}
+
+.spell-tool:active:not(:disabled) {
+  translate: 0 2px;
+  box-shadow: 0 1px 0 rgb(38 24 61 / 0.7);
+}
+
+.spell-tool svg {
+  width: 34px;
+  height: 34px;
+}
+
+.spell-tool:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.spell-work {
+  display: grid;
+  grid-template-areas:
+    "caption"
+    "above"
+    "slots"
+    "keys";
+  gap: 8px;
+  justify-items: center;
+  align-content: center;
+  width: 100%;
+  min-width: 0;
+  /* The keys are sized by how wide this is. */
+  container-type: inline-size;
+}
+
+.spell-caption {
+  grid-area: caption;
+  margin: 0;
+  min-height: 1.2em;
+  max-width: 100%;
+  font-size: clamp(15px, calc(4.6 * var(--vh)), 22px);
+  font-weight: 600;
+  line-height: 1.2;
+  text-align: center;
+  color: #fff3d6;
+  text-shadow: 0 2px 0 var(--ink);
+}
+
+.spell[data-done="true"] .spell-caption {
+  font-size: clamp(20px, calc(6.4 * var(--vh)), 32px);
+  color: var(--sun);
+}
+
+/*
+ * What it says when the word is done can be three lines on a narrow phone, so upright it is a
+ * little smaller where the screen is short.
+ */
+@media (max-aspect-ratio: 129 / 100) {
+  .spell[data-done="true"] .spell-caption {
+    font-size: clamp(18px, calc(5 * var(--vh)), 32px);
+  }
+}
+
+/*
+ * The whole word, for the rungs that copy it. It keeps its room while it is out of sight, so the
+ * places do not jump.
+ */
+.spell-above {
+  grid-area: above;
+  min-height: 1.2em;
+  font-size: clamp(20px, calc(6 * var(--vh)), 32px);
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  padding-left: 0.22em;
+  color: #fff;
+  text-shadow: 0 2px 0 var(--ink);
+  opacity: 0;
+  transition: opacity 220ms ease;
+}
+
+.spell-above[data-show="true"] {
+  opacity: 0.9;
+}
+
+.spell[data-case="upper"] .spell-above {
+  text-transform: uppercase;
+}
+
+.spell-slots {
+  grid-area: slots;
+  --slot: clamp(44px, calc(14 * var(--vh)), 88px);
+  display: grid;
+  grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+  gap: 6px;
+  /* As wide as the places want to be, and no wider than the room, so a long word shrinks them. */
+  width: min(100%, calc(var(--n) * var(--slot) * 0.86 + (var(--n) - 1) * 6px));
+  container-type: inline-size;
+}
+
+/* Upright, the places are a little smaller, since the keys under them are four rows high. */
+@media (max-aspect-ratio: 129 / 100) {
+  .spell-slots {
+    --slot: clamp(40px, calc(11 * var(--vh)), 88px);
+  }
+}
+
+.spell-slot {
+  position: relative;
+  display: grid;
+  place-items: center;
+  height: var(--slot);
+  min-width: 0;
+  border-radius: 12px;
+  background: rgb(0 0 0 / 0.34);
+  border: 3px solid rgb(255 255 255 / 0.45);
+  box-shadow: inset 0 3px 0 rgb(0 0 0 / 0.18);
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.spell-letter {
+  font-size: min(calc(var(--slot) * 0.66), calc(100cqw / var(--n) * 0.7));
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 2px 0 var(--ink);
+}
+
+.spell[data-case="upper"] :is(.spell-letter, .spell-cap, .spell-flyer) {
+  text-transform: uppercase;
+}
+
+.spell-slot[data-guide="true"] .spell-letter {
+  color: rgb(255 255 255 / 0.3);
+  text-shadow: none;
+}
+
+/* The place the player is on pulses, so their eye goes to it. */
+.spell-slot[data-state="next"] {
+  border-color: var(--sun);
+  background: rgb(255 215 94 / 0.14);
+  animation: spell-next 1.3s ease-in-out infinite;
+}
+
+.spell-slot[data-state="placed"] {
+  background: rgb(255 154 60 / 0.4);
+  border-color: var(--sun);
+}
+
+.spell-slot[data-landing="true"] .spell-letter {
+  opacity: 0;
+}
+
+.spell-slot[data-pop="true"] {
+  animation: spell-pop 480ms cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+.spell[data-done="true"] .spell-slot {
+  background: rgb(95 227 215 / 0.4);
+  border-color: var(--aqua);
+  animation: spell-cheer 760ms ease-in-out calc(var(--i, 0) * 90ms) 2;
+}
+
+.spell-keys {
+  grid-area: keys;
+  --cols: 9;
+  /* How much taller than wide a key may grow when the row is what holds it in. */
+  --lean: 1.19;
+  display: grid;
+  gap: var(--gap);
+  /* No wider than the room, so a row of ten still fits beside the picture. */
+  --width: min(var(--key), calc((100cqw - (var(--cols) - 1) * var(--gap)) / var(--cols)));
+  /*
+   * As tall as a thumb wants. Where the row makes a key narrow it grows taller instead, which is
+   * the shape of a phone's own keys.
+   */
+  --height: min(calc(var(--key) * 1.08), calc(var(--width) * var(--lean)));
+}
+
+.spell-keys[data-layout="qwerty"] {
+  --cols: 10;
+  --lean: 1.5;
+}
+
+.spell-row {
+  display: flex;
+  gap: var(--gap);
+  justify-content: center;
+}
+
+.spell-key {
+  position: relative;
+  width: var(--width);
+  height: var(--height);
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #7a4cc9, #5a34a0);
+  border: 3px solid #fff;
+  box-shadow: 0 3px 0 rgb(38 24 61 / 0.7);
+  cursor: pointer;
+  transition:
+    opacity 200ms ease,
+    filter 200ms ease;
+}
+
+.spell-cap {
+  /* The share of the key that the flying letter starts from, CAP_OF_KEY in spell-card.ts. */
+  font-size: calc(var(--height) * 0.48);
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 2px 0 var(--ink);
+  pointer-events: none;
+}
+
+.spell-key:active {
+  translate: 0 2px;
+  box-shadow: 0 1px 0 rgb(38 24 61 / 0.7);
+}
+
+/*
+ * A key the rung does not use rests. It keeps its place, so the keyboard is the same shape at every
+ * rung.
+ */
+.spell-key[data-state="off"] {
+  opacity: 0.3;
+  filter: saturate(0.3);
+  box-shadow: none;
+}
+
+.spell-key[data-state="off"]:active {
+  translate: 0 0;
+}
+
+/* The key the player needs next. */
+.spell-key[data-state="lit"] {
+  background: linear-gradient(180deg, #ffd75e, #ffa22e);
+  border-color: #fff7d1;
+  animation: spell-glow 900ms ease-in-out infinite alternate;
+}
+
+.spell-key[data-flash="right"] {
+  animation: spell-right 420ms ease-out;
+}
+
+.spell-key[data-flash="soft"] {
+  animation: spell-nudge 360ms ease-in-out;
+}
+
+.spell-key[data-flash="faded"] {
+  animation: spell-rest 260ms ease-in-out;
+}
+
+.spell[data-done="true"] .spell-keys {
+  visibility: hidden;
+}
+
+/*
+ * Where keys are short of room, the rows of the alphabet wrap to seven a row, which is what lets a
+ * thumb find a key.
+ */
+@media (max-aspect-ratio: 129 / 100) {
+  .spell-keys[data-layout="abc"] {
+    --cols: 7;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    max-width: calc(var(--cols) * var(--width) + (var(--cols) - 1) * var(--gap));
+  }
+
+  .spell-keys[data-layout="abc"] .spell-row {
+    display: contents;
+  }
+}
+
+.spell-flyer {
+  position: absolute;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  border-radius: 12px;
+  background: linear-gradient(180deg, #ffb347, #ff8a1f);
+  border: 3px solid #fff;
+  box-shadow: 0 6px 12px rgb(0 0 0 / 0.35);
+  font-weight: 700;
+  line-height: 1;
+  color: #fff;
+  text-shadow: 0 2px 0 var(--ink);
+  pointer-events: none;
+  will-change: transform;
+}
+
+.spell-finish {
+  grid-area: keys;
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+  align-self: center;
+}
+
+.spell[data-done="false"] .spell-finish {
+  display: none;
+}
+
+.spell-stars {
+  display: flex;
+  gap: 8px;
+}
+
+.spell-star svg {
+  display: block;
+  width: clamp(30px, calc(10 * var(--vh)), 56px);
+  height: auto;
+}
+
+.spell-star[data-earned="false"] {
+  opacity: 0.8;
+}
+
+.spell-star[data-new="true"] {
+  animation: spell-star 700ms cubic-bezier(0.2, 1.7, 0.4, 1) calc(var(--i) * 170ms + 250ms) both;
+}
+
+.spell-collect {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 22px 8px 14px;
+  border-radius: 99px;
+  background: linear-gradient(180deg, #ffb347, #ff8a1f);
+  border: 3px solid #fff;
+  box-shadow: 0 4px 0 rgb(38 24 61 / 0.7);
+  font-size: clamp(17px, calc(5 * var(--vh)), 25px);
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 2px 0 var(--ink);
+  cursor: pointer;
+  animation: spell-beckon 1.6s ease-in-out 1.2s infinite;
+}
+
+.spell-collect-icon svg {
+  display: block;
+  width: clamp(28px, calc(8 * var(--vh)), 40px);
+  height: auto;
+}
+
+/*
+ * A round number of words, a finished page and the whole book shine on the picture, and pin a badge
+ * to its corner.
+ */
+.spell[data-occasion="milestone"] .spell-frame,
+.spell[data-occasion="page"] .spell-frame,
+.spell[data-occasion="everything"] .spell-frame {
+  border-color: var(--sun);
+  box-shadow:
+    0 4px 0 rgb(38 24 61 / 0.6),
+    0 0 22px 6px rgb(255 215 94 / 0.7),
+    inset 0 0 0 3px rgb(255 215 94 / 0.3);
+  animation: spell-prize 1.5s ease-in-out infinite alternate;
+}
+
+.spell-badge {
+  --badge: clamp(44px, calc(15 * var(--vh)), 70px);
+  position: absolute;
+  z-index: 3;
+  top: calc(var(--badge) * -0.34);
+  left: calc(var(--badge) * -0.34);
+  width: var(--badge);
+  height: calc(var(--badge) * 1.1667);
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  animation: spell-star 800ms cubic-bezier(0.2, 1.7, 0.4, 1) 150ms both;
+}
+
+.spell-badge[data-shape="crown"] {
+  height: var(--badge);
+}
+
+/* Upright, the picture can be small, and the badge is a share of the picture. */
+@media (max-aspect-ratio: 129 / 100) {
+  .spell-badge {
+    --badge: clamp(30px, 36cqh, 70px);
+  }
+}
+
+/* Rays turn behind it, and fade out before they reach the edge of the card. */
+.spell-badge::before {
+  content: "";
+  position: absolute;
+  inset: -45%;
+  z-index: -1;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgb(255 236 150 / 0.7) 0 9deg, transparent 9deg 24deg);
+  -webkit-mask-image: radial-gradient(circle, #000 18%, transparent 68%);
+  mask-image: radial-gradient(circle, #000 18%, transparent 68%);
+  animation: spell-rays 14s linear infinite;
+}
+
+.spell-badge svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 3px 0 rgb(38 24 61 / 0.55));
+}
+
+.spell-badge-number {
+  position: absolute;
+  top: 39%;
+  left: 0;
+  right: 0;
+  translate: 0 -50%;
+  font-size: calc(var(--badge) * 0.4);
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  color: var(--ink);
+}
+
+.spell-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+@keyframes spell-next {
+  0%,
+  100% {
+    box-shadow:
+      inset 0 3px 0 rgb(0 0 0 / 0.18),
+      0 0 0 0 rgb(255 215 94 / 0);
+  }
+  50% {
+    box-shadow:
+      inset 0 3px 0 rgb(0 0 0 / 0.18),
+      0 0 14px 2px rgb(255 215 94 / 0.55);
+  }
+}
+
+@keyframes spell-pop {
+  0% {
+    transform: scale(1);
+  }
+  40% {
+    transform: scale(1.22) rotate(-3deg);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes spell-cheer {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px) scale(1.08);
+  }
+}
+
+@keyframes spell-glow {
+  from {
+    box-shadow:
+      0 3px 0 rgb(38 24 61 / 0.7),
+      0 0 0 0 rgb(255 215 94 / 0.9);
+  }
+  to {
+    box-shadow:
+      0 3px 0 rgb(38 24 61 / 0.7),
+      0 0 16px 5px rgb(255 215 94 / 0.85);
+  }
+}
+
+@keyframes spell-prize {
+  to {
+    box-shadow:
+      0 4px 0 rgb(38 24 61 / 0.6),
+      0 0 34px 12px rgb(255 215 94 / 0.95),
+      inset 0 0 0 3px rgb(255 215 94 / 0.3);
+  }
+}
+
+@keyframes spell-rays {
+  to {
+    rotate: 360deg;
+  }
+}
+
+@keyframes spell-right {
+  0% {
+    background: linear-gradient(180deg, #8ff5e8, var(--aqua));
+    transform: scale(1.14);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes spell-nudge {
+  0%,
+  100% {
+    rotate: 0deg;
+  }
+  25% {
+    rotate: -5deg;
+  }
+  60% {
+    rotate: 4deg;
+  }
+}
+
+@keyframes spell-rest {
+  0%,
+  100% {
+    translate: 0 0;
+  }
+  35% {
+    translate: -3px 0;
+  }
+  70% {
+    translate: 3px 0;
+  }
+}
+
+@keyframes spell-star {
+  from {
+    transform: scale(0) rotate(-50deg);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes spell-beckon {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px) scale(1.04);
+  }
+}
+
+/*
+ * Fewer effects, by the parent's choice or the device's: the card still changes, and nothing moves.
+ */
+.spell[data-calm="true"],
+.spell[data-calm="true"] * {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spell,
+  .spell * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

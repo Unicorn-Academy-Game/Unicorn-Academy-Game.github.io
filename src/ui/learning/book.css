@@ -1,0 +1,823 @@
+/*
+ * The Spell Book and the button that opens it. Sizes follow the height of the screen first, because
+ * the game is played on a phone held sideways, and then the width, so a phone held upright still
+ * fits three words across. Nothing here is red: a word that is not found yet is a shape waiting to
+ * be filled, and a word that is ready again glows gold.
+ */
+
+[data-spellbook="true"] .guide {
+  visibility: hidden;
+}
+
+/*
+ * A card over the book has a way out of its own, and two crosses so near each other would be one
+ * too many.
+ */
+[data-spellcard="true"] .book-shut {
+  visibility: hidden;
+}
+
+.bookchip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 46px;
+  padding: 3px 14px 3px 10px;
+  border-radius: 99px;
+  background: var(--glass);
+  border: 3px solid rgb(255 255 255 / 0.85);
+  box-shadow:
+    0 3px 0 rgb(38 24 61 / 0.55),
+    0 6px 14px rgb(0 0 0 / 0.3);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+
+/* The finger can land a little outside the pill and still open the book. */
+.bookchip::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+  border-radius: 99px;
+}
+
+.bookchip:active {
+  transform: scale(0.94);
+}
+
+.bookchip-icon svg {
+  display: block;
+  width: 30px;
+  height: 30px;
+}
+
+.bookchip-count {
+  min-width: 1.1em;
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--sun);
+  text-shadow: 0 2px 0 var(--ink);
+}
+
+.bookchip[data-pop="true"] {
+  animation: basket-pop 480ms cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+.bookchip[data-gain="true"] {
+  animation: bookchip-gain 800ms cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+@keyframes bookchip-gain {
+  0% {
+    transform: scale(1);
+    box-shadow:
+      0 3px 0 rgb(38 24 61 / 0.55),
+      0 6px 14px rgb(0 0 0 / 0.3),
+      0 0 0 0 rgb(255 215 94 / 0.9);
+  }
+  35% {
+    transform: scale(1.3) rotate(-5deg);
+    box-shadow:
+      0 3px 0 rgb(38 24 61 / 0.55),
+      0 6px 14px rgb(0 0 0 / 0.3),
+      0 0 22px 8px rgb(255 215 94 / 0.8);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow:
+      0 3px 0 rgb(38 24 61 / 0.55),
+      0 6px 14px rgb(0 0 0 / 0.3),
+      0 0 0 0 rgb(255 215 94 / 0);
+  }
+}
+
+.book,
+#ui .book {
+  pointer-events: auto;
+}
+
+.book {
+  --tab-pic: clamp(26px, min(calc(8.4 * var(--vh)), 9vw), 46px);
+  --pip: clamp(5px, min(calc(1.7 * var(--vh)), 1.4vw), 8px);
+  position: absolute;
+  inset: 0;
+  z-index: 36;
+  /*
+   * The sheet is given a place that is exactly the screen less its edge, so a height in percent
+   * means something.
+   */
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  place-items: center;
+  padding: calc(var(--safe-top) + 14px) calc(var(--safe-right) + 14px) calc(var(--safe-bottom) + 10px)
+    calc(var(--safe-left) + 14px);
+  background: radial-gradient(ellipse at 50% 30%, rgb(70 30 90 / 0.5), rgb(20 10 36 / 0.84) 85%);
+  font-family: var(--font);
+  color: #fff;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  animation: overlay-in 320ms ease-out both;
+}
+
+/*
+ * The sheet is as big on every page, so turning a page never moves the tabs from under their
+ * finger.
+ */
+.book-sheet {
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  gap: clamp(4px, calc(1.4 * var(--vh)), 10px);
+  width: min(100%, 940px);
+  height: min(100%, 580px);
+  padding: clamp(8px, calc(2.4 * var(--vh)), 14px) clamp(10px, 2vw, 18px) clamp(10px, calc(2.6 * var(--vh)), 16px);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 12% 18%, rgb(255 255 255 / 0.1) 0 2px, transparent 3px),
+    radial-gradient(circle at 78% 12%, rgb(255 255 255 / 0.1) 0 2px, transparent 3px),
+    radial-gradient(circle at 90% 70%, rgb(255 255 255 / 0.08) 0 2px, transparent 3px),
+    linear-gradient(180deg, #3f2268, #261540);
+  border: 4px solid var(--sun);
+  box-shadow:
+    0 5px 0 rgb(38 24 61 / 0.7),
+    0 14px 34px rgb(0 0 0 / 0.5),
+    inset 0 0 0 3px rgb(255 215 94 / 0.18);
+  outline: none;
+  animation: book-rise 380ms cubic-bezier(0.2, 1.25, 0.4, 1) both;
+  /* The tabs are laid out by how wide the sheet is, which is its own width and not the screen's. */
+  container: book / inline-size;
+}
+
+/*
+ * Its name, and what the player has. On a screen too narrow for both on one line, what they have
+ * goes under the name.
+ */
+.book-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  min-width: 0;
+  padding-right: 30px;
+}
+
+.book-badge svg {
+  display: block;
+  width: clamp(26px, calc(7 * var(--vh)), 40px);
+  height: auto;
+}
+
+.book-title {
+  margin: 0;
+  white-space: nowrap;
+  font-size: clamp(18px, min(calc(5.6 * var(--vh)), 6.4vw), 30px);
+  font-weight: 700;
+  line-height: 1.1;
+  color: #fff3d6;
+  text-shadow: 0 2px 0 var(--ink);
+}
+
+.book-totals {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 0 auto;
+}
+
+.book-total {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 12px 1px 9px;
+  border-radius: 99px;
+  background: rgb(0 0 0 / 0.3);
+  font-size: clamp(15px, calc(4.6 * var(--vh)), 24px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--sun);
+  text-shadow: 0 2px 0 var(--ink);
+}
+
+.book-of {
+  font-size: 0.68em;
+  font-weight: 600;
+  color: #fff3d6;
+  opacity: 0.85;
+}
+
+.book-star-icon svg {
+  display: block;
+  width: 1.15em;
+  height: 1.15em;
+}
+
+/*
+ * All the tabs go across when each has room for its picture. On a sheet too narrow for that they
+ * sit in two rows, half to a row.
+ */
+.book-tabs {
+  --tab-gap: clamp(4px, 1vw, 10px);
+  --across: var(--tabs, 6);
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--tab-gap);
+}
+
+@container book (max-width: 480px) {
+  .book-tabs {
+    --across: var(--half, 3);
+  }
+}
+
+.book-tab {
+  position: relative;
+  flex: 0 0 calc((100% - (var(--across) - 1) * var(--tab-gap)) / var(--across));
+  max-width: 112px;
+  min-width: 0;
+  /* The picture and the dots are made to fit the tab, so the tab says how wide it is. */
+  container-type: inline-size;
+  display: grid;
+  justify-items: center;
+  align-content: start;
+  gap: 3px;
+  padding: 4px 3px 5px;
+  border-radius: 16px;
+  background: rgb(255 255 255 / 0.07);
+  border: 3px solid transparent;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+.book-tab:active {
+  translate: 0 2px;
+}
+
+.book-tab[aria-selected="true"] {
+  background: rgb(255 215 94 / 0.18);
+  border-color: var(--sun);
+}
+
+/* A page that is finished glows, and carries a star. */
+.book-tab[data-complete="true"] {
+  box-shadow: 0 0 12px rgb(255 215 94 / 0.45);
+}
+
+.book-tab[data-complete="true"]::after {
+  content: "";
+  position: absolute;
+  top: -7px;
+  right: -5px;
+  width: 17px;
+  height: 17px;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpolygon points='12,2.3 14.9,8.6 21.7,9.3 16.6,13.9 18,20.7 12,17.2 6,20.7 7.4,13.9 2.3,9.3 9.1,8.6' fill='%23ffd75e' stroke='%2326183d' stroke-width='2.4' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / contain no-repeat;
+}
+
+.book-emblem {
+  display: grid;
+  place-items: center;
+  width: min(var(--tab-pic), 100cqw);
+  height: min(var(--tab-pic), 100cqw);
+  border-radius: 14%;
+  background: radial-gradient(circle at 50% 32%, #fffbe8 0%, #bfe6ff 52%, #8cc8f2 100%);
+  border: 2px solid #fff;
+  overflow: hidden;
+}
+
+.book-emblem[data-kind="portrait"] {
+  border-radius: 50%;
+}
+
+.book-emblem img {
+  width: 84%;
+  height: 84%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  pointer-events: none;
+}
+
+.book-emblem[data-kind="portrait"] img {
+  width: 100%;
+  height: auto;
+  align-self: start;
+  margin-top: 4%;
+}
+
+/*
+ * A dot for each word, in one row for a few and in two even rows for many, as big as the tab has
+ * room for.
+ */
+.book-pips {
+  --per: 6;
+  display: grid;
+  grid-template-columns: repeat(var(--per), minmax(0, var(--pip)));
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+}
+
+.book-pip {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.22);
+}
+
+.book-pip[data-on="true"] {
+  background: var(--sun);
+  box-shadow: 0 0 0 1px var(--ink);
+}
+
+/*
+ * Held upright there is height to spare, so the sheet takes more of it, and a dozen words get cards
+ * as big as a few.
+ */
+@media (orientation: portrait) {
+  .book-sheet {
+    height: min(100%, 720px);
+  }
+}
+
+/*
+ * On the shortest screens, smaller than most phones held sideways, the edges give way so a page of
+ * a dozen words still fits whole.
+ */
+@media (max-height: 340px) {
+  .book {
+    padding: calc(var(--safe-top) + 4px) calc(var(--safe-right) + 8px) calc(var(--safe-bottom) + 4px)
+      calc(var(--safe-left) + 8px);
+  }
+
+  .book-sheet {
+    gap: 3px;
+    padding: 5px 10px 6px;
+    border-width: 3px;
+  }
+
+  .book-tab {
+    gap: 2px;
+    padding: 2px 2px 3px;
+    border-width: 2px;
+  }
+}
+
+.book-page {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: clamp(3px, calc(1 * var(--vh)), 8px);
+  min-height: 0;
+  padding: clamp(5px, calc(1.5 * var(--vh)), 10px) clamp(6px, 1.4vw, 14px) clamp(5px, calc(1.4 * var(--vh)), 10px);
+  border-radius: 20px;
+  background: rgb(0 0 0 / 0.2);
+  border: 3px solid rgb(255 255 255 / 0.12);
+  /*
+   * A swipe along the page turns it, so the browser keeps its hands off sideways, and the page can
+   * still be scrolled up and down.
+   */
+  touch-action: pan-y;
+}
+
+.book-page[data-complete="true"] {
+  border-color: var(--sun);
+  box-shadow:
+    inset 0 0 22px rgb(255 215 94 / 0.25),
+    0 0 14px rgb(255 215 94 / 0.3);
+}
+
+.book-page-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.book-page-title {
+  margin: 0;
+  font-size: clamp(15px, calc(4.4 * var(--vh)), 25px);
+  font-weight: 700;
+  line-height: 1.1;
+  color: #fff3d6;
+  text-shadow: 0 2px 0 var(--ink);
+}
+
+.book-page-progress {
+  font-size: clamp(12px, calc(3.5 * var(--vh)), 19px);
+  font-weight: 600;
+  color: rgb(255 243 214 / 0.85);
+}
+
+/*
+ * A page. Its words sit in cells that book-fit.ts sizes from the room the page has, and rows that
+ * are not full are centred.
+ */
+.book-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-content: center;
+  align-content: safe center;
+  justify-content: center;
+  gap: clamp(4px, calc(1.2 * var(--vh)), 10px);
+  min-height: 0;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  /*
+   * A page that cannot give every word a card the player can tap scrolls, and a bar that would take
+   * room from the cards stays out of the way.
+   */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.book-grid::-webkit-scrollbar {
+  display: none;
+}
+
+/* A cell: the room for one card, which makes its picture from what the cell gives it. */
+.book-word {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--cell-w, 120px);
+  height: var(--cell-h, 180px);
+  container-type: size;
+}
+
+/*
+ * A card: the picture, the name and the stars. The picture is as big as its cell lets it be, which
+ * is the width of the cell less 22px beside it, or the height of the cell less 6px around it with
+ * the card 1.7 pictures tall, and never more than 124px. These are the measures book-fit.ts lays a
+ * page out by, and a test holds the two to each other.
+ */
+@property --pic {
+  syntax: "<length>";
+  inherits: true;
+  initial-value: 64px;
+}
+
+.book-card {
+  --pic: max(40px, min(calc(100cqw - 22px), calc((100cqh - 6px) / 1.7), 124px));
+  position: relative;
+  display: grid;
+  grid-template-rows: var(--pic) minmax(0, 1fr) auto;
+  align-items: center;
+  justify-items: center;
+  gap: calc(var(--pic) * 0.04);
+  width: calc(var(--pic) + 22px);
+  height: calc(var(--pic) * 1.7 + 6px);
+  padding: calc(var(--pic) * 0.06) 4px;
+  border-radius: calc(var(--pic) * 0.2);
+  background: rgb(255 255 255 / 0.08);
+  border: 3px solid rgb(255 255 255 / 0.16);
+  color: #fff;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+}
+
+button.book-card:active {
+  translate: 0 2px;
+}
+
+.book-frame {
+  display: grid;
+  place-items: center;
+  width: var(--pic);
+  height: var(--pic);
+  border-radius: 14%;
+  background: radial-gradient(circle at 50% 32%, #fffbe8 0%, #bfe6ff 52%, #8cc8f2 100%);
+  border: 3px solid #fff;
+  box-shadow:
+    0 3px 0 rgb(38 24 61 / 0.55),
+    inset 0 0 0 2px rgb(38 24 61 / 0.12);
+  overflow: hidden;
+}
+
+.book-frame[data-kind="portrait"] {
+  border-radius: 50%;
+}
+
+.book-picture {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 0 rgb(38 24 61 / 0.28));
+  pointer-events: none;
+}
+
+.book-frame[data-kind="portrait"] .book-picture {
+  width: 100%;
+  height: auto;
+  align-self: start;
+  margin-top: 4%;
+}
+
+/*
+ * The name is as big as the card's width allows for the letters it has, so a long word is whole,
+ * however small it comes out.
+ */
+.book-name {
+  max-width: 100%;
+  font-size: min(calc(var(--pic) * 0.27), calc((var(--pic) + 8px) / var(--n) * 1.5));
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  color: #fff;
+  text-shadow: 0 2px 0 var(--ink);
+}
+
+.book[data-case="upper"] .book-name {
+  text-transform: uppercase;
+}
+
+.book-stars {
+  display: flex;
+  gap: calc(var(--pic) * 0.03);
+}
+
+.book-star svg {
+  display: block;
+  width: max(8px, calc(var(--pic) * 0.17));
+  height: auto;
+}
+
+/*
+ * A word that is waiting to be found: a shape, and a place for each of its letters. The word is not
+ * written, because the word is the answer.
+ */
+.book-word[data-found="false"] .book-card {
+  background: rgb(0 0 0 / 0.18);
+  border: 3px dashed rgb(255 255 255 / 0.22);
+}
+
+/* It can be tapped to be shown where the word is, and a magnifying glass on its corner says so. */
+.book-word[data-found="false"] .book-card:hover {
+  border-color: rgb(255 255 255 / 0.5);
+}
+
+.book-find {
+  position: absolute;
+  z-index: 2;
+  top: -6px;
+  right: -6px;
+  width: clamp(20px, calc(var(--pic) * 0.42), 46px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--aqua);
+  border: 2px solid #fff;
+  box-shadow: 0 2px 0 rgb(38 24 61 / 0.55);
+  pointer-events: none;
+}
+
+.book-find svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.book-word[data-found="false"] .book-frame {
+  background: rgb(255 255 255 / 0.07);
+  border: 3px dashed rgb(255 255 255 / 0.32);
+  box-shadow: none;
+}
+
+.book-word[data-found="false"] .book-picture {
+  filter: brightness(0) invert(1) opacity(0.26);
+}
+
+.book-dots {
+  display: flex;
+  justify-content: center;
+  gap: 2px;
+  width: 100%;
+}
+
+.book-dot {
+  flex: 0 1 calc(var(--pic) * 0.16);
+  min-width: 3px;
+  aspect-ratio: 1;
+  border-radius: 30%;
+  background: rgb(0 0 0 / 0.3);
+  border: 2px solid rgb(255 255 255 / 0.32);
+}
+
+/* A word that is ready to be spelled again glows. */
+.book-word[data-due="true"] .book-card {
+  border-color: var(--sun);
+  background: rgb(255 215 94 / 0.12);
+  animation: book-due 1.9s ease-in-out infinite;
+}
+
+/*
+ * The word the player found most recently wears a sparkle on the corner of its card, and it
+ * twinkles until they find another.
+ */
+.book-new {
+  display: none;
+  position: absolute;
+  z-index: 2;
+  top: -5px;
+  right: -5px;
+  width: clamp(18px, calc(var(--pic) * 0.4), 44px);
+  aspect-ratio: 1;
+  pointer-events: none;
+  filter: drop-shadow(0 0 4px rgb(255 215 94 / 0.85));
+  animation: book-twinkle 2.2s ease-in-out infinite;
+}
+
+.book-new svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.book-word[data-newest="true"] .book-new {
+  display: block;
+}
+
+/*
+ * A word the player reads on their own wears reading glasses on the corner of its card that the
+ * sparkle is not on.
+ */
+.book-reads {
+  display: none;
+  position: absolute;
+  z-index: 2;
+  top: -6px;
+  left: -6px;
+  width: clamp(20px, calc(var(--pic) * 0.42), 46px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--aqua);
+  border: 2px solid #fff;
+  box-shadow: 0 2px 0 rgb(38 24 61 / 0.55);
+  pointer-events: none;
+}
+
+.book-reads svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.book-word[data-reads="true"] .book-reads {
+  display: block;
+}
+
+/* While its picture is flying home, the place waits empty. */
+.book-word[data-landing="true"] .book-frame {
+  opacity: 0;
+}
+
+.book-word[data-landing="true"] :is(.book-new, .book-reads) {
+  visibility: hidden;
+}
+
+.book-word[data-pop="true"] .book-card {
+  animation: spell-pop 560ms cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+.book-word[data-nudge="true"] .book-card {
+  animation: spell-nudge 360ms ease-in-out;
+}
+
+.book-star[data-new="true"] {
+  animation: spell-star 700ms cubic-bezier(0.2, 1.7, 0.4, 1) 120ms both;
+}
+
+/* A picture on its way to the book: the same frame, so it lands as the card it is going to be. */
+.book-flyer {
+  position: absolute;
+  z-index: 60;
+  display: grid;
+  place-items: center;
+  border-radius: 14%;
+  background: radial-gradient(circle at 50% 32%, #fffbe8 0%, #bfe6ff 52%, #8cc8f2 100%);
+  border: 4px solid #fff;
+  box-shadow: 0 6px 14px rgb(0 0 0 / 0.35);
+  overflow: hidden;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.book-flyer[data-kind="portrait"] {
+  border-radius: 50%;
+}
+
+.book-flyer img {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 0 rgb(38 24 61 / 0.28));
+}
+
+.book-flyer[data-kind="portrait"] img {
+  width: 100%;
+  height: auto;
+  align-self: start;
+  margin-top: 4%;
+}
+
+.book-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.book-page[data-turn="next"] .book-grid {
+  animation: book-in-next 260ms ease-out both;
+}
+
+.book-page[data-turn="back"] .book-grid {
+  animation: book-in-back 260ms ease-out both;
+}
+
+@keyframes book-rise {
+  from {
+    opacity: 0;
+    transform: translateY(26px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes book-in-next {
+  from {
+    opacity: 0;
+    transform: translateX(34px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes book-in-back {
+  from {
+    opacity: 0;
+    transform: translateX(-34px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes book-twinkle {
+  0%,
+  100% {
+    transform: scale(0.88) rotate(-8deg);
+    opacity: 0.88;
+  }
+  50% {
+    transform: scale(1.16) rotate(8deg);
+    opacity: 1;
+  }
+}
+
+@keyframes book-due {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(255 215 94 / 0);
+  }
+  50% {
+    box-shadow: 0 0 14px 3px rgb(255 215 94 / 0.55);
+  }
+}
+
+/*
+ * Fewer effects, by the parent's choice or the device's: the book still changes, and nothing moves.
+ */
+.book[data-calm="true"],
+.book[data-calm="true"] * {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book,
+  .book *,
+  .bookchip {
+    animation: none !important;
+    transition: none !important;
+  }
+}

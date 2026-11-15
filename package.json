@@ -1,0 +1,48 @@
+{
+  "name": "unicorn-academy",
+  "version": "1.0.0",
+  "private": true,
+  "license": "AGPL-3.0-only",
+  "description": "A pixel-art unicorn adventure that runs in the browser, offline, for everyone. An unofficial fan game.",
+  "homepage": "https://unicorn-academy-game.github.io/",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "packageManager": "pnpm@11.22.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "pnpm assets:validate && vite build && tsx tools/build/build-sw.ts",
+    "preview": "tsx tools/qa/pages-server.ts dist",
+    "smoke": "tsx tools/qa/smoke-dist.ts dist",
+    "typecheck": "tsc -p tsconfig.domain.json && tsc -p tsconfig.app.json && tsc -p tsconfig.sw.json && tsc -p tsconfig.tools.json",
+    "lint": "biome check",
+    "lint:fix": "biome check --write",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "assets:build": "tsx tools/assets/build-all.ts",
+    "assets:validate": "tsx tools/assets/validate.ts",
+    "voice:lines": "tsx tools/voice/export-lines.ts",
+    "voice:times": "tsx tools/voice/export-times.ts",
+    "course:report": "tsx tools/qa/course-report.ts",
+    "course:sim": "tsx tools/qa/reading-sim.ts",
+    "icons:build": "tsx tools/icons/make-icons.ts",
+    "notices": "tsx tools/licenses/notices.ts"
+  },
+  "dependencies": {
+    "@fontsource-variable/fredoka": "5.3.0",
+    "idb": "8.0.4",
+    "phaser": "4.2.1",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.7",
+    "@playwright/test": "1.64.1",
+    "@types/node": "26.6.5",
+    "fake-indexeddb": "6.2.6",
+    "tsx": "4.23.15",
+    "typescript": "7.0.2",
+    "vite": "8.3.5",
+    "vitest": "5.0.5"
+  }
+}

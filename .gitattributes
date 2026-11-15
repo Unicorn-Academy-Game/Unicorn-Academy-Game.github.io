@@ -1,0 +1,10 @@
+# Auto detect text files and perform LF normalization
+* text=auto
+
+# Made by a tool from the sources beside them: diffs of these are collapsed, and they do not count towards the language bar.
+pnpm-lock.yaml linguist-generated
+THIRD_PARTY_NOTICES.md linguist-generated
+docs/ASSET_REPORT.md linguist-generated
+src/ui/wordmark-paths.ts linguist-generated
+assets/maps/*.tmj linguist-generated
+public/assets/** linguist-generated

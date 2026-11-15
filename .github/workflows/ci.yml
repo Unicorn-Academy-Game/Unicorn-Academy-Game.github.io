@@ -1,0 +1,38 @@
+name: Check
+
+# Every pull request is linted, type-checked, tested and built. The browser tests are slow, so they run when asked for.
+on:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      browser-tests:
+        description: Also run the end-to-end tests in Chromium
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # The audio checks measure loudness with ffmpeg, and the picture checks read WebP files with dwebp.
+      - name: Install ffmpeg and webp
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends ffmpeg webp
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm build
+      - name: Try the build the way it will be published
+        run: pnpm exec playwright install --with-deps chromium && pnpm smoke
+      - name: End-to-end tests
+        if: ${{ inputs.browser-tests }}
+        run: pnpm exec playwright test --project=phone --project=desktop

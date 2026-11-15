@@ -1,0 +1,1715 @@
+/*
+ * The reading computer's screen. It is a monitor over the whole game: a gold rim, a tint that
+ * follows the chapter the player is in, and a word that is written as big as its room lets it be.
+ * Sizes follow the height of the screen first, because the game is played on a phone held sideways,
+ * and the pieces of a word are measured in ems so they are one size at any size. No colour here
+ * says wrong: a tile that is not the next one nudges, and a button that is not ready rests.
+ */
+
+[data-reading="true"] .corner,
+[data-reading="true"] .guide {
+  visibility: hidden;
+}
+
+.read,
+#ui .read {
+  pointer-events: auto;
+}
+
+.read {
+  --tint: #ffd75e;
+  --tint-glow: rgb(255 215 94 / 0.22);
+  --tile: linear-gradient(180deg, #fffdf6, #f0e6ff);
+  --lit: linear-gradient(180deg, #ffeb94, #ffc93d);
+  --band-0: #ff5d6c;
+  --band-1: #ff9f43;
+  --band-2: #ffd75e;
+  --band-3: #6bcf5a;
+  --band-4: #4aa8ff;
+  --band-5: #6b6bff;
+  --band-6: #b36bff;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  isolation: isolate;
+  display: grid;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  place-items: center;
+  padding: calc(var(--safe-top) + 8px) calc(var(--safe-right) + 8px) calc(var(--safe-bottom) + 8px)
+    calc(var(--safe-left) + 8px);
+  background: radial-gradient(ellipse at 50% 30%, rgb(70 30 90 / 0.55), rgb(20 10 36 / 0.9) 85%);
+  font-family: var(--font);
+  color: #fff;
+  -webkit-user-select: none;
+  user-select: none;
+  touch-action: manipulation;
+  animation: read-fade 320ms ease-out both;
+}
+
+.read[data-chapter="tiny"] {
+  --tint: #c7a6ff;
+  --tint-glow: rgb(199 166 255 / 0.24);
+}
+
+.read[data-chapter="meadow"] {
+  --tint: #7be08a;
+  --tint-glow: rgb(123 224 138 / 0.24);
+}
+
+.read[data-chapter="farm"] {
+  --tint: #f4a259;
+  --tint-glow: rgb(244 162 89 / 0.24);
+}
+
+.read[data-chapter="pond"] {
+  --tint: #5fe3d7;
+  --tint-glow: rgb(95 227 215 / 0.24);
+}
+
+.read[data-chapter="beach"] {
+  --tint: #ff8f8f;
+  --tint-glow: rgb(255 143 143 / 0.24);
+}
+
+.read[data-chapter="forest"] {
+  --tint: #b4dc6a;
+  --tint-glow: rgb(180 220 106 / 0.24);
+}
+
+.read[data-chapter="treehouse"] {
+  --tint: #6ee7b7;
+  --tint-glow: rgb(110 231 183 / 0.24);
+}
+
+.read[data-chapter="palace"] {
+  --tint: #ff7ac8;
+  --tint-glow: rgb(255 122 200 / 0.24);
+}
+
+.read[data-chapter="garden"] {
+  --tint: #ffc9a0;
+  --tint-glow: rgb(255 201 160 / 0.24);
+}
+
+.read[data-chapter="sky"] {
+  --tint: #8fc8ff;
+  --tint-glow: rgb(143 200 255 / 0.24);
+}
+
+.read[data-chapter="stars"] {
+  --tint: #c4b5fd;
+  --tint-glow: rgb(196 181 253 / 0.24);
+}
+
+.read[data-chapter="rainbow"] {
+  --tint: #ffd75e;
+  --tint-glow: rgb(255 215 94 / 0.24);
+}
+
+.read[data-chapter="unicorn"] {
+  --tint: #f0abfc;
+  --tint-glow: rgb(240 171 252 / 0.24);
+}
+
+@keyframes read-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.read-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 1280px);
+  height: 100%;
+  max-height: 940px;
+  overflow: hidden;
+  border-radius: 28px;
+  background:
+    radial-gradient(ellipse at 50% -10%, var(--tint-glow), transparent 62%),
+    radial-gradient(circle at 12% 18%, rgb(255 255 255 / 0.1) 0 2px, transparent 3px),
+    radial-gradient(circle at 78% 12%, rgb(255 255 255 / 0.1) 0 2px, transparent 3px),
+    radial-gradient(circle at 90% 70%, rgb(255 255 255 / 0.08) 0 2px, transparent 3px),
+    linear-gradient(180deg, #402469, #25143f);
+  border: 4px solid var(--sun);
+  box-shadow:
+    0 5px 0 rgb(38 24 61 / 0.7),
+    0 14px 34px rgb(0 0 0 / 0.5),
+    inset 0 0 0 3px rgb(255 215 94 / 0.18);
+  outline: none;
+}
+
+/*
+ * A faint sheen across the glass, and the lines of a screen under it, which are too faint to read
+ * as stripes.
+ */
+.read-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(115deg, rgb(255 255 255 / 0.07), transparent 28%),
+    repeating-linear-gradient(0deg, rgb(255 255 255 / 0.025) 0 1px, transparent 1px 4px);
+  border-radius: inherit;
+}
+
+.read[data-entering="true"] .read-panel {
+  animation: read-on 540ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes read-on {
+  0% {
+    transform: scale(0.62, 0.05);
+    filter: brightness(2.6);
+    opacity: 0.4;
+  }
+  55% {
+    transform: scale(1.01, 1.02);
+    filter: brightness(1.5);
+    opacity: 1;
+  }
+  100% {
+    transform: none;
+    filter: none;
+  }
+}
+
+.read-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.read-head {
+  position: relative;
+  z-index: 2;
+  flex: none;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 8px 12px 4px 12px;
+  padding-right: calc(12px + var(--hud, 0px));
+}
+
+.read-close {
+  position: relative;
+  padding: 0;
+  cursor: pointer;
+}
+
+.read-where {
+  margin: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+  font-weight: 600;
+  text-shadow: 0 2px 0 rgb(38 24 61 / 0.6);
+  white-space: nowrap;
+}
+
+.read-level {
+  font-size: clamp(20px, calc(5.6 * var(--vh)), 30px);
+}
+
+.read-chapter-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: clamp(15px, calc(3.8 * var(--vh)), 20px);
+  color: var(--tint);
+}
+
+.read-chapter-name:empty {
+  display: none;
+}
+
+.read-bands {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.read-bands[hidden] {
+  display: none;
+}
+
+.read-bands i {
+  display: block;
+  flex: 0 1 26px;
+  min-width: 8px;
+  height: 12px;
+  border-radius: 8px;
+  background: rgb(255 255 255 / 0.14);
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.28);
+  transition:
+    background 300ms ease,
+    box-shadow 300ms ease,
+    scale 300ms ease;
+}
+
+.read-bands i:nth-child(1) {
+  --c: var(--band-0);
+}
+
+.read-bands i:nth-child(2) {
+  --c: var(--band-1);
+}
+
+.read-bands i:nth-child(3) {
+  --c: var(--band-2);
+}
+
+.read-bands i:nth-child(4) {
+  --c: var(--band-3);
+}
+
+.read-bands i:nth-child(5) {
+  --c: var(--band-4);
+}
+
+.read-bands i:nth-child(6) {
+  --c: var(--band-5);
+}
+
+.read-bands i:nth-child(7) {
+  --c: var(--band-6);
+}
+
+.read-bands i[data-band="read"] {
+  background: var(--c);
+  box-shadow:
+    0 0 0 2px rgb(255 255 255 / 0.85),
+    0 0 10px var(--c);
+}
+
+.read-bands i[data-band="now"] {
+  background: rgb(255 255 255 / 0.55);
+  box-shadow: 0 0 0 2px #fff;
+  animation: read-breathe 1.6s ease-in-out infinite;
+}
+
+.read-bands i[data-band="skipped"] {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.4);
+  opacity: 0.6;
+}
+
+.read-bands[data-size="big"] {
+  gap: clamp(5px, 1.4vw, 10px);
+  width: min(100%, 440px);
+  justify-content: center;
+}
+
+.read-bands[data-size="big"] i {
+  flex: 1 1 0;
+  max-width: clamp(26px, calc(8 * var(--vh)), 52px);
+  height: clamp(16px, calc(4.4 * var(--vh)), 26px);
+  border-radius: 14px;
+}
+
+@keyframes read-breathe {
+  50% {
+    scale: 1.14 1.3;
+    background: rgb(255 255 255 / 0.8);
+  }
+}
+
+/*
+ * On a narrow screen held upright the buttons that are always there take the right of the first
+ * row, so where the player is and the bands go on a row of their own.
+ */
+@media (max-width: 720px) and (min-height: 540px) {
+  .read-head {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      "close close"
+      "where bands";
+    padding-right: 12px;
+  }
+
+  .read-close {
+    grid-area: close;
+  }
+
+  .read-where {
+    grid-area: where;
+  }
+
+  .read-head .read-bands {
+    grid-area: bands;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 720px) {
+  .read-chapter-name {
+    display: none;
+  }
+}
+
+.read-body {
+  position: relative;
+  z-index: 1;
+  flex: 1 1 0;
+  min-height: 0;
+  display: flex;
+}
+
+[data-enter="true"] {
+  animation: read-in 380ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+@keyframes read-in {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+
+.read-icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+}
+
+.read-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.read-big {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5em;
+  min-height: clamp(52px, calc(10.5 * var(--vh)), 72px);
+  padding: 0 clamp(20px, 4vw, 34px) 0 clamp(14px, 3vw, 24px);
+  border-radius: 40px;
+  border: 3px solid #fff;
+  background: var(--glass);
+  color: #fff;
+  font-size: clamp(19px, min(calc(5 * var(--vh)), 6.4vw), 30px);
+  font-weight: 700;
+  box-shadow:
+    0 4px 0 rgb(38 24 61 / 0.6),
+    0 8px 16px rgb(0 0 0 / 0.3);
+  transition:
+    transform 120ms ease,
+    filter 160ms ease;
+  cursor: pointer;
+}
+
+.read-big .read-icon {
+  width: 1.45em;
+  height: 1.45em;
+}
+
+.read-big:active {
+  transform: translateY(2px) scale(0.97);
+}
+
+.read-big:disabled {
+  opacity: 0.45;
+  filter: grayscale(0.6);
+  cursor: default;
+}
+
+.read-start,
+.read-play,
+.read-another,
+.read-next {
+  background: var(--lit);
+  color: var(--ink);
+}
+
+.read-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px 16px;
+}
+
+/*
+ * The buttons that are not the way on are smaller and quieter, so that the one that is stands out
+ * and three of them still fit a small screen.
+ */
+.read-quiet {
+  min-height: clamp(46px, calc(8.6 * var(--vh)), 58px);
+  padding: 0 clamp(14px, 3vw, 24px) 0 clamp(10px, 2.4vw, 18px);
+  background: rgb(255 255 255 / 0.12);
+  font-size: clamp(17px, min(calc(4.2 * var(--vh)), 5.4vw), 25px);
+}
+
+.read-done .read-another {
+  flex: 1 0 100%;
+  max-width: max-content;
+  margin-inline: auto;
+}
+
+.read-home,
+.read-done {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(8px, calc(2.6 * var(--vh)), 22px);
+  padding: 8px 18px 14px;
+  overflow-y: auto;
+  text-align: center;
+}
+
+/*
+ * In the middle when there is room, and from the top when there is not, so nothing is out of reach
+ * above.
+ */
+.read-home > :first-child,
+.read-done > :first-child {
+  margin-top: auto;
+}
+
+.read-home > :last-child,
+.read-done > :last-child {
+  margin-bottom: auto;
+}
+
+.read-intro {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(12px, 3vw, 28px);
+  min-width: 0;
+}
+
+.read-intro-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(2px, calc(1 * var(--vh)), 8px);
+  min-width: 0;
+}
+
+.read-hero {
+  flex: none;
+  width: clamp(56px, calc(14 * var(--vh)), 150px);
+  height: clamp(56px, calc(14 * var(--vh)), 150px);
+  filter: drop-shadow(0 6px 0 rgb(38 24 61 / 0.5));
+  animation: read-float 3.4s ease-in-out infinite;
+}
+
+.read-hero svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes read-float {
+  50% {
+    translate: 0 -5%;
+  }
+}
+
+.read-title {
+  margin: 0;
+  font-size: clamp(30px, min(calc(9 * var(--vh)), 12vw), 56px);
+  line-height: 1.05;
+  text-shadow: 0 3px 0 rgb(38 24 61 / 0.7);
+}
+
+.read-welcome {
+  margin: 0;
+  font-size: clamp(17px, min(calc(4.4 * var(--vh)), 6vw), 26px);
+  font-weight: 500;
+  color: var(--sun);
+}
+
+.read-where-big {
+  margin: 0;
+  font-size: clamp(17px, min(calc(4.6 * var(--vh)), 5.8vw), 28px);
+  font-weight: 600;
+  color: var(--tint);
+}
+
+.read-stage-name {
+  margin: 0;
+  font-size: clamp(20px, min(calc(5.6 * var(--vh)), 7.4vw), 34px);
+  font-weight: 700;
+}
+
+.read-samples {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.read-samples li {
+  padding: 4px 14px;
+  border-radius: 18px;
+  background: rgb(255 255 255 / 0.12);
+  border: 2px solid rgb(255 255 255 / 0.25);
+  font-size: clamp(15px, calc(3.8 * var(--vh)), 22px);
+  font-weight: 600;
+}
+
+.read-samples:empty {
+  display: none;
+}
+
+.read-steps {
+  display: none;
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  gap: 10px;
+  text-align: left;
+}
+
+[data-first="true"] .read-steps {
+  display: grid;
+}
+
+[data-first="true"] .read-where-big,
+[data-first="true"] .read-stage-name,
+[data-first="true"] .read-samples {
+  display: none;
+}
+
+.read-steps li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: clamp(16px, min(calc(4.4 * var(--vh)), 5.2vw), 24px);
+  font-weight: 600;
+}
+
+.read-step-icon {
+  flex: none;
+  width: clamp(30px, min(calc(8 * var(--vh)), 9vw), 48px);
+  height: clamp(30px, min(calc(8 * var(--vh)), 9vw), 48px);
+}
+
+.read-step-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.read-stats {
+  margin: 0;
+  font-size: clamp(14px, calc(3.4 * var(--vh)), 19px);
+  color: rgb(255 255 255 / 0.78);
+  text-align: center;
+  text-wrap: balance;
+}
+
+.read-promise {
+  margin: 0;
+  text-align: center;
+  font-size: clamp(15px, calc(3.8 * var(--vh)), 21px);
+  font-weight: 700;
+  color: var(--lit);
+}
+
+.read-promise .read-gem {
+  vertical-align: middle;
+  margin-right: 6px;
+}
+
+.read-pick .read-promise {
+  text-align: left;
+}
+
+.read-promise[data-won="true"] {
+  color: rgb(255 255 255 / 0.85);
+}
+
+.read-gem {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.read-gem-icon {
+  display: inline-flex;
+  width: 1.5em;
+  height: 1.5em;
+  filter: drop-shadow(0 0 5px rgb(255 215 94 / 0.55));
+}
+
+.read-gem-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.read-promise .read-gem-icon {
+  width: 1.25em;
+  height: 1.25em;
+}
+
+.read-gem-big .read-gem-icon {
+  width: 1.4em;
+  height: 1.4em;
+}
+
+.read-title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2px 18px;
+}
+
+.read-treasure {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 2px 12px;
+  font-size: clamp(14px, calc(3.4 * var(--vh)), 19px);
+}
+
+.read-banner-prize {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding-block: 3px;
+}
+
+.read-banner-prize .read-gem {
+  color: inherit;
+}
+
+/*
+ * A phone held sideways has the picture beside the words and not above them, and what a first visit
+ * is told goes across.
+ */
+@media (max-height: 520px) {
+  .read-home {
+    gap: 8px;
+  }
+
+  [data-first="true"] .read-steps {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 22px;
+  }
+
+  .read-intro {
+    flex-direction: row;
+  }
+
+  .read-home .read-samples {
+    display: none;
+  }
+
+  .read-home .read-title {
+    font-size: clamp(24px, calc(8 * var(--vh)), 40px);
+  }
+
+  .read-home .read-steps {
+    margin-top: 2px;
+  }
+
+  .read-home .read-step-icon {
+    width: 24px;
+    height: 24px;
+  }
+
+  .read-pick .read-samples {
+    display: none;
+  }
+}
+
+/*
+ * The first time the player sits down there is the prize to say as well as how it works, so the
+ * picture is smaller on a screen that is not tall.
+ */
+@media (max-height: 640px) {
+  [data-first="true"] .read-hero {
+    width: clamp(40px, calc(8 * var(--vh)), 150px);
+    height: clamp(40px, calc(8 * var(--vh)), 150px);
+  }
+}
+
+/*
+ * A narrow phone held upright that has won every kind of treasure has it on two lines under the
+ * title, so the picture gives them the room.
+ */
+@media (max-width: 420px) and (max-height: 640px) {
+  .read-home[data-first="false"] .read-hero {
+    width: clamp(40px, calc(10 * var(--vh)), 150px);
+    height: clamp(40px, calc(10 * var(--vh)), 150px);
+  }
+}
+
+/*
+ * A phone held upright that is short has less room, so the words the player will meet next are left
+ * out.
+ */
+@media (max-width: 720px) and (min-height: 540px) and (max-height: 700px) {
+  .read-home .read-samples {
+    display: none;
+  }
+}
+
+.read-map {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.read-chapters {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 6px 14px 10px;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.read-chapter {
+  --tint: #ffd75e;
+  flex: none;
+  padding: 10px 14px 14px;
+  border-radius: 22px;
+  background: rgb(255 255 255 / 0.07);
+  border: 2px solid rgb(255 255 255 / 0.16);
+}
+
+.read-chapter[data-chapter="tiny"] {
+  --tint: #c7a6ff;
+}
+
+.read-chapter[data-chapter="meadow"] {
+  --tint: #7be08a;
+}
+
+.read-chapter[data-chapter="farm"] {
+  --tint: #f4a259;
+}
+
+.read-chapter[data-chapter="pond"] {
+  --tint: #5fe3d7;
+}
+
+.read-chapter[data-chapter="beach"] {
+  --tint: #ff8f8f;
+}
+
+.read-chapter[data-chapter="forest"] {
+  --tint: #b4dc6a;
+}
+
+.read-chapter[data-chapter="treehouse"] {
+  --tint: #6ee7b7;
+}
+
+.read-chapter[data-chapter="palace"] {
+  --tint: #ff7ac8;
+}
+
+.read-chapter[data-chapter="garden"] {
+  --tint: #ffc9a0;
+}
+
+.read-chapter[data-chapter="sky"] {
+  --tint: #8fc8ff;
+}
+
+.read-chapter[data-chapter="stars"] {
+  --tint: #c4b5fd;
+}
+
+.read-chapter[data-chapter="rainbow"] {
+  --tint: #ffd75e;
+}
+
+.read-chapter[data-chapter="unicorn"] {
+  --tint: #f0abfc;
+}
+
+.read-chapter-title {
+  margin: 0 0 8px;
+  font-size: clamp(18px, calc(4.6 * var(--vh)), 26px);
+  color: var(--tint);
+  text-shadow: 0 2px 0 rgb(38 24 61 / 0.6);
+}
+
+.read-stages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.read-node {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: clamp(48px, calc(10.4 * var(--vh)), 64px);
+  height: clamp(48px, calc(10.4 * var(--vh)), 64px);
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.12);
+  border: 3px solid rgb(255 255 255 / 0.7);
+  box-shadow: 0 3px 0 rgb(38 24 61 / 0.55);
+  font-size: clamp(18px, calc(4.4 * var(--vh)), 26px);
+  font-weight: 700;
+  transition:
+    scale 160ms ease,
+    background 200ms ease;
+  cursor: pointer;
+}
+
+.read-node[data-mark="cleared"],
+.read-node[data-mark="mastered"] {
+  background: var(--lit);
+  border-color: #fff;
+  color: var(--ink);
+}
+
+.read-node[data-mark="current"] {
+  background: linear-gradient(180deg, #b69cff, #8a63f0);
+  border-color: var(--sun);
+  box-shadow:
+    0 0 0 4px rgb(255 215 94 / 0.35),
+    0 3px 0 rgb(38 24 61 / 0.55);
+  animation: read-breathe-node 1.8s ease-in-out infinite;
+}
+
+.read-node[data-picked="true"] {
+  scale: 1.14;
+  border-color: #fff;
+  box-shadow:
+    0 0 0 5px rgb(255 255 255 / 0.4),
+    0 3px 0 rgb(38 24 61 / 0.55);
+}
+
+.read-node .read-mark {
+  position: absolute;
+  right: -7px;
+  bottom: -7px;
+  width: 24px;
+  height: 24px;
+  pointer-events: none;
+}
+
+.read-node .read-mark svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.read-node[data-mark="cleared"] .read-mark {
+  display: none;
+}
+
+.read-node[data-mark="current"] .read-mark {
+  display: none;
+}
+
+@keyframes read-breathe-node {
+  50% {
+    box-shadow:
+      0 0 0 9px rgb(255 215 94 / 0.18),
+      0 3px 0 rgb(38 24 61 / 0.55);
+  }
+}
+
+.read-pick {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  padding: 10px 16px 12px;
+  background: rgb(0 0 0 / 0.2);
+  border-top: 2px solid rgb(255 255 255 / 0.14);
+}
+
+.read-pick-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.read-pick-level {
+  margin: 0;
+  font-size: clamp(14px, calc(3.4 * var(--vh)), 18px);
+  font-weight: 600;
+  color: var(--tint);
+}
+
+.read-pick-name {
+  margin: 0;
+  font-size: clamp(20px, calc(5.2 * var(--vh)), 30px);
+  font-weight: 700;
+  line-height: 1.1;
+}
+
+.read-pick-state {
+  margin: 0;
+  font-size: clamp(14px, calc(3.4 * var(--vh)), 17px);
+  color: rgb(255 255 255 / 0.78);
+}
+
+.read-pick .read-samples {
+  justify-content: flex-start;
+  margin: 2px 0;
+}
+
+.read-pick .read-samples li {
+  padding: 2px 10px;
+  font-size: clamp(14px, calc(3.4 * var(--vh)), 18px);
+}
+
+.read-pick .read-big {
+  min-height: clamp(46px, calc(9 * var(--vh)), 60px);
+}
+
+.read-item {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 2px 14px 12px;
+}
+
+.read-says {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 1.6em;
+  font-size: clamp(18px, calc(4.8 * var(--vh)), 28px);
+  font-weight: 600;
+  text-align: center;
+  text-shadow: 0 2px 0 rgb(38 24 61 / 0.6);
+}
+
+.read-caption {
+  margin: 0;
+  min-width: 0;
+}
+
+.read-earned {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.read-earned:empty {
+  display: none;
+}
+
+.read-star,
+.read-badge {
+  display: block;
+  width: 1.5em;
+  height: 1.5em;
+  animation: read-badge-in 600ms cubic-bezier(0.2, 1.5, 0.4, 1) both;
+}
+
+.read-badge {
+  animation-delay: 120ms;
+}
+
+.read-star svg,
+.read-badge svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+@keyframes read-badge-in {
+  from {
+    scale: 0;
+    rotate: -40deg;
+  }
+}
+
+.read-stage {
+  position: relative;
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.read-pieces {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--row-gap);
+  font-size: var(--size);
+  line-height: 1;
+}
+
+.read-row {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap);
+  transition: gap 500ms cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+/* The space that falls between the parts of a longer word, but not at the start of a row. */
+.read-row > :not(:first-child)[data-gap="true"] {
+  margin-left: var(--space);
+}
+
+.read-bridge {
+  position: relative;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+  transition: gap 500ms cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+/*
+ * A vowel and its magic e are held together by a bracket under the letters that are between them.
+ */
+.read-bridge::after {
+  content: "";
+  position: absolute;
+  left: 0.5em;
+  right: 0.5em;
+  bottom: -0.16em;
+  height: 0.12em;
+  border: 0.06em solid var(--tint);
+  border-top: 0;
+  border-radius: 0 0 0.3em 0.3em;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.read-piece {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  height: var(--height);
+  min-width: 1.12em;
+  padding: 0 0.26em;
+  border-radius: 0.26em;
+  border: 0;
+  background: var(--tile);
+  color: #35195e;
+  font-size: 1em;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow:
+    0 0.07em 0 #b6a2e6,
+    0 0.14em 0.22em rgb(0 0 0 / 0.38),
+    inset 0 0.04em 0 #fff;
+  transition:
+    background 220ms ease,
+    box-shadow 220ms ease,
+    border-radius 400ms ease,
+    translate 160ms ease;
+  cursor: pointer;
+}
+
+.read-pieces[data-kind="line"] .read-piece {
+  min-width: 1.5em;
+  padding: 0 0.34em;
+  font-weight: 500;
+}
+
+.read-cap {
+  display: block;
+  pointer-events: none;
+  /* The round letters of Fredoka sit a little low in their line. */
+  translate: 0 -0.02em;
+}
+
+.read-piece[data-silent="true"] .read-cap {
+  opacity: 0.4;
+}
+
+.read-piece[data-state="touched"] {
+  background: var(--lit);
+  box-shadow:
+    0 0.04em 0 #c98d00,
+    0 0.1em 0.2em rgb(0 0 0 / 0.35),
+    0 0 0.5em rgb(255 215 94 / 0.5),
+    inset 0 0.04em 0 #fff6b8;
+  translate: 0 0.03em;
+}
+
+.read-piece[data-glow="true"] {
+  box-shadow:
+    0 0.07em 0 #b6a2e6,
+    0 0 0 0.07em var(--aqua),
+    0 0 0.7em 0.14em rgb(95 227 215 / 0.75);
+  animation: read-glow 1.2s ease-in-out infinite;
+}
+
+@keyframes read-glow {
+  50% {
+    box-shadow:
+      0 0.07em 0 #b6a2e6,
+      0 0 0 0.1em var(--aqua),
+      0 0 1em 0.3em rgb(95 227 215 / 0.85);
+    scale: 1.05;
+  }
+}
+
+.read-piece[data-split="start"],
+.read-piece[data-split="end"] {
+  box-shadow:
+    0 0.07em 0 #b6a2e6,
+    0 0 0 0.04em var(--tint),
+    0 0.14em 0.22em rgb(0 0 0 / 0.38);
+}
+
+/*
+ * The pieces come together. Each is the same lit colour, and they sit close to each other, so the
+ * word is one thing.
+ */
+.read-pieces[data-joined="true"] .read-row,
+.read-pieces[data-joined="true"] .read-bridge {
+  gap: 0.04em;
+}
+
+.read-pieces[data-joined="true"] .read-piece {
+  background: var(--lit);
+  border-radius: 0.14em;
+  box-shadow:
+    0 0.05em 0 #c98d00,
+    0 0.12em 0.22em rgb(0 0 0 / 0.38),
+    0 0 0.6em rgb(255 215 94 / 0.55),
+    inset 0 0.04em 0 #fff6b8;
+  pointer-events: none;
+  cursor: default;
+}
+
+.read-pieces[data-joined="true"] .read-bridge::after {
+  opacity: 0;
+}
+
+.read-pieces[data-joined="true"] .read-row > :not(:first-child)[data-gap="true"] {
+  margin-left: calc(var(--space) * 0.6);
+}
+
+[data-phase="found"] .read-piece {
+  background: linear-gradient(180deg, #fff3b0, #ffd75e);
+}
+
+.read-piece[data-pop] {
+  animation: read-pop 480ms cubic-bezier(0.2, 1.5, 0.4, 1);
+}
+
+.read-piece[data-pulse] {
+  animation: read-pulse 340ms ease-out;
+}
+
+.read-piece[data-nudge] {
+  animation: read-nudge 400ms ease-in-out;
+}
+
+.read-pieces[data-join] .read-piece {
+  animation: read-join 900ms cubic-bezier(0.3, 1.3, 0.5, 1) both;
+  animation-delay: calc(var(--i) * 45ms);
+}
+
+@keyframes read-pop {
+  35% {
+    scale: 1.16;
+    translate: 0 -0.1em;
+  }
+}
+
+@keyframes read-pulse {
+  40% {
+    scale: 1.08;
+  }
+}
+
+@keyframes read-nudge {
+  20% {
+    translate: -0.06em 0;
+  }
+  50% {
+    translate: 0.06em 0;
+  }
+  80% {
+    translate: -0.03em 0;
+  }
+}
+
+@keyframes read-join {
+  35% {
+    translate: 0 -0.16em;
+    scale: 1.06;
+  }
+}
+
+/* A burst of stars when it is read. */
+.read-spark {
+  --r: calc(20vmin + var(--d) * 6vmin);
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  background: var(--sun);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.read-stage[data-burst] .read-spark {
+  animation: read-spark 1100ms cubic-bezier(0.1, 0.7, 0.3, 1) both;
+  animation-delay: calc(var(--d) * 70ms);
+}
+
+@keyframes read-spark {
+  0% {
+    opacity: 0;
+    transform: rotate(var(--a)) translateY(0) scale(0.3);
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--a)) translateY(calc(-1 * var(--r))) scale(1.1) rotate(180deg);
+  }
+}
+
+.read-foot {
+  flex: none;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "tools answers";
+  align-items: end;
+  gap: 8px 12px;
+  padding-top: 4px;
+}
+
+.read-tools {
+  grid-area: tools;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.read-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: clamp(46px, calc(9.4 * var(--vh)), 58px);
+  padding: 0 clamp(12px, 2.4vw, 20px) 0 10px;
+  border-radius: 30px;
+  border: 3px solid rgb(255 255 255 / 0.85);
+  background: var(--glass);
+  color: #fff;
+  font-size: clamp(15px, calc(3.8 * var(--vh)), 20px);
+  font-weight: 600;
+  box-shadow:
+    0 3px 0 rgb(38 24 61 / 0.55),
+    0 6px 12px rgb(0 0 0 / 0.25);
+  transition:
+    transform 120ms ease,
+    opacity 200ms ease;
+  cursor: pointer;
+}
+
+.read-tool .read-icon {
+  width: clamp(26px, calc(5.6 * var(--vh)), 34px);
+  height: clamp(26px, calc(5.6 * var(--vh)), 34px);
+}
+
+.read-tool:active {
+  transform: translateY(2px) scale(0.97);
+}
+
+.read-skip {
+  background: transparent;
+  border-color: rgb(255 255 255 / 0.45);
+  box-shadow: none;
+  opacity: 0.85;
+}
+
+.read-tool:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.read-answers {
+  grid-area: answers;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: opacity 300ms ease;
+}
+
+.read-answers[data-live="false"] {
+  opacity: 0.5;
+}
+
+.read-once .read-label {
+  white-space: nowrap;
+}
+
+.read-once {
+  min-height: clamp(44px, calc(8 * var(--vh)), 50px);
+  font-size: clamp(14px, calc(3.4 * var(--vh)), 18px);
+}
+
+.read-check {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: clamp(58px, calc(13 * var(--vh)), 80px);
+  height: clamp(58px, calc(13 * var(--vh)), 80px);
+  border-radius: 50%;
+  border: 3px solid #fff;
+  background: linear-gradient(180deg, #86e693, #3fae5a);
+  box-shadow:
+    0 3px 0 rgb(38 24 61 / 0.6),
+    0 6px 14px rgb(0 0 0 / 0.3);
+  transition:
+    filter 300ms ease,
+    opacity 300ms ease,
+    transform 120ms ease;
+  cursor: pointer;
+}
+
+.read-check .read-icon {
+  width: 56%;
+  height: 56%;
+}
+
+.read-answers[data-live="false"] .read-check {
+  filter: grayscale(0.85);
+  opacity: 0.6;
+}
+
+.read-answers[data-live="true"] .read-check {
+  animation: read-wake 2.2s ease-in-out infinite;
+}
+
+.read-check:active {
+  transform: scale(0.94);
+}
+
+@keyframes read-wake {
+  50% {
+    box-shadow:
+      0 3px 0 rgb(38 24 61 / 0.6),
+      0 0 0 7px rgb(134 230 147 / 0.28),
+      0 6px 14px rgb(0 0 0 / 0.3);
+  }
+}
+
+/*
+ * What the player is told the first time, under the words that say what to do, where it does not
+ * cover what they are reading.
+ */
+.read-hint {
+  flex: none;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  margin: 2px 0 0;
+  padding: 4px 14px 4px 6px;
+  border-radius: 20px;
+  background: rgb(255 255 255 / 0.14);
+  font-size: clamp(14px, calc(3.4 * var(--vh)), 18px);
+  font-weight: 600;
+  line-height: 1.2;
+  animation: read-bob 1.8s ease-in-out infinite;
+}
+
+.read-hint[hidden] {
+  display: none;
+}
+
+.read-hint-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.6em;
+  height: 1.6em;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #86e693, #3fae5a);
+  border: 2px solid #fff;
+}
+
+.read-hint-icon svg {
+  display: block;
+  width: 62%;
+  height: 62%;
+}
+
+@keyframes read-bob {
+  50% {
+    translate: 0 -3px;
+  }
+}
+
+.read-banner {
+  grid-area: banner;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.read-banner-line {
+  padding: 8px 18px;
+  border-radius: 24px;
+  background: var(--lit);
+  color: var(--ink);
+  font-size: clamp(15px, min(calc(4 * var(--vh)), 4.9vw), 22px);
+  font-weight: 700;
+  box-shadow:
+    0 3px 0 rgb(38 24 61 / 0.55),
+    0 0 18px rgb(255 215 94 / 0.5);
+  animation: read-banner-in 560ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+}
+
+.read-banner-line:nth-child(2) {
+  animation-delay: 140ms;
+}
+
+.read-banner-line:nth-child(3) {
+  animation-delay: 280ms;
+}
+
+@keyframes read-banner-in {
+  from {
+    scale: 0.4;
+    opacity: 0;
+  }
+}
+
+.read-next {
+  grid-area: next;
+  justify-self: end;
+  min-height: clamp(56px, calc(11 * var(--vh)), 74px);
+  padding: 0 clamp(22px, 4vw, 36px) 0 clamp(16px, 3vw, 26px);
+  border-radius: 40px;
+  border: 3px solid #fff;
+  font-size: clamp(20px, calc(5 * var(--vh)), 30px);
+  font-weight: 700;
+  gap: 0.4em;
+  animation: read-bob 1.8s ease-in-out 600ms infinite;
+}
+
+.read-next .read-icon {
+  width: 1.5em;
+  height: 1.5em;
+}
+
+[data-phase="found"] .read-foot {
+  grid-template-areas: "banner next";
+}
+
+/* A tap anywhere goes on, and the pieces do nothing more. */
+[data-phase="found"] .read-stage {
+  cursor: pointer;
+}
+
+.read-done-title {
+  margin: 0;
+  font-size: clamp(26px, min(calc(7.4 * var(--vh)), 10vw), 46px);
+  font-weight: 700;
+  line-height: 1.1;
+  text-shadow: 0 3px 0 rgb(38 24 61 / 0.7);
+}
+
+.read-done-tally {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 6px 14px;
+}
+
+.read-done-count {
+  margin: 0;
+  font-size: clamp(22px, min(calc(6 * var(--vh)), 8vw), 36px);
+  font-weight: 700;
+  color: var(--sun);
+}
+
+.read-done-fresh {
+  margin: 0;
+  padding: 4px 16px;
+  border-radius: 20px;
+  background: rgb(255 255 255 / 0.14);
+  border: 2px solid rgb(255 255 255 / 0.3);
+  font-size: clamp(16px, calc(4 * var(--vh)), 22px);
+  font-weight: 600;
+}
+
+/*
+ * A narrow phone held upright has the count and the new ones on one line, so that the banner for a
+ * level and what it paid have room.
+ */
+@media (max-width: 420px) and (max-height: 640px) {
+  .read-done-count {
+    font-size: 20px;
+  }
+
+  .read-done-fresh {
+    padding: 2px 12px;
+    font-size: 16px;
+  }
+}
+
+.read-done .read-banner {
+  justify-content: center;
+}
+
+@media (max-width: 720px) and (min-height: 540px) {
+  .read-foot {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "tools"
+      "answers";
+  }
+
+  .read-answers {
+    justify-self: end;
+  }
+
+  [data-phase="found"] .read-foot {
+    grid-template-areas:
+      "banner"
+      "next";
+  }
+
+  .read-next {
+    justify-self: stretch;
+  }
+
+  .read-tools {
+    justify-content: center;
+  }
+
+  /* What the player needs is above the way out, when they do not all fit on a row. */
+  .read-skip {
+    order: 9;
+  }
+}
+
+/* A small phone has three buttons across, or two when it is the narrowest. */
+@media (max-width: 420px), (max-width: 720px) and (max-height: 539px) {
+  .read-tool {
+    gap: 6px;
+    padding: 0 12px 0 8px;
+    font-size: 16px;
+  }
+
+  .read-tool .read-icon {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+/*
+ * On a phone held sideways that is small, the buttons the player presses are a picture each, so
+ * that they and the tick fit on a row.
+ */
+@media (max-width: 720px) and (max-height: 539px) {
+  .read-help,
+  .read-hear,
+  .read-show {
+    justify-content: center;
+    min-width: 54px;
+    padding: 0 8px;
+  }
+
+  .read-help .read-label,
+  .read-hear .read-label,
+  .read-show .read-label {
+    display: none;
+  }
+}
+
+.read[data-calm="true"],
+.read[data-calm="true"] * {
+  animation-duration: 1ms !important;
+  animation-delay: 0ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+}
+
+.read[data-calm="true"] .read-hero,
+.read[data-calm="true"] .read-hint,
+.read[data-calm="true"] .read-next,
+.read[data-calm="true"] .read-answers[data-live="true"] .read-check,
+.read[data-calm="true"] .read-bands i[data-band="now"],
+.read[data-calm="true"] .read-node[data-mark="current"],
+.read[data-calm="true"] .read-piece[data-glow="true"] {
+  animation: none !important;
+}
+
+.read[data-calm="true"] .read-piece[data-glow="true"] {
+  box-shadow:
+    0 0.07em 0 #b6a2e6,
+    0 0 0 0.1em var(--aqua),
+    0 0 0.8em 0.2em rgb(95 227 215 / 0.8);
+}
+
+.read[data-calm="true"] .read-spark {
+  display: none;
+}
+
+/* Measuring a piece wants it as it is at rest, and as far apart as it is when it is not joined. */
+.read-pieces[data-measuring] .read-bridge {
+  gap: var(--gap) !important;
+}
+
+.read-pieces[data-measuring] *,
+.read-pieces[data-measuring] {
+  animation: none !important;
+  transition: none !important;
+  translate: none !important;
+  scale: none !important;
+  rotate: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .read[data-calm="false"] .read-hero {
+    animation: none;
+  }
+}

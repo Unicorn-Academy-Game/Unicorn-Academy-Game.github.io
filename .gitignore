@@ -1,0 +1,25 @@
+node_modules/
+dist/
+.env
+.env.local
+*.log
+.DS_Store
+coverage/
+test-results/
+playwright-report/
+.vite/
+.vitest/
+tmp/
+# Reference images from the show belong to their owners and are never committed.
+assets/source/reference/cache/
+# Scratch output from art/audio iteration; the generated runtime assets in public/assets are committed.
+assets/source/_scratch/
+# Render caches. Every frame and sprite here is rebuilt from the generators under tools/art; contact sheets in
+# assets/source/previews are kept as review evidence.
+assets/source/frames/
+assets/source/env-cache/
+# Python caches from tools/voice.
+__pycache__/
+
+# Editor settings are personal.
+.vscode/

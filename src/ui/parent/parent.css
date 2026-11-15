@@ -1,0 +1,949 @@
+/*
+ * The parent controls. One sheet over the game, in the game's own colours but quieter: a parent is
+ * reading, not playing. It is laid out for a phone held sideways first (about 360 pixels tall),
+ * then portrait, then a larger screen.
+ */
+
+/*
+ * The layers above the canvas pass taps through, so everything in here has to say it wants them.
+ * Without this a tap on an empty part of the sheet would walk a unicorn.
+ */
+#ui .parent,
+#ui .parent * {
+  pointer-events: auto;
+}
+
+.parent {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  padding: max(var(--safe-top), 8px) max(var(--safe-right), 8px) max(var(--safe-bottom), 8px) max(var(--safe-left), 8px);
+  background: rgb(10 6 22 / 0.62);
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.parent.shown {
+  opacity: 1;
+}
+
+.parent-sheet {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 980px);
+  height: min(100%, 700px);
+  background: linear-gradient(180deg, #33245c 0%, #241741 100%);
+  border: 3px solid rgb(255 255 255 / 0.85);
+  border-radius: 22px;
+  box-shadow:
+    0 8px 0 rgb(0 0 0 / 0.25),
+    0 24px 56px rgb(0 0 0 / 0.5);
+  overflow: hidden;
+  transform: translateY(10px) scale(0.985);
+  transition: transform 220ms ease;
+}
+
+.parent.shown .parent-sheet {
+  transform: none;
+}
+
+/*
+ * The sheet takes focus when its empty space is pressed, so the keyboard keeps working there. It
+ * needs no ring for that.
+ */
+.parent-sheet:focus {
+  outline: none;
+}
+
+.parent-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.parent-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px 6px 20px;
+  border-bottom: 2px solid rgb(255 255 255 / 0.12);
+}
+
+.parent-head h2 {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  outline: none;
+}
+
+.close {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.1);
+}
+
+.close svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.6;
+  stroke-linecap: round;
+}
+
+.parent-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.parent-nav {
+  flex: none;
+  width: 184px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 10px;
+  overflow-y: auto;
+  border-right: 2px solid rgb(255 255 255 / 0.1);
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 500;
+  text-align: left;
+  color: rgb(255 255 255 / 0.82);
+}
+
+.tab svg {
+  flex: none;
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tab[aria-selected="true"] {
+  color: #fff;
+  background: rgb(255 255 255 / 0.14);
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.35);
+}
+
+.tab .dot {
+  display: none;
+  flex: none;
+  width: 12px;
+  height: 12px;
+  margin-left: auto;
+  border-radius: 50%;
+  background: #ffb13d;
+}
+
+.tab[data-attention="true"] .dot {
+  display: block;
+}
+
+.parent-page {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 18px 28px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  outline: none;
+}
+
+.page-head h3 {
+  margin: 0 0 2px;
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.page-head p {
+  margin: 0 0 14px;
+  font-size: 16px;
+  line-height: 1.35;
+  opacity: 0.8;
+}
+
+.parent-page > p {
+  margin: 8px 0 0;
+  opacity: 0.8;
+}
+
+.card {
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  border-radius: 18px;
+  background: rgb(255 255 255 / 0.07);
+  border: 2px solid rgb(255 255 255 / 0.12);
+}
+
+.card h4 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--sun);
+}
+
+.card h5,
+.group h5 {
+  margin: 14px 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.card p {
+  margin: 0 0 10px;
+  font-size: 16px;
+  line-height: 1.4;
+  opacity: 0.92;
+}
+
+.card p:last-child {
+  margin-bottom: 0;
+}
+
+.card .note,
+.parent .note {
+  font-size: 15px;
+  opacity: 0.72;
+}
+
+.muted {
+  font-size: 14px;
+  opacity: 0.66;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+/*
+ * What a card shows once a file is chosen: what is in it, or why it cannot be used. It stands clear
+ * of the buttons above it.
+ */
+.choice-result:not(:empty) {
+  margin-top: 12px;
+}
+
+.btn {
+  min-height: 48px;
+  padding: 0 22px;
+  border-radius: 14px;
+  border: 3px solid var(--ink);
+  font-size: 17px;
+  font-weight: 600;
+  transition: transform 120ms ease;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn.primary {
+  background: linear-gradient(180deg, var(--pink), var(--purple));
+  box-shadow: 0 0 0 2px rgb(255 255 255 / 0.85);
+}
+
+.btn.quiet {
+  background: rgb(255 255 255 / 0.12);
+  border-color: rgb(255 255 255 / 0.55);
+}
+
+.btn.danger {
+  background: linear-gradient(180deg, #ff9a76, #ff5d73);
+  box-shadow: 0 0 0 2px rgb(255 255 255 / 0.85);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 56px;
+  padding: 6px 0;
+}
+
+.row + .row {
+  border-top: 2px solid rgb(255 255 255 / 0.08);
+}
+
+.row-text {
+  display: grid;
+  gap: 2px;
+}
+
+.row-text strong {
+  font-size: 18px;
+}
+
+.row-text span {
+  font-size: 15px;
+  line-height: 1.3;
+  opacity: 0.78;
+}
+
+.switch {
+  position: relative;
+  flex: none;
+  width: 64px;
+  height: 38px;
+  border-radius: 99px;
+  background: rgb(255 255 255 / 0.2);
+  border: 3px solid rgb(255 255 255 / 0.55);
+  transition:
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.switch i {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 2px 0 rgb(0 0 0 / 0.3);
+  transition: transform 160ms ease;
+}
+
+.switch[aria-checked="true"] {
+  background: linear-gradient(180deg, var(--pink), var(--purple));
+  border-color: #fff;
+}
+
+.switch[aria-checked="true"] i {
+  transform: translateX(26px);
+}
+
+/*
+ * A short row of choices, one of them picked. It sits under its own label, since five choices do
+ * not fit beside one.
+ */
+.choice-row {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/*
+ * A word is never squeezed into less than it takes. A row whose words do not fit on one line goes
+ * on to a second, and short ones, like the zoom, stay on one.
+ */
+.option {
+  flex: 1 1 0;
+  min-width: max-content;
+  min-height: 48px;
+  border-radius: 14px;
+  border: 3px solid rgb(255 255 255 / 0.45);
+  background: rgb(255 255 255 / 0.1);
+  font-size: 17px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  transition:
+    transform 120ms ease,
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.option:active {
+  transform: scale(0.96);
+}
+
+.option[aria-checked="true"] {
+  background: linear-gradient(180deg, var(--pink), var(--purple));
+  border-color: #fff;
+}
+
+.option:focus-visible {
+  outline: 4px solid var(--sun);
+  outline-offset: 3px;
+}
+
+.level-row {
+  display: grid;
+  grid-template-columns: 84px 1fr 52px;
+  gap: 14px;
+}
+
+.level-row label {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.level-value {
+  text-align: right;
+  font-size: 17px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.page[data-muted="true"] .level-row {
+  opacity: 0.5;
+}
+
+.level {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 44px;
+  margin: 0;
+  background: transparent;
+  touch-action: pan-y;
+}
+
+.level::-webkit-slider-runnable-track {
+  height: 14px;
+  border-radius: 99px;
+  border: 2px solid rgb(255 255 255 / 0.35);
+  background:
+    linear-gradient(90deg, var(--pink), var(--purple)) 0 / var(--fill, 50%) 100% no-repeat,
+    rgb(255 255 255 / 0.14);
+}
+
+.level::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 34px;
+  height: 34px;
+  margin-top: -12px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid var(--ink);
+  box-shadow: 0 3px 0 rgb(0 0 0 / 0.35);
+}
+
+.level::-moz-range-track {
+  height: 14px;
+  border-radius: 99px;
+  border: 2px solid rgb(255 255 255 / 0.35);
+  background: rgb(255 255 255 / 0.14);
+}
+
+.level::-moz-range-progress {
+  height: 14px;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--pink), var(--purple));
+}
+
+.level::-moz-range-thumb {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid var(--ink);
+  box-shadow: 0 3px 0 rgb(0 0 0 / 0.35);
+}
+
+.level:focus-visible,
+.switch:focus-visible,
+.tab:focus-visible {
+  outline: 4px solid var(--sun);
+  outline-offset: 3px;
+}
+
+.status {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* Where the book is kept is told one line at a time, on this device and in the cloud. */
+.book-line + .book-line {
+  margin-top: 14px;
+}
+
+.status.good {
+  --tone: #6be3a0;
+}
+
+.status.info {
+  --tone: #9fb7ff;
+}
+
+.status.warn {
+  --tone: #ffc857;
+}
+
+.status.bad {
+  --tone: #ff7a8a;
+}
+
+.tone-icon {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--tone) 18%, transparent);
+  border: 2px solid color-mix(in srgb, var(--tone) 55%, transparent);
+}
+
+.tone-icon svg {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: var(--tone);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.status-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.status-text strong {
+  font-size: 18px;
+}
+
+.status-text span {
+  font-size: 16px;
+  line-height: 1.35;
+  opacity: 0.85;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.tile {
+  display: grid;
+  gap: 2px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgb(0 0 0 / 0.18);
+  border: 2px solid rgb(255 255 255 / 0.14);
+}
+
+.tile strong {
+  font-size: 17px;
+}
+
+.copy {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+}
+
+.copy + .copy {
+  border-top: 2px solid rgb(255 255 255 / 0.08);
+}
+
+.copy-text {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.copy-text strong {
+  font-size: 17px;
+}
+
+.copy .btn {
+  flex: none;
+}
+
+.meter {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
+  width: 100%;
+  height: 12px;
+  margin-top: 12px;
+  border: 0;
+  border-radius: 99px;
+  overflow: hidden;
+  background: rgb(255 255 255 / 0.14);
+}
+
+.meter::-webkit-progress-bar {
+  background: rgb(255 255 255 / 0.14);
+}
+
+.meter::-webkit-progress-value {
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--pink), var(--purple), var(--aqua));
+}
+
+.meter::-moz-progress-bar {
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--pink), var(--purple), var(--aqua));
+}
+
+.steps {
+  margin: 4px 0 10px;
+  padding-left: 22px;
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.inline-icon {
+  width: 1.25em;
+  height: 1.25em;
+  vertical-align: -0.25em;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.facts {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 20px;
+  margin: 0;
+  font-size: 16px;
+}
+
+.notices {
+  margin: 12px 0 0;
+  padding: 12px;
+  max-height: calc(40 * var(--vh));
+  overflow: auto;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  font:
+    12px / 1.45 ui-monospace,
+    "SF Mono",
+    Menlo,
+    Consolas,
+    monospace;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.fact {
+  display: contents;
+}
+
+.fact dt {
+  opacity: 0.7;
+}
+
+.fact dd {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+/*
+ * A button that cannot be used now stays where it is and stays reachable, so focus is never lost
+ * with it, and it says why beside it.
+ */
+.btn[aria-disabled="true"] {
+  opacity: 0.45;
+  transform: none;
+}
+
+.words {
+  margin-top: 12px;
+}
+
+.words summary {
+  display: flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 14px;
+  border-radius: 14px;
+  border: 3px solid rgb(255 255 255 / 0.45);
+  background: rgb(255 255 255 / 0.1);
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.words summary:focus-visible {
+  outline: 4px solid var(--sun);
+  outline-offset: 3px;
+}
+
+.word-rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.word-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 14px;
+  min-height: 40px;
+  padding: 4px 0;
+  font-size: 16px;
+}
+
+.word-row + .word-row {
+  border-top: 2px solid rgb(255 255 255 / 0.08);
+}
+
+.word-row strong {
+  flex: 0 0 7.5em;
+}
+
+.word-level {
+  flex: 0 0 8.5em;
+}
+
+.word-row .muted {
+  flex: 1 1 12em;
+}
+
+.stars {
+  display: inline-flex;
+  flex: none;
+  gap: 3px;
+}
+
+.stars i {
+  width: 17px;
+  height: 17px;
+  background: rgb(255 255 255 / 0.22);
+  clip-path: polygon(50% 0, 62% 35%, 98% 35%, 69% 57%, 80% 91%, 50% 70%, 20% 91%, 31% 57%, 2% 35%, 38% 35%);
+}
+
+.stars i.on {
+  background: var(--sun);
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  padding: 14px;
+  background: rgb(10 6 22 / 0.68);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+}
+
+.dialog {
+  width: min(100%, 540px);
+  max-height: 100%;
+  padding: 18px 20px;
+  overflow-y: auto;
+  border-radius: 20px;
+  background: #2d1d56;
+  border: 3px solid rgb(255 255 255 / 0.9);
+  box-shadow:
+    0 8px 0 rgb(0 0 0 / 0.25),
+    0 20px 44px rgb(0 0 0 / 0.5);
+}
+
+.dialog h3 {
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.dialog-body p {
+  margin: 0 0 10px;
+  font-size: 16.5px;
+  line-height: 1.4;
+}
+
+.dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.dialog.working {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  width: min(100%, 360px);
+  text-align: center;
+}
+
+.dialog.working p {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+}
+
+.spinner {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 4px solid rgb(255 255 255 / 0.25);
+  border-top-color: var(--sun);
+  animation: spin 900ms linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: 16px;
+  z-index: 3;
+  max-width: calc(100% - 32px);
+  padding: 10px 18px;
+  transform: translateX(-50%);
+  border-radius: 99px;
+  background: rgb(18 12 38 / 0.97);
+  border: 3px solid rgb(255 255 255 / 0.85);
+  font-size: 16px;
+  font-weight: 500;
+  text-align: center;
+  box-shadow: 0 6px 18px rgb(0 0 0 / 0.4);
+}
+
+.toast.good {
+  border-color: #6be3a0;
+}
+
+.toast.warn {
+  border-color: #ffc857;
+}
+
+.toast.bad {
+  border-color: #ff7a8a;
+}
+
+@media (max-width: 640px) {
+  .parent-body {
+    flex-direction: column;
+  }
+
+  .parent-nav {
+    flex-direction: row;
+    width: auto;
+    gap: 6px;
+    padding: 8px 10px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    border-right: 0;
+    border-bottom: 2px solid rgb(255 255 255 / 0.1);
+  }
+
+  .tab {
+    flex: none;
+    padding: 0 14px 0 12px;
+  }
+
+  .tiles {
+    grid-template-columns: 1fr;
+  }
+
+  .level-row {
+    grid-template-columns: 70px 1fr 48px;
+    gap: 10px;
+  }
+}
+
+@media (max-height: 480px) {
+  .parent-sheet {
+    height: 100%;
+    border-radius: 18px;
+  }
+
+  .parent-head {
+    padding-top: 2px;
+    padding-bottom: 2px;
+  }
+
+  .parent-head h2 {
+    font-size: 20px;
+  }
+
+  .close {
+    width: 44px;
+    height: 44px;
+  }
+
+  .parent-nav {
+    padding: 6px 8px;
+  }
+
+  /* Seven pages must sit in the list of a phone held sideways without it having to scroll. */
+  .tab {
+    min-height: 44px;
+  }
+
+  .parent-page {
+    padding: 10px 14px 22px;
+  }
+
+  .page-head p {
+    margin-bottom: 10px;
+  }
+}
+
+@media (max-height: 480px) and (min-width: 641px) {
+  .parent-nav {
+    width: 168px;
+    gap: 2px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .parent,
+  .parent-sheet,
+  .switch,
+  .switch i,
+  .option,
+  .btn {
+    transition: none;
+  }
+
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}

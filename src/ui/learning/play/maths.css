@@ -1,0 +1,792 @@
+/*
+ * The maths table's screens, inside the monitor that `reading.css` and `play.css` draw. A question
+ * is a prompt, something to look at and a few big buttons, and every drawing in it sizes itself to
+ * the box it is in with container units, so a heap of twenty things on the glass and a clock face
+ * on a button come from the same rules. No colour here says wrong: a choice that is touched and is
+ * not the one rests, and the right one lights up gold and fills the gap.
+ */
+
+.table-game[data-game="maths"] {
+  --gap: clamp(8px, calc(2.4 * var(--vh)), 18px);
+}
+
+.play-menu {
+  flex: none;
+  width: var(--pill);
+  height: var(--pill);
+  padding: 0;
+  cursor: pointer;
+}
+
+.play-menu[hidden] {
+  display: none;
+}
+
+.maths-menu {
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: var(--gap);
+  padding: clamp(6px, calc(2 * var(--vh)), 18px) clamp(10px, 2.4vw, 28px) clamp(10px, calc(3 * var(--vh)), 26px);
+}
+
+/* Held upright there is more height than width, so there are fewer across and more rows. */
+@media (max-aspect-ratio: 1 / 1) {
+  .maths-menu {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: repeat(5, minmax(0, 1fr));
+  }
+}
+
+/*
+ * Five tiles are three above two with the two in the middle, or held upright two and two and the
+ * last one in the middle on its own.
+ */
+.maths-menu[data-count="5"] {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.maths-menu[data-count="5"] .maths-tile {
+  grid-column: span 2;
+}
+
+.maths-menu[data-count="5"] .maths-tile:nth-child(4) {
+  grid-column: 2 / span 2;
+}
+
+@media (max-aspect-ratio: 1 / 1) {
+  .maths-menu[data-count="5"] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-rows: repeat(3, minmax(0, 1fr));
+  }
+
+  .maths-menu[data-count="5"] .maths-tile:nth-child(4) {
+    grid-column: span 2;
+  }
+
+  .maths-menu[data-count="5"] .maths-tile:nth-child(5) {
+    grid-column: 2 / span 2;
+  }
+}
+
+.maths-tile {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(3px, calc(1.2 * var(--vh)), 10px);
+  padding: 6px;
+  border-radius: clamp(14px, calc(3.6 * var(--vh)), 26px);
+  border: 3px solid rgb(255 255 255 / 0.7);
+  background: rgb(255 255 255 / 0.1);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  box-shadow: 0 4px 0 rgb(38 24 61 / 0.6);
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    background 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.maths-tile:hover {
+  background: rgb(255 255 255 / 0.18);
+}
+
+.maths-tile:active {
+  transform: translateY(2px) scale(0.97);
+}
+
+.maths-tile:focus-visible,
+.maths-choice:focus-visible {
+  outline: 4px solid var(--sun);
+  outline-offset: 3px;
+}
+
+.maths-tile-icon {
+  flex: none;
+  width: clamp(30px, calc(10.4 * var(--vh)), 64px);
+  height: clamp(30px, calc(10.4 * var(--vh)), 64px);
+}
+
+.maths-tile-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.maths-tile-name {
+  max-width: 100%;
+  font-size: clamp(13px, calc(3.4 * var(--vh)), 21px);
+  line-height: 1.1;
+  text-align: center;
+  text-shadow: 0 2px 0 rgb(38 24 61 / 0.6);
+}
+
+/*
+ * How far the player has come at a kind of sum: a dot for each level, lit up to the one they are
+ * at.
+ */
+.maths-pips {
+  display: flex;
+  gap: clamp(3px, 0.8vw, 6px);
+}
+
+.maths-pips i {
+  display: block;
+  width: clamp(8px, calc(2.2 * var(--vh)), 13px);
+  height: clamp(8px, calc(2.2 * var(--vh)), 13px);
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.14);
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.42);
+}
+
+.maths-pips i[data-on="true"] {
+  background: var(--sun);
+  box-shadow: 0 0 0 2px #fff;
+}
+
+.maths-ask {
+  container: maths / size;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--gap);
+  padding: clamp(4px, calc(1.4 * var(--vh)), 14px) clamp(10px, 2.4vw, 28px) clamp(10px, calc(3 * var(--vh)), 26px);
+}
+
+.maths-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.maths-prompt {
+  margin: 0;
+  min-width: 0;
+  font-size: clamp(20px, min(calc(6.4 * var(--vh)), 6.6vw), 42px);
+  font-weight: 700;
+  line-height: 1.1;
+  text-shadow: 0 3px 0 rgb(38 24 61 / 0.6);
+}
+
+.maths-dots {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: clamp(5px, 1vw, 10px);
+}
+
+.maths-dots i {
+  display: block;
+  width: clamp(12px, calc(3.2 * var(--vh)), 22px);
+  height: clamp(12px, calc(3.2 * var(--vh)), 22px);
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.14);
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.4);
+  transition:
+    background 300ms ease,
+    box-shadow 300ms ease;
+}
+
+.maths-dots i[data-state="done"] {
+  background: var(--sun);
+  box-shadow:
+    0 0 0 2px #fff,
+    0 0 10px rgb(255 215 94 / 0.8);
+}
+
+.maths-dots i[data-state="now"] {
+  background: rgb(255 255 255 / 0.55);
+  box-shadow: 0 0 0 2px #fff;
+  animation: maths-wait 1.6s ease-in-out infinite;
+}
+
+/*
+ * A thing that waits for the player breathes in size and nothing else, so a dot stays round and a
+ * question mark stays on its own.
+ */
+@keyframes maths-wait {
+  50% {
+    scale: 1.14;
+  }
+}
+
+/*
+ * The stage has what to look at on one side and the choices on the other. Held upright it is one
+ * above the other.
+ */
+.maths-stage {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  gap: var(--gap);
+}
+
+.maths-stage[data-layout="row"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.maths-stage[data-layout="stack"] {
+  grid-template-columns: minmax(0, 1fr);
+  /*
+   * What the player looks at is never squeezed under a hand's width, even on a screen that is not
+   * much taller than that.
+   */
+  grid-template-rows: minmax(64px, 0.55fr) minmax(0, 1fr);
+}
+
+@container maths (max-aspect-ratio: 1 / 1) {
+  .maths-stage[data-layout="side"] {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1.15fr) minmax(0, 1fr);
+  }
+}
+
+.maths-show {
+  container-type: size;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  border-radius: clamp(14px, calc(3.6 * var(--vh)), 26px);
+  background: rgb(255 255 255 / 0.07);
+  box-shadow: inset 0 0 0 2px rgb(255 255 255 / 0.16);
+}
+
+.maths-show[hidden] {
+  display: none;
+}
+
+.maths-choices {
+  --cols: 1;
+  --rows: 1;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--rows), minmax(0, 1fr));
+  gap: var(--gap);
+}
+
+.maths-stage[data-layout="side"] .maths-choices[data-count="2"] {
+  --rows: 2;
+}
+
+.maths-stage[data-layout="side"] .maths-choices[data-count="3"] {
+  --rows: 3;
+}
+
+.maths-stage[data-layout="side"] .maths-choices[data-count="4"] {
+  --cols: 2;
+  --rows: 2;
+}
+
+.maths-stage:not([data-layout="side"]) .maths-choices[data-count="2"] {
+  --cols: 2;
+}
+
+.maths-stage:not([data-layout="side"]) .maths-choices[data-count="3"] {
+  --cols: 3;
+}
+
+.maths-stage:not([data-layout="side"]) .maths-choices[data-count="4"] {
+  --cols: 4;
+}
+
+@container maths (max-aspect-ratio: 1 / 1) {
+  .maths-stage[data-layout="side"] .maths-choices[data-count="2"] {
+    --cols: 2;
+    --rows: 1;
+  }
+
+  .maths-stage[data-layout="side"] .maths-choices[data-count="3"] {
+    --cols: 3;
+    --rows: 1;
+  }
+
+  .maths-stage[data-layout="side"] .maths-choices[data-count="4"] {
+    --cols: 2;
+    --rows: 2;
+  }
+
+  .maths-stage[data-layout="side"][data-kind="time"] {
+    grid-template-rows: minmax(0, 0.9fr) minmax(0, 1fr);
+  }
+
+  .maths-stage[data-layout="side"][data-kind="time"] .maths-choices[data-count="3"] {
+    --cols: 1;
+    --rows: 3;
+  }
+
+  /*
+   * Four across is too narrow for a shape or a clock on a phone held upright, so they are two and
+   * two.
+   */
+  .maths-stage:not([data-layout="side"]) .maths-choices[data-count="4"] {
+    --cols: 2;
+    --rows: 2;
+  }
+}
+
+.maths-choice {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border-radius: clamp(14px, calc(3.6 * var(--vh)), 26px);
+  border: 3px solid #fff;
+  background: var(--tile);
+  color: var(--ink);
+  font: inherit;
+  box-shadow: 0 5px 0 rgb(38 24 61 / 0.6);
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    opacity 240ms ease,
+    box-shadow 200ms ease,
+    border-color 200ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.maths-choice-in {
+  position: absolute;
+  inset: 5%;
+  container-type: size;
+  display: grid;
+  place-items: center;
+}
+
+.maths-choice[aria-disabled="false"]:active {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 rgb(38 24 61 / 0.6);
+}
+
+/*
+ * A choice that was touched and is not the one sits back, a little lower and fainter, and can be
+ * left alone.
+ */
+.maths-choice[data-state="rest"] {
+  opacity: 0.5;
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 rgb(38 24 61 / 0.6);
+  cursor: default;
+}
+
+.maths-choice[data-state="right"] {
+  border-color: var(--sun);
+  box-shadow:
+    0 0 0 4px rgb(255 215 94 / 0.7),
+    0 5px 0 rgb(38 24 61 / 0.6);
+  cursor: default;
+  animation: maths-right 560ms ease-out both;
+}
+
+/* Once the question is done the others step back, and the right one stays as it is. */
+.maths-ask[data-solved="true"] .maths-choice:not([data-state="right"]) {
+  opacity: 0.45;
+  cursor: default;
+}
+
+/* After two tries the right choice shines, which is a hint and never a reproach. */
+.maths-choice[data-hint="true"] {
+  animation: maths-hint 1.2s ease-in-out infinite;
+}
+
+@keyframes maths-right {
+  40% {
+    scale: 1.07;
+  }
+}
+
+@keyframes maths-hint {
+  50% {
+    box-shadow:
+      0 0 0 6px rgb(255 215 94 / 0.85),
+      0 5px 0 rgb(38 24 61 / 0.6);
+    border-color: var(--sun);
+  }
+}
+
+.maths-ask[data-entering="true"] .maths-show,
+.maths-ask[data-entering="true"] .maths-choice,
+.maths-menu[data-entering="true"] .maths-tile {
+  animation: maths-in 420ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.maths-ask[data-entering="true"] .maths-choice:nth-child(2),
+.maths-menu[data-entering="true"] .maths-tile:nth-child(even) {
+  animation-delay: 60ms;
+}
+
+.maths-ask[data-entering="true"] .maths-choice:nth-child(3) {
+  animation-delay: 120ms;
+}
+
+.maths-ask[data-entering="true"] .maths-choice:nth-child(4) {
+  animation-delay: 180ms;
+}
+
+@keyframes maths-in {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+    scale: 0.96;
+  }
+}
+
+.table-game[data-calm="true"] .maths-choice,
+.table-game[data-calm="true"] .maths-show,
+.table-game[data-calm="true"] .maths-tile,
+.table-game[data-calm="true"] .maths-dots i,
+.table-game[data-calm="true"] .mv-gap {
+  animation: none;
+  transition: none;
+}
+
+.mv {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+/*
+ * A heap of the same picture, in rows of five, every picture as big as the box allows. The size
+ * comes from the room the heap is given and not from how many are in it, so that heaps side by side
+ * have pictures of one size and the bigger heap is the one that is longer.
+ */
+.mv-heap {
+  --g: clamp(3px, 1.4cqmin, 10px);
+  --per: var(--across);
+  --room-per: var(--room-across);
+  --room-lines: var(--room-rows);
+  --item: min(
+    calc(((100cqw - var(--span, 0px)) / var(--parts, 1) - var(--g) * var(--room-per)) / var(--room-per)),
+    calc((100cqh - var(--below, 0px) - var(--g) * var(--room-lines)) / var(--room-lines)),
+    120px
+  );
+  display: grid;
+  grid-template-columns: repeat(var(--per), var(--item));
+  grid-auto-rows: var(--item);
+  gap: var(--g);
+  justify-content: center;
+  align-content: center;
+}
+
+/*
+ * A box that is narrow, or is shared by two heaps, takes shorter rows, so that a picture is as big
+ * as the box allows.
+ */
+@container (max-width: 220px) {
+  .mv-heap {
+    --per: var(--across-tight);
+    --room-per: var(--room-across-tight);
+    --room-lines: var(--room-rows-tight);
+  }
+}
+
+@container (max-width: 440px) {
+  .mv-twice .mv-heap {
+    --per: var(--across-tight);
+    --room-per: var(--room-across-tight);
+    --room-lines: var(--room-rows-tight);
+  }
+}
+
+.mv-thing {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 3px 0 rgb(38 24 61 / 0.28));
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
+/* A thing that has been taken away is still there, only faint. */
+.mv-thing[data-taken="true"] {
+  opacity: 0.2;
+  filter: grayscale(1);
+}
+
+.mv-twice {
+  --parts: 2;
+  --apart: clamp(8px, 3cqw, 24px);
+  --span: calc(var(--apart) * 2 + 3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--apart);
+}
+
+.mv-divider {
+  flex: none;
+  align-self: center;
+  width: 3px;
+  height: 56%;
+  border-radius: 2px;
+  background: rgb(255 255 255 / 0.4);
+}
+
+/* A row of numbers, with a gap where the one the player is asked for goes. */
+.mv-sequence {
+  --per: var(--count);
+  --lines: 1;
+  --n: min(calc(100cqw / (var(--per) * 1.16 + 0.1)), calc(62cqh / var(--lines)), 130px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+  gap: calc(var(--n) * 0.16);
+}
+
+/* A long row in a narrow box is two rows, half each, so that no number is shrunk to a speck. */
+@container (max-width: 460px) {
+  .mv-sequence[data-long="true"] {
+    --per: var(--half);
+    --lines: 2;
+  }
+}
+
+.mv-num {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: var(--n);
+  height: var(--n);
+  border-radius: 24%;
+  border: 3px solid #fff;
+  background: var(--tile);
+  color: var(--ink);
+  font-size: calc(var(--n) * 0.46);
+  font-weight: 800;
+  line-height: 1;
+  box-shadow: 0 4px 0 rgb(38 24 61 / 0.6);
+}
+
+.mv-num.mv-gap,
+.mv-bead.mv-gap {
+  border-style: dashed;
+  background: rgb(255 255 255 / 0.1);
+  color: #fff;
+  box-shadow: none;
+  animation: maths-wait 1.8s ease-in-out infinite;
+}
+
+.mv-num[data-filled="true"] {
+  border-color: var(--sun);
+  box-shadow:
+    0 0 0 4px rgb(255 215 94 / 0.7),
+    0 4px 0 rgb(38 24 61 / 0.6);
+  animation: maths-right 560ms ease-out both;
+}
+
+/* A sum written out, as big as its box, with a line of things above it when there are things. */
+.mv-sum {
+  --below: 0px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4cqh;
+}
+
+.mv-sum[data-with-things="true"] {
+  --below: 26cqh;
+}
+
+.mv-equation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.28em;
+  font-size: min(36cqh, 13cqw);
+  font-weight: 800;
+  line-height: 1;
+  text-shadow: 0 3px 0 rgb(38 24 61 / 0.6);
+}
+
+.mv-sum[data-with-things="true"] .mv-equation {
+  font-size: min(18cqh, 8cqw);
+}
+
+/*
+ * A sum of any length is as big as its width allows, and `--em` is how wide it is written, counted
+ * in ems.
+ */
+.mv-expression {
+  font-size: min(36cqh, calc(94cqw / var(--em)));
+}
+
+.mv-n {
+  display: inline-block;
+  min-width: 0.8em;
+  text-align: center;
+}
+
+.mv-sign {
+  display: inline-block;
+  color: var(--tint);
+}
+
+.mv-n.mv-gap {
+  color: var(--sun);
+  animation: maths-wait 1.8s ease-in-out infinite;
+}
+
+.mv-n[data-filled="true"] {
+  color: var(--sun);
+  animation: maths-right 560ms ease-out both;
+}
+
+/*
+ * Tens as bars of ten laid one under the next and ones as single squares under them, kept in the
+ * same blue and gold wherever they are.
+ */
+.mv-blocks {
+  --cell: min(calc(100cqw / 11), calc(100cqh / (var(--lines) * 1.16 + 0.1)), 40px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: calc(var(--cell) * 0.16);
+}
+
+.mv-rod {
+  display: grid;
+  grid-template-columns: repeat(10, var(--cell));
+  gap: calc(var(--cell) * 0.08);
+}
+
+.mv-ones {
+  display: flex;
+  gap: calc(var(--cell) * 0.08);
+}
+
+.mv-rod i,
+.mv-cube {
+  display: block;
+  box-sizing: border-box;
+  width: var(--cell);
+  height: var(--cell);
+  border: 2px solid var(--ink);
+  border-radius: calc(var(--cell) * 0.16);
+  background: #8fd3ff;
+}
+
+/* The second five of a bar is a shade deeper, so that a bar reads as two fives. */
+.mv-rod i:nth-child(n + 6) {
+  background: #66bdf7;
+}
+
+.mv-cube {
+  background: #ffd75e;
+}
+
+.mv-numeral {
+  font-size: min(64cqh, calc(100cqw / (var(--digits, 1) * 0.62 + 0.3)));
+  font-weight: 800;
+  line-height: 1;
+}
+
+.mv-words {
+  max-width: 94%;
+  font-size: min(24cqh, 9cqw);
+  font-weight: 800;
+  line-height: 1.15;
+  text-align: center;
+  text-shadow: 0 3px 0 rgb(38 24 61 / 0.6);
+}
+
+.mv-shape,
+.mv-clock,
+.mv-bead {
+  display: block;
+  width: min(100cqw, 100cqh);
+  height: min(100cqw, 100cqh);
+}
+
+.mv-shape svg,
+.mv-clock svg,
+.mv-bead svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* A time as a shop clock writes it, bright on dark. */
+.mv-time {
+  padding: 0.08em 0.34em;
+  border-radius: 0.24em;
+  border: 3px solid #fff;
+  background: #1d1233;
+  color: #8bffb0;
+  font-size: min(54cqh, calc(100cqw / 4));
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  text-shadow: 0 0 0.3em rgb(139 255 176 / 0.6);
+}
+
+.mv-beads {
+  --per: var(--count);
+  --lines: 1;
+  --n: min(calc(100cqw / (var(--per) * 1.14 + 0.1)), calc(80cqh / var(--lines)), 120px);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+  gap: calc(var(--n) * 0.14);
+}
+
+@container (max-width: 460px) {
+  .mv-beads[data-long="true"] {
+    --per: var(--half);
+    --lines: 2;
+  }
+}
+
+.mv-beads .mv-bead {
+  flex: none;
+  width: var(--n);
+  height: var(--n);
+}
+
+.mv-bead.mv-gap {
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  border: 3px dashed #fff;
+  border-radius: 50%;
+  font-size: calc(var(--n) * 0.5);
+  font-weight: 800;
+}
+
+.mv-bead[data-filled="true"] {
+  filter: drop-shadow(0 0 0.3em var(--sun));
+  animation: maths-right 560ms ease-out both;
+}
+
+.maths-levelup {
+  margin: 0;
+  font-size: clamp(18px, calc(5 * var(--vh)), 30px);
+  font-weight: 700;
+  color: var(--sun);
+  text-shadow: 0 2px 0 rgb(38 24 61 / 0.6);
+}

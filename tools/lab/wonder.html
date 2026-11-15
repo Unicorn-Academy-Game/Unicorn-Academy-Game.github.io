@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="dark" />
+    <title>Wonder lab</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        background: #000;
+        overflow: hidden;
+        touch-action: none;
+      }
+      #host {
+        position: fixed;
+        inset: 0;
+      }
+      .wonder-canvas {
+        display: block;
+        touch-action: none;
+      }
+      #readout {
+        position: fixed;
+        left: 6px;
+        bottom: 4px;
+        font: 11px/1.3 ui-monospace, monospace;
+        color: #fff8;
+        pointer-events: none;
+        white-space: pre;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="host"></div>
+    <div id="readout"></div>
+    <script type="module" src="./wonder.ts"></script>
+  </body>
+</html>

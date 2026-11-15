@@ -1,0 +1,18 @@
+{
+ "shout.ruby": { "style": 0, "seed": 1, "speed": 0.9 },
+ "shout.shell": { "style": 12, "seed": 1, "speed": 1.0 },
+ "word.splash": { "style": 8, "seed": 1, "speed": 1.0 },
+ "shout.splash": { "style": 12, "seed": 1, "speed": 1.0 },
+ "shout.moon": { "style": 0, "seed": 1, "speed": 1.0 },
+ "word.bee": { "copy": "letter.b" },
+ "word.are": { "copy": "letter.r" },
+ "word.for": { "copy": "word.four" },
+ "word.an": { "phonemes": "ˈæn." },
+ "word.the": { "phonemes": "ðˈʌ." },
+ "word.catch": { "phonemes": "kˈæʧ." },
+ "word.saw": { "style": 0, "seed": 1, "speed": 1.0, "phonemes": "sˈɒ." },
+ "word.fawn": { "style": 0, "seed": 1, "speed": 0.85, "phonemes": "fˈɒn." },
+ "num.80": { "phonemes": "ˈAti." },
+ "word.wall": { "phonemes": "wˈɔːl." },
+ "last.8": { "frame": "What is two plus [eight]?" }
+}

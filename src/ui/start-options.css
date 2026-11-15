@@ -1,0 +1,187 @@
+/*
+ * The switches on the start screen. Every size is in vmin or a clamp, never vh, so the browser's
+ * moving toolbar cannot resize them. They look like the other glass on the screen: a dark rounded
+ * pane with a white edge, and a lit side in the pink and purple of the Play button.
+ */
+
+.start-options {
+  --row: clamp(32px, 7vmin, 56px);
+  width: 100%;
+  max-width: 480px;
+  display: grid;
+  gap: clamp(2px, 0.6vmin, 6px);
+  padding: clamp(3px, 1vmin, 10px) clamp(8px, 2.2vmin, 18px);
+  border-radius: clamp(16px, 3.6vmin, 28px);
+  background: var(--glass);
+  border: clamp(2px, 0.5vmin, 3px) solid rgb(255 255 255 / 0.85);
+  box-shadow:
+    0 0.6vmin 0 rgb(38 24 61 / 0.55),
+    0 1.4vmin 3vmin rgb(0 0 0 / 0.3);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.start-row {
+  min-height: var(--row);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: clamp(8px, 1.8vmin, 16px);
+}
+
+.start-name {
+  display: flex;
+  align-items: center;
+  gap: clamp(6px, 1.2vmin, 10px);
+  font-size: clamp(13px, 2.9vmin, 22px);
+  font-weight: 600;
+  line-height: 1.1;
+  text-align: left;
+  text-shadow:
+    0 2px 0 rgb(38 24 61 / 0.75),
+    0 0 10px rgb(0 0 0 / 0.45);
+}
+
+.start-icon {
+  flex: none;
+  display: grid;
+}
+
+.start-icon svg,
+.side-icon svg {
+  display: block;
+  width: clamp(16px, 3.4vmin, 28px);
+  height: clamp(16px, 3.4vmin, 28px);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.start-icon svg {
+  color: #fff;
+  filter: drop-shadow(0 2px 0 rgb(38 24 61 / 0.6));
+}
+
+.segmented {
+  position: relative;
+  flex: none;
+  display: grid;
+  grid-template-columns: repeat(var(--count), minmax(0, 1fr));
+  padding: 3px;
+  border-radius: 999px;
+  background: rgb(38 24 61 / 0.62);
+  border: 2px solid rgb(255 255 255 / 0.55);
+}
+
+.thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / var(--count));
+  transform: translateX(calc(var(--at) * 100%));
+  border-radius: 999px;
+  background: linear-gradient(180deg, #ffa6dc, var(--pink) 42%, var(--purple));
+  border: 2px solid #fff;
+  box-shadow:
+    0 2px 0 rgb(38 24 61 / 0.6),
+    inset 0 2px 0 rgb(255 255 255 / 0.45);
+  transition: transform 260ms cubic-bezier(0.3, 1.3, 0.5, 1);
+}
+
+.side {
+  position: relative;
+  z-index: 1;
+  min-width: clamp(44px, 9vmin, 84px);
+  min-height: clamp(26px, 5.8vmin, 44px);
+  padding: 0 clamp(8px, 1.8vmin, 16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(4px, 0.8vmin, 7px);
+  font-size: clamp(13px, 2.7vmin, 21px);
+  font-weight: 700;
+  line-height: 1;
+  color: rgb(255 255 255 / 0.66);
+  transition:
+    color 160ms ease,
+    transform 90ms ease;
+}
+
+.side[aria-checked="true"] {
+  color: #fff;
+  text-shadow: 0 2px 0 var(--ink);
+}
+
+.side:focus-visible {
+  outline: 3px solid var(--sun);
+  outline-offset: 1px;
+}
+
+.side-icon {
+  display: grid;
+}
+
+.side:active {
+  transform: scale(0.95);
+}
+
+/* While the page is about to open again, the switches are out of reach and look it. */
+.start-options[inert] {
+  opacity: 0.6;
+}
+
+/* The season switch is five pictures and no words, on every screen. */
+.segmented.icons-only .side {
+  min-width: clamp(34px, 7vmin, 56px);
+  padding: 0 clamp(4px, 1vmin, 10px);
+}
+
+.segmented.icons-only .side-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/*
+ * On a narrow screen held upright the place switch drops its pictures, or the name and the switch
+ * would not fit on a line.
+ */
+@media (max-width: 400px) {
+  .segmented:not(.icons-only) .side-icon {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .thumb,
+  .side {
+    transition: none;
+  }
+  .side:active {
+    transform: none;
+  }
+}
+
+/*
+ * Where the browser can line the rows up, the switches are as wide as the widest, so their edges
+ * meet.
+ */
+@supports (grid-template-columns: subgrid) {
+  .start-options {
+    grid-template-columns: 1fr auto;
+  }
+  .start-row {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: subgrid;
+  }
+  .segmented {
+    justify-self: stretch;
+  }
+}
