@@ -1,5 +1,7 @@
 name: Probe
-on: push
+on:
+  push:
+  pull_request:
 jobs:
   hi:
     runs-on: ubuntu-latest
