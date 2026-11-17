@@ -20,7 +20,7 @@ import { loadMaps } from '../../tools/assets/check/maps';
 import { checkSpeechFiles, checkSpeechManifest } from '../../tools/assets/check/speech';
 import { decodeMono, hasFfmpeg } from '../../tools/assets/lib/ffmpeg';
 import { shortHash } from '../../tools/assets/lib/hash';
-import { buildSpeech, MAX_HELD } from '../../tools/assets/speech';
+import { buildSpeech, MAX_HELD, PIECE_MAX_OVER } from '../../tools/assets/speech';
 import { wavBytes } from '../../tools/audio/dsp';
 import { momentaryLoudness } from '../../tools/audio/loudness';
 
@@ -100,7 +100,7 @@ describe.skipIf(!hasFfmpeg())('packing the voice', () => {
     }
   }, 60_000);
 
-  it('turns the pieces of a sentence up by one amount, so they keep the levels they had in it, and still sets a clip of its own to the loudness of the voice', () => {
+  it('turns the pieces of a sentence up by one amount, so they keep the levels they had in it, unless one would ship louder than a piece may be, and still sets a clip of its own to the loudness of the voice', () => {
     const masters = {
       'lead.34': note(0.6, 0.5, 200),
       'last.5': note(0.4, 0.25, 220),
@@ -118,11 +118,13 @@ describe.skipIf(!hasFfmpeg())('packing the voice', () => {
     const { 'lead.34': loud, 'last.5': soft, 'word.frog': word } = speech.clips;
     const heardOf = (id: 'lead.34' | 'last.5'): number =>
       momentaryLoudness({ l: masters[id], r: masters[id] }, SPEECH.rate);
-    // Against each other, the pieces are as far apart as their masters were.
-    expect(loud!.lufs - soft!.lufs).toBeCloseTo(heardOf('lead.34') - heardOf('last.5'), 0);
-    // Each is the master turned up by the one amount, with no more than the encoder's own change.
-    expect(loud!.lufs - heardOf('lead.34')).toBeCloseTo(SPEECH.lufs - PIECE_LUFS, 0);
-    expect(soft!.lufs - heardOf('last.5')).toBeCloseTo(SPEECH.lufs - PIECE_LUFS, 0);
+    // Each piece is its master turned up by the one amount, with no more than the encoder's own
+    // change, unless that would ship it louder than a piece may be (slowing a piece voiced all
+    // through raises its loudest 400 ms), when it is turned up only to there. Against each other,
+    // two pieces under that ceiling are as far apart as their masters were.
+    const ceiling = SPEECH.lufs + PIECE_MAX_OVER;
+    expect(loud!.lufs).toBeCloseTo(Math.min(heardOf('lead.34') + (SPEECH.lufs - PIECE_LUFS), ceiling), 0);
+    expect(soft!.lufs).toBeCloseTo(Math.min(heardOf('last.5') + (SPEECH.lufs - PIECE_LUFS), ceiling), 0);
     expect(Math.abs(word!.lufs - SPEECH.lufs), 'a clip of its own is set to the loudness of the voice').toBeLessThan(
       0.4,
     );

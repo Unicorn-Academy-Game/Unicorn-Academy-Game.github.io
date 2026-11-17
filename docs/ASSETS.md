@@ -9,7 +9,7 @@ Where every picture, sound and word of the game comes from, and what keeps the d
 | Unicorn, grown-up, scenery and effect sprites | A software 3D rasterizer in `tools/art`, which renders hard-pixel frames from meshes written as code | The licence of the repository |
 | Maps | TypeScript in `tools/maps/author`, compiled to `public/assets/maps` | The licence of the repository |
 | Music, ambience and sound effects | The synthesizer in `src/audio/synth` and the scores and patches in `tools/audio` | The licence of the repository |
-| The spoken lessons | The speech model Kokoro-82M, in the voice `af_heart`, run once and offline. `tools/voice/README.md` pins the versions | The files are the game's. The model is Apache License 2.0 |
+| The spoken lessons | The speech model Qwen3-TTS 1.7B, in a voice designed for the game and cloned from two reference clips in `tools/voice/refs`, run once and offline. `tools/voice/README.md` pins the versions | The files are the game's. The model is Apache License 2.0 |
 | The type | Fredoka, from the `@fontsource-variable/fredoka` package, and the title lettering cut from it by `tools/art/wordmark.py` | SIL Open Font License 1.1 |
 | The tone matrix | Adapted from ToneMatrix Redux by Wolfy | GPL-3.0-only, in `src/wonder/games/tonematrix` |
 

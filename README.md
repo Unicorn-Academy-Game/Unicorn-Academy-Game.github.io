@@ -114,6 +114,6 @@ Dependencies point one way, from `shared` to `content` to `domain` or `learning`
 
 The code is under the GNU Affero General Public License version 3, in `LICENSE`. The pictures and the music are drawn and played by that code and are under the same licence. The files of the tone matrix are adapted from [ToneMatrix Redux](https://github.com/lupine-dev/ToneMatrixRedux) by Wolfy, which is under the GNU General Public License version 3. They are marked `GPL-3.0-only`, and `src/wonder/games/tonematrix/NOTICE.md` lists them with the licence text in `LICENSES/GPL-3.0-only.txt`.
 
-The game carries Phaser (MIT), zod (MIT), idb (ISC) and the Fredoka typeface (SIL Open Font License 1.1). The spoken lessons were made with Kokoro-82M (Apache License 2.0). [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) holds their notices, it is written from the installed packages, a test keeps it current, and the About page of the game shows it.
+The game carries Phaser (MIT), zod (MIT), idb (ISC) and the Fredoka typeface (SIL Open Font License 1.1). The spoken lessons were made with Qwen3-TTS (Apache License 2.0), in a voice designed for the game. [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) holds their notices, it is written from the installed packages, a test keeps it current, and the About page of the game shows it.
 
 The name Unicorn Academy and the characters it is inspired by belong to their owners, and the licence of this repository gives no right to them. Ask the owners before you sell anything made from this game.

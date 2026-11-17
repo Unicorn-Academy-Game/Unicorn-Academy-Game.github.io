@@ -1,0 +1,14 @@
+# The environment for `generate_qwen.py`: MLX on Apple Silicon, plus the listeners and measures it
+# reuses from the Kokoro pipeline. Python 3.12. The spaCy model is not a package requirement line of
+# Misaki's, so it is installed on its own line, as the Kokoro environment notes in README.md describe.
+mlx==0.32.4
+mlx-audio==0.6.6
+misaki[en]==0.9.4
+en-core-web-sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
+praat-parselmouth==0.4.7
+faster-whisper==1.2.1
+transformers==5.23.0
+torch==2.15.0
+scipy==1.18.1
+soundfile==0.14.0
+numpy==2.5.5

@@ -50,19 +50,25 @@ const FINE_QUALITY = 2;
  * `sound.d` and a sound in front of the `h` of `cheer.hooray`. A clip a fifth to a third of a
  * second long has little to spare, and the encoder smears its first and last sound. These are
  * encoded at `FINE_QUALITY`, which costs about a kilobyte each. `tools/voice/verify.py` is how a
- * clip gets on this list.
+ * clip gets on this list. Three more are here for the level, not the sounds: the encoder leaves
+ * the file of `word.chest`, `word.sheep` and `sound.sh` louder than the packer set it, by more
+ * than the check on the shipped files allows, and at `FINE_QUALITY` it does not.
  */
 const FINER: ReadonlySet<string> = new Set([
+  'word.chest',
   'word.fill',
   'word.full',
   'word.hole',
+  'word.make',
   'word.petal',
   'word.rib',
   'word.sang',
+  'word.sheep',
   'word.were',
   'sound.ch',
   'sound.d',
   'sound.ng',
+  'sound.sh',
   'sound.t',
   'cheer.hooray',
 ]);
@@ -168,14 +174,25 @@ function level(master: Float32Array, ceilingDb: number, maxHeld: number): Limite
 }
 
 /**
+ * How far over the target the loudest piece may ship, in LU. The check on the manifest allows a
+ * piece 1 LU over and 0.3 more for the measuring (`MAX_LOUD_PIECE` in `tools/assets/check/speech.ts`);
+ * half of that is kept back for what the encoder adds.
+ */
+export const PIECE_MAX_OVER = 0.5;
+
+/**
  * Turns a piece of a sentence up by the one amount every piece is, with no sample over `ceilingDb`.
  * The masters of the pieces were set to `PIECE_LUFS` as whole sentences, so a word that was
  * spoken quietly in its sentence is quiet in the clip, as it was when it was said, and a question
  * that is joined from its pieces has the levels of one that was said whole. A peak the gain puts
  * over the ceiling is turned down by the limiter, and the check on the manifest says how much.
+ * One exception: slowing a piece that is voiced all through raises its loudest 400 ms by about
+ * 2 LU, so a few pieces would ship louder than a whole clip may be. Those are turned up by less,
+ * only enough to stay under `PIECE_MAX_OVER` over the target, measured on the slowed master the
+ * way the check measures the file.
  */
 function raise(master: Float32Array, ceilingDb: number): Limited & { gainDb: number } {
-  const gainDb = SPEECH.lufs - PIECE_LUFS;
+  const gainDb = Math.min(SPEECH.lufs - PIECE_LUFS, SPEECH.lufs + PIECE_MAX_OVER - heard(master));
   const gain = 10 ** (gainDb / 20);
   return {
     ...limit(
@@ -327,7 +344,7 @@ export function buildSpeech(outDir: string, options: SpeechOptions = {}): Speech
   } finally {
     rmSync(scratch, { recursive: true, force: true });
   }
-  const assets = SpeechAssets.parse({ voice: 'af_heart', clips });
+  const assets = SpeechAssets.parse({ voice: 'qwen3-tts-1.7b-base', clips });
 
   // Remove files from older builds.
   const keep = new Set(filesOf(assets).map((f) => f.slice(`${SPEECH_DIR}/`.length)));

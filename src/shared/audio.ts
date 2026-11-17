@@ -243,6 +243,7 @@ export const KEPT_AT_MASTER_PACE: ReadonlySet<string> = new Set([
   'word.kettle',
   'word.knock',
   'word.mail',
+  'word.make',
   'word.no',
   'word.peaches',
   'word.petal',

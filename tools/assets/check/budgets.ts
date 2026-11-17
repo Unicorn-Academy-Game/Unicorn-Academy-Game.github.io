@@ -21,12 +21,13 @@ const MiB = 1024 * 1024;
  * playable download, `offline` is the game kept for play with no connection, and `voice` is the
  * spoken lessons, which are kept as they are heard, or all at once when a parent asks. `gpu` is the
  * memory of a device that shows eight facings, `gpuFine` that of one that also holds the fine
- * facings, and `audio` is the sound a device may hold decoded.
+ * facings, and `audio` is the sound a device may hold decoded. The voice is allowed 25 rather
+ * than 24 because the Qwen3 voice's masters pack to 24.6 MiB where the Kokoro voice's fit in 24.
  */
 export const BUDGET = {
   initial: 5 * MiB,
   offline: 13 * MiB,
-  voice: 24 * MiB,
+  voice: 25 * MiB,
   gpu: 160 * MiB,
   gpuFine: 256 * MiB,
   audio: DECODED_BUDGET,
