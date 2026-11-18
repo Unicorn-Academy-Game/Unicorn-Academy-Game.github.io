@@ -311,6 +311,8 @@ export interface LearningSettings {
   help: 'full' | 'some' | 'little';
   ask: 'often' | 'sometimes' | 'rarely';
   friends: boolean;
+  mathsSay: boolean;
+  mathsKeys: boolean;
 }
 
 /**
@@ -375,13 +377,14 @@ export const withoutFineSheets = async (page: Page): Promise<void> => {
  * browser that says it has under 4 GB of memory) never brings them, and says so.
  */
 export async function waitForFine(page: Page, id: string): Promise<void> {
-  const given = await page.evaluate(
-    () => (window.__ua as unknown as { profile: { fineFacings: boolean } }).profile.fineFacings,
+  const reach = await page.evaluate(
+    () => (window.__ua as unknown as { profile: { fineFacings: string } }).profile.fineFacings,
   );
   const memory = await page.evaluate(() => (navigator as unknown as { deviceMemory?: number }).deviceMemory);
-  expect(given, `the game is not given the fine facings in this browser (navigator.deviceMemory is ${memory})`).toBe(
-    true,
-  );
+  expect(
+    reach === 'herd' || (reach === 'leader' && id === 'wildstar'),
+    `${id} is not given the fine facings in this browser (they go to ${reach}; navigator.deviceMemory is ${memory})`,
+  ).toBe(true);
   await expect
     .poll(
       () =>
@@ -954,26 +957,14 @@ export async function settled(page: Page): Promise<void> {
 
 export const SCRATCH = 'assets/source/_scratch/e2e';
 
-export const GEAR = /^Parent controls\. Press and hold/;
+export const GEAR = /^Parent controls$/;
 
 export const PARENT = { name: 'Parent controls' } as const;
 
-/** Presses the middle of the gear with the mouse, the way a finger lands on it. */
-export async function pressGear(page: Page): Promise<void> {
-  const box = (await page.getByRole('button', { name: GEAR }).boundingBox())!;
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await page.mouse.down();
-}
-
-/**
- * Holds the gear until the controls come up and then lets go, which is what a parent does. It waits
- * for the controls and not for a fixed time, because a slow frame in a test browser can make the
- * page late to a timer that was right.
- */
+/** Taps the gear, which is all a parent does, and waits for the controls to come up. */
 export async function openParent(page: Page): Promise<void> {
-  await pressGear(page);
+  await page.getByRole('button', { name: GEAR }).click();
   await expect(page.getByRole('dialog', PARENT)).toBeVisible();
-  await page.mouse.up();
 }
 
 /**

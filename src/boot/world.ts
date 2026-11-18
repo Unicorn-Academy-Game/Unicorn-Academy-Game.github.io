@@ -113,10 +113,10 @@ export async function startWorld({
     onProduceGathered: (id, at) => ui.produceGathered(id, controller.onScreen(at)),
     onMinigame: (site) => {
       // A table has its own little show as it is tapped, and the player sits down at it a moment
-      // later. With learning switched off the table has the show and nothing after it.
+      // later, whether learning is on or off.
       if (isTable(site.game)) {
         const table = site.game;
-        if (settings.get().learning.on) window.setTimeout(() => overlays.sitDown[table](), leadInOf(site.toy));
+        window.setTimeout(() => overlays.sitDown[table](), leadInOf(site.toy));
         return;
       }
       // The toy has its own little reaction as it is tapped, and the picture opens from it a moment

@@ -116,6 +116,7 @@ export class SpellBook {
     this.render();
     this.deps.host.dataset.spellbook = 'true';
     this.deps.mount(this.root);
+    this.showTab(false);
     this.resizer = new ResizeObserver(() => this.fit());
     this.resizer.observe(parts.grid);
     this.fit();
@@ -212,6 +213,16 @@ export class SpellBook {
       totals,
     );
     const tablist = h('div', { class: 'book-tabs', role: 'tablist', 'aria-label': BOOK_LABELS.pages });
+    // A mouse wheel turns the row of tabs along, since a mouse cannot swipe it.
+    tablist.addEventListener(
+      'wheel',
+      (event) => {
+        if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
+        tablist.scrollLeft += event.deltaY;
+        event.preventDefault();
+      },
+      { passive: false },
+    );
     const title = h('h3', { class: 'book-page-title' });
     const progress = h('small', { class: 'book-page-progress' });
     const grid = h('ul', { class: 'book-grid', 'aria-label': BOOK_LABELS.words });
@@ -253,8 +264,6 @@ export class SpellBook {
   }
 
   private renderTabs(parts: Parts, view: BookView): void {
-    parts.tablist.style.setProperty('--tabs', String(view.tabs.length));
-    parts.tablist.style.setProperty('--half', String(Math.ceil(view.tabs.length / 2)));
     for (const tab of view.tabs) {
       const button = parts.tabs.get(tab.id) ?? this.addTab(parts, tab);
       button.setAttribute('aria-selected', String(tab.current));
@@ -434,9 +443,22 @@ export class SpellBook {
     const direction = tabs.indexOf(id) > tabs.indexOf(this.page) ? 'next' : 'back';
     this.page = id;
     const now = this.render()?.tabs.find((t) => t.current);
+    this.showTab(!this.deps.calm());
     flag(parts.page, 'turn', TURN_MS, direction);
     this.deps.sounds.turn();
     if (now) this.tell(tabLabel(now));
+  }
+
+  /**
+   * Brings the tab of the open page to the middle of the row of tabs, which is swiped along when
+   * there are more than go across. The row alone is moved, and nothing around it.
+   */
+  private showTab(smooth: boolean): void {
+    const strip = this.parts?.tablist;
+    const tab = this.parts?.tabs.get(this.page);
+    if (!strip || !tab) return;
+    const left = tab.offsetLeft - (strip.clientWidth - tab.offsetWidth) / 2;
+    strip.scrollTo({ left: Math.max(0, left), behavior: smooth ? 'smooth' : 'auto' });
   }
 
   /** Says something to a screen reader. */

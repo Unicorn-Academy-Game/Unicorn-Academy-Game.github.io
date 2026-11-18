@@ -38,6 +38,7 @@ export function showGuide({ ui, scene, controller, pointer, seeking }: GuideDeps
     corner: ui.cornerNode,
     onExit: (portalId) => controller.goToExit(portalId),
     onSurvey: () => controller.toggleSurvey(),
+    onWayOut: () => controller.wayOut(),
     onSeek: () => {
       const word = seeking.word();
       if (word !== null) controller.seekGo(word);
@@ -58,7 +59,12 @@ export function showGuide({ ui, scene, controller, pointer, seeking }: GuideDeps
         word !== null && seek
           ? { ...seek.bubble, word, picture: seeking.picture(word), portrait: isPortrait(word), letters: word.length }
           : null;
-      guide.update(controller.exitArrows(screen, inset, seek ?? undefined), controller.surveyOffer(), view);
+      guide.update(
+        controller.exitArrows(screen, inset, seek ?? undefined),
+        controller.surveyOffer(),
+        view,
+        controller.wayOutOffer(),
+      );
     });
   };
 }

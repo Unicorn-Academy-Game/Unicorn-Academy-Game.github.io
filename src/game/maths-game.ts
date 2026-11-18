@@ -1,10 +1,20 @@
 import { CHEERS, type ClipId } from '../learning';
 import { cheerClip } from '../learning/lines';
 import { phraseClip } from '../learning/play/maths/clips';
-import { FAMILIES, type Family, familyOf, STRAND_IDS, type StrandId, strandsOf } from '../learning/play/maths/question';
+import { NUMBER_TOP, numberClip } from '../learning/play/maths/numbers';
+import {
+  FAMILIES,
+  type Family,
+  familyOf,
+  STRAND_IDS,
+  type StrandId,
+  strandsOf,
+  typedAnswer,
+} from '../learning/play/maths/question';
 import {
   begin,
   choose,
+  enter,
   familyReached,
   finished,
   hinted,
@@ -19,7 +29,7 @@ import { STRANDS } from '../learning/play/maths/strands';
 import type { LearningSettings } from '../shared/learning';
 import type { MathsLevel } from '../shared/play';
 import { type DeskDeps, DeskKit, type Started, WELCOME_GAMES } from './desk';
-import type { AskView, DoneView, MathsHandlers, MathsScreen, MathsView, PickView } from './maths-ports';
+import type { AskView, DoneView, KeypadView, MathsHandlers, MathsScreen, MathsView, PickView } from './maths-ports';
 import type { PlayLedger, PlaySounds } from './play-ports';
 import type { Rest } from './ports';
 
@@ -34,8 +44,10 @@ export const NEXT_AFTER_SPOKEN_MS = 2400;
 export const DONE_AFTER_MS = 1800;
 
 export interface MathsDeps extends DeskDeps {
-  /** What a parent has chosen, as it is now. */
+  /** What a parent has chosen, as it is now, with the child's two switches at this table. */
   settings: () => LearningSettings;
+  /** Changes the child's two switches, which are kept with the settings. */
+  setSettings: (patch: Partial<Pick<LearningSettings, 'mathsSay' | 'mathsKeys'>>) => void;
   play: PlayLedger;
   /** A number from 0 up to but not including 1. */
   random: () => number;
@@ -70,8 +82,8 @@ type Timer = 'advance';
  * family of levels at a time, Level 0 or Level 1, and they can switch between them. A choice that
  * is not the right one rests, and nothing is said about it: they touch another, and after two the
  * right one shines. The next question comes after the right one is found, and a round that is
- * finished earns stars and may take them up a level. It is only ever opened with learning on, and
- * learning turned off takes it away.
+ * finished earns stars and may take them up a level. It opens whether learning is on or off: the
+ * voice is the part that belongs to learning.
  */
 export class MathsGame {
   private readonly screen: MathsScreen;
@@ -93,6 +105,10 @@ export class MathsGame {
       family: (level) => this.switchTo(level),
       pick: (strand) => this.pick(strand),
       choose: (at) => this.touch(at),
+      enter: (value) => this.typeIn(value),
+      tap: () => this.kit.quietly(() => this.deps.sounds.flip()),
+      say: (on) => this.switchVoice(on),
+      keys: (on) => this.switchKeys(on),
       hear: () => this.hear(),
       again: () => this.again(),
       menu: () => this.menu(),
@@ -113,7 +129,6 @@ export class MathsGame {
   /** Sits the player down at the tiles. It is never put over itself. */
   open(): Started {
     if (this.stage) return 'busy';
-    if (!this.deps.settings().on) return 'off';
     this.deps.rest.freeze();
     this.stage = { at: 'pick' };
     if (!this.render()) {
@@ -121,16 +136,13 @@ export class MathsGame {
       return 'broke';
     }
     this.kit.quietly(() => this.deps.sounds.open());
-    if (this.deps.play.get().maths.played < WELCOME_GAMES) this.kit.say([phraseClip('pick')]);
+    if (this.deps.play.get().maths.played < WELCOME_GAMES) this.say([phraseClip('pick')]);
     return 'up';
   }
 
-  /**
-   * A parent changed something. With learning off the screen goes away, and what the player earned
-   * is kept.
-   */
+  /** A parent changed something. A screen that is up shows the voice as it is now. */
   settingsChanged(): void {
-    if (this.stage && !this.deps.settings().on) this.end();
+    if (this.stage) this.render();
   }
 
   /**
@@ -157,17 +169,38 @@ export class MathsGame {
     if (s?.at !== 'ask') return;
     const { round, result } = choose(s.round, at);
     if (result === 'ignored') return;
-    const picked = round.question.choices[at]!;
+    this.answered(s, round, result, round.question.choices[at]!.clips);
+  }
+
+  /**
+   * A number was typed in and sent. It says the number, as a touched choice says its own, and is
+   * the answer or rests the same way.
+   */
+  private typeIn(value: number): void {
+    const s = this.stage;
+    if (s?.at !== 'ask') return;
+    const { round, result } = enter(s.round, value);
+    if (result === 'ignored') return;
+    this.answered(s, round, result, value <= NUMBER_TOP ? [numberClip(value)] : []);
+  }
+
+  /** What happens once an answer, touched or typed, was the right one or one that rests. */
+  private answered(
+    s: Extract<Stage, { at: 'ask' }>,
+    round: Round,
+    result: 'right' | 'rest',
+    said: readonly ClipId[],
+  ): void {
     this.kit.quietly(() => this.deps.sounds.flip());
     if (result === 'rest') {
       this.stage = { ...s, round, streak: 0 };
       this.kit.quietly(() => this.deps.sounds.nudge());
-      this.kit.say([...picked.clips, ...(hinted(round) ? [phraseClip('look-again')] : [])]);
+      this.say([...said, ...(hinted(round) ? [phraseClip('look-again')] : [])]);
     } else {
       const streak = s.streak + 1;
       this.stage = { ...s, round, streak };
       this.kit.quietly(() => this.deps.sounds.pair(streak));
-      this.kit.say([...picked.clips, this.cheer()]);
+      this.say([...round.question.choices[round.question.answer]!.clips, this.cheer()]);
       const wait = finished(round) ? DONE_AFTER_MS : this.speaking() ? NEXT_AFTER_SPOKEN_MS : NEXT_AFTER_MS;
       this.kit.after('advance', wait, () => this.advance());
     }
@@ -189,7 +222,7 @@ export class MathsGame {
     const round = next(s.round, this.deps.random);
     this.stage = { ...s, round, serial: this.serial };
     this.render();
-    this.kit.say(round.question.say);
+    this.say(round.question.say);
   }
 
   private finish(round: Round): void {
@@ -200,7 +233,7 @@ export class MathsGame {
     this.stage = { at: 'done', strand, level, next: levelOf(record, strand), clean, stars };
     this.render();
     this.kit.quietly(() => this.deps.sounds.finish(stars));
-    this.kit.say([phraseClip('done')]);
+    this.say([phraseClip('done')]);
   }
 
   /** Another round of the kind of sum the player just finished, at the level they are at now. */
@@ -215,10 +248,30 @@ export class MathsGame {
     this.render();
   }
 
+  /** Says clips, unless the child has the voice off at this table. */
+  private say(clips: readonly ClipId[]): void {
+    if (this.deps.settings().mathsSay) this.kit.say(clips);
+  }
+
+  /** The child's switch for the voice: what is being said stops when it is turned off. */
+  private switchVoice(on: boolean): void {
+    if (!this.stage || this.deps.settings().mathsSay === on) return;
+    this.deps.setSettings({ mathsSay: on });
+    if (!on) this.kit.quietly(() => this.deps.voice.stop());
+    this.render();
+  }
+
+  /** The child's switch for the keypad, which takes the choices' place where an answer is a number. */
+  private switchKeys(on: boolean): void {
+    if (!this.stage || this.deps.settings().mathsKeys === on) return;
+    this.deps.setSettings({ mathsKeys: on });
+    this.render();
+  }
+
   private hear(): void {
     const s = this.stage;
-    if (s?.at === 'ask') this.kit.say(s.round.question.say);
-    else if (s?.at === 'pick') this.kit.say([phraseClip('pick')]);
+    if (s?.at === 'ask') this.say(s.round.question.say);
+    else if (s?.at === 'pick') this.say([phraseClip('pick')]);
   }
 
   private close(): void {
@@ -249,19 +302,30 @@ export class MathsGame {
     const round = begin(strand, levelOf(this.deps.play.get(), strand), this.deps.random);
     this.stage = { at: 'ask', round, serial: this.serial, streak: 0 };
     this.render();
-    this.kit.say(round.question.say);
+    this.say(round.question.say);
   }
 
   private cheer(): ClipId {
     return cheerClip(CHEERS[Math.min(CHEERS.length - 1, Math.floor(this.deps.random() * CHEERS.length))]!);
   }
 
+  /** Whether a parent has the voice on and it can be heard, so that there is a voice to switch. */
+  private hasVoice(): boolean {
+    return this.deps.settings().say && this.deps.voice.audible;
+  }
+
   /**
-   * Whether the voice is on and can be heard, which is when the screen need not say it all in words
-   * and the game waits for the voice.
+   * Whether the voice is on and can be heard, and the child has not turned it off at this table,
+   * which is when the screen need not say it all in words and the game waits for the voice.
    */
   private speaking(): boolean {
-    return this.deps.settings().say && this.deps.voice.audible;
+    return this.hasVoice() && this.deps.settings().mathsSay;
+  }
+
+  /** What every view shows of the voice and the keypad. */
+  private switches(caption: string): Pick<PickView, 'speech' | 'voice' | 'say' | 'keys' | 'caption'> {
+    const { mathsSay, mathsKeys } = this.deps.settings();
+    return { speech: this.speaking(), voice: this.hasVoice(), say: mathsSay, keys: mathsKeys, caption };
   }
 
   /** Draws the view. False when the screen would not draw it. */
@@ -278,13 +342,12 @@ export class MathsGame {
   }
 
   private view(s: Stage): MathsView {
-    const speech = this.speaking();
-    if (s.at === 'pick') return this.pickView(speech);
-    if (s.at === 'ask') return this.askView(s.round, s.serial, speech);
-    return this.doneView(s, speech);
+    if (s.at === 'pick') return this.pickView();
+    if (s.at === 'ask') return this.askView(s.round, s.serial);
+    return this.doneView(s);
   }
 
-  private pickView(speech: boolean): PickView {
+  private pickView(): PickView {
     const record = this.deps.play.get();
     const family = this.inFamily();
     return {
@@ -301,14 +364,16 @@ export class MathsGame {
         level: levelOf(record, id),
         rounds: record.maths.strands[id]?.rounds ?? 0,
       })),
-      speech,
-      caption: 'What shall we play?',
+      ...this.switches('What shall we play?'),
     };
   }
 
-  private askView(round: Round, serial: number, speech: boolean): AskView {
+  private askView(round: Round, serial: number): AskView {
     const { question } = round;
     const right = question.choices[question.answer]!;
+    const answer = typedAnswer(question);
+    const keypad: KeypadView | null =
+      answer !== null && this.deps.settings().mathsKeys ? { answer: String(answer), misses: round.typed } : null;
     return {
       kind: 'ask',
       strand: round.strand,
@@ -321,14 +386,14 @@ export class MathsGame {
       rested: round.rested,
       solved: round.solved,
       hint: hinted(round),
-      speech,
-      caption: round.solved
-        ? `Yes, ${right.label}.`
-        : `Question ${round.index + 1} of ${ROUND_LENGTH}. ${question.prompt}`,
+      keypad,
+      ...this.switches(
+        round.solved ? `Yes, ${right.label}.` : `Question ${round.index + 1} of ${ROUND_LENGTH}. ${question.prompt}`,
+      ),
     };
   }
 
-  private doneView(s: Extract<Stage, { at: 'done' }>, speech: boolean): DoneView {
+  private doneView(s: Extract<Stage, { at: 'done' }>): DoneView {
     return {
       kind: 'done',
       strand: s.strand,
@@ -338,8 +403,9 @@ export class MathsGame {
       clean: s.clean,
       length: ROUND_LENGTH,
       stars: s.stars,
-      speech,
-      caption: `Well done! ${s.clean} of ${ROUND_LENGTH} at the first touch, ${s.stars} ${s.stars === 1 ? 'star' : 'stars'}.`,
+      ...this.switches(
+        `Well done! ${s.clean} of ${ROUND_LENGTH} at the first touch, ${s.stars} ${s.stars === 1 ? 'star' : 'stars'}.`,
+      ),
     };
   }
 }

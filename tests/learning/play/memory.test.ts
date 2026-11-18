@@ -36,7 +36,7 @@ describe('the words a game is dealt from', () => {
       POOL.length,
     );
     expect(POOL.length, 'enough for the biggest game, and plenty to vary it').toBeGreaterThan(
-      PAIR_SIZES[PAIR_SIZES.length - 1]! * 8,
+      PAIR_SIZES[PAIR_SIZES.length - 1]! * 3,
     );
   });
 });
@@ -212,6 +212,6 @@ describe('stars and records', () => {
       play = withGame(play, pairs, pairs * 2);
       order.push(startSize(play));
     }
-    expect(order).toEqual([4, 6, 8, 8]);
+    expect(order).toEqual([4, 6, 8, 12, 16, 24, 32, 32]);
   });
 });

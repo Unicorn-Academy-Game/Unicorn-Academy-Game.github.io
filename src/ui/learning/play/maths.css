@@ -456,6 +456,187 @@
   transition: none;
 }
 
+/*
+ * The keypad that answers a question in place of the choices: a display and ten keys, rub out and go,
+ * like a calculator. It is as big as the room allows and no bigger. Where the room is wider than it
+ * is tall the keys are two rows of five under the display, and where it is taller they are three
+ * across, so a key is a finger wide on a phone held either way.
+ */
+.maths-keypad {
+  container: pad / size;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+}
+
+.maths-keys {
+  --key: min(calc(100cqw / 3), calc(100cqh / 5));
+  --across: 3;
+  --down: 5;
+  --space: calc(var(--key) * 0.1);
+  width: calc(var(--key) * var(--across));
+  height: calc(var(--key) * var(--down));
+  display: grid;
+  grid-template-columns: repeat(var(--across), minmax(0, 1fr));
+  grid-template-rows: repeat(var(--down), minmax(0, 1fr));
+  grid-template-areas:
+    "disp disp disp"
+    "k1 k2 k3"
+    "k4 k5 k6"
+    "k7 k8 k9"
+    "back k0 go";
+  gap: var(--space);
+}
+
+@container pad (min-aspect-ratio: 1 / 1) {
+  .maths-keys {
+    --key: min(calc(100cqw / 5), calc(100cqh / 3));
+    --across: 5;
+    --down: 3;
+    grid-template-areas:
+      "disp disp disp back go"
+      "k1 k2 k3 k4 k5"
+      "k6 k7 k8 k9 k0";
+  }
+}
+
+.maths-display {
+  grid-area: disp;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 calc(var(--key) * 0.22);
+  border-radius: calc(var(--key) * 0.3);
+  border: 3px solid rgb(255 255 255 / 0.55);
+  background: rgb(20 12 40 / 0.55);
+  box-shadow: inset 0 3px 8px rgb(0 0 0 / 0.35);
+  color: #fff;
+  font-size: calc(var(--key) * 0.62);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-shadow: 0 3px 0 rgb(38 24 61 / 0.6);
+  overflow: hidden;
+}
+
+.maths-display[data-state="empty"] {
+  color: rgb(255 255 255 / 0.4);
+  animation: maths-blink 1.6s ease-in-out infinite;
+}
+
+/* The question mark waits like a cursor does, in its colour and not in its size. */
+@keyframes maths-blink {
+  50% {
+    color: rgb(255 255 255 / 0.18);
+  }
+}
+
+/* A number that was sent and was not the answer stays where it is, fainter, until the next key. */
+.maths-display[data-state="rest"] {
+  opacity: 0.5;
+}
+
+.maths-display[data-state="right"] {
+  border-color: var(--sun);
+  color: var(--sun);
+  box-shadow:
+    inset 0 3px 8px rgb(0 0 0 / 0.35),
+    0 0 0 4px rgb(255 215 94 / 0.5);
+  animation: maths-glow 560ms ease-out both;
+}
+
+@keyframes maths-glow {
+  40% {
+    box-shadow:
+      inset 0 3px 8px rgb(0 0 0 / 0.35),
+      0 0 0 9px rgb(255 215 94 / 0.55);
+  }
+}
+
+.maths-key {
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border-radius: calc(var(--key) * 0.3);
+  border: 3px solid #fff;
+  background: var(--tile);
+  color: var(--ink);
+  font: inherit;
+  font-size: calc(var(--key) * 0.5);
+  font-weight: 700;
+  line-height: 1;
+  box-shadow: 0 4px 0 rgb(38 24 61 / 0.6);
+  cursor: pointer;
+  transition:
+    transform 100ms ease,
+    opacity 200ms ease,
+    background 160ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.maths-key:active {
+  transform: translateY(3px);
+  box-shadow: 0 1px 0 rgb(38 24 61 / 0.6);
+}
+
+.maths-key:focus-visible {
+  outline: 4px solid var(--sun);
+  outline-offset: 3px;
+}
+
+.maths-key[data-key="back"] {
+  background: rgb(255 255 255 / 0.28);
+  color: #fff;
+}
+
+.maths-key[data-key="go"] {
+  background: rgb(255 255 255 / 0.28);
+  color: rgb(255 255 255 / 0.6);
+}
+
+.maths-key[data-key="go"][data-ready="true"] {
+  border-color: var(--sun);
+  background: var(--sun);
+  color: var(--ink);
+  animation: maths-ready 1.2s ease-in-out infinite;
+}
+
+/* The key that sends shines when there is a number to send, without taking more room than a key. */
+@keyframes maths-ready {
+  50% {
+    box-shadow:
+      0 0 0 5px rgb(255 215 94 / 0.6),
+      0 4px 0 rgb(38 24 61 / 0.6);
+  }
+}
+
+/* After enough tries the keys of the answer shine, which is a hint and never a reproach. */
+.maths-key[data-hint="true"] {
+  animation: maths-hint 1.2s ease-in-out infinite;
+}
+
+.maths-keypad[data-solved="true"] .maths-key {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.maths-keypad[data-solved="true"] .maths-key[data-key="go"] {
+  animation: none;
+}
+
+.maths-ask[data-entering="true"] .maths-keys {
+  animation: maths-in 420ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.table-game[data-calm="true"] .maths-key,
+.table-game[data-calm="true"] .maths-display,
+.table-game[data-calm="true"] .maths-keys {
+  animation: none;
+  transition: none;
+}
+
 .mv {
   max-width: 100%;
   max-height: 100%;

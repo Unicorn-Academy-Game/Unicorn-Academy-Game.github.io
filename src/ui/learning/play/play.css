@@ -16,20 +16,81 @@
 
 .play-tools {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: clamp(6px, 1.6vw, 14px);
+  gap: 6px clamp(6px, 1.6vw, 14px);
   min-width: 0;
 }
 
+/* Eight sizes of memory game is more than a narrow screen holds in a row, so they wrap. */
 .play-sizes {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: clamp(4px, 1vw, 10px);
+}
+
+@media (max-width: 480px) {
+  .play-size {
+    min-width: 36px;
+    padding: 0 5px;
+  }
 }
 
 .play-sizes[hidden] {
   display: none;
+}
+
+/*
+ * Eight sizes in a row do not fit beside the buttons that are always there on the smallest phone
+ * held sideways, so they wrap to two rows and take half the height from the cards. There the sizes
+ * are a step back, the size, and a step on.
+ */
+.play-stepper {
+  display: none;
+  align-items: center;
+  gap: clamp(4px, 1vw, 10px);
+}
+
+.play-step {
+  flex: none;
+  width: var(--pill);
+  height: var(--pill);
+  padding: 0;
+  cursor: pointer;
+}
+
+.play-step[data-flip="true"] svg {
+  transform: scaleX(-1);
+}
+
+.play-step[aria-disabled="true"] {
+  opacity: 0.35;
+}
+
+.play-step-now .play-size-n {
+  font-size: clamp(20px, calc(6.4 * var(--vh)), 28px);
+}
+
+.play-step-now {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: calc(var(--pill) * 0.95);
+  color: #fff;
+  font-weight: 700;
+}
+
+@media (max-width: 680px) and (max-height: 480px) {
+  .table-game[data-game="memory"] .play-sizes {
+    display: none;
+  }
+
+  .play-stepper {
+    display: flex;
+  }
 }
 
 .play-size {
@@ -93,6 +154,27 @@
   display: none;
 }
 
+/*
+ * The child's own switches, for the voice and for the number keys. A switch that is on is lit, and
+ * the voice that is off has a line through it.
+ */
+.play-switch {
+  flex: none;
+  width: var(--pill);
+  height: var(--pill);
+  padding: 0;
+  cursor: pointer;
+}
+
+.play-switch[hidden] {
+  display: none;
+}
+
+.play-switch[aria-pressed="true"] {
+  border-color: var(--sun);
+  background: rgb(255 215 94 / 0.38);
+}
+
 .table-game .read-level {
   min-width: 0;
   overflow: hidden;
@@ -152,53 +234,32 @@
   grid-template-rows: repeat(var(--rows), minmax(0, 1fr));
   gap: var(--gap);
   padding: clamp(6px, calc(2 * var(--vh)), 18px) clamp(10px, 2.4vw, 28px) clamp(10px, calc(3 * var(--vh)), 26px);
+  /* Two fingers on the cards are two taps, and are never taken for a pinch that zooms the page. */
+  touch-action: none;
 }
 
 /*
- * Held sideways the board is a wide strip, and the cards are two rows. A few of them are kept
- * together in the middle.
+ * How many cards go across and down is chosen from the room the board has (`grid.ts`), as the board
+ * is drawn and when it changes size, so thirty-two cards and sixty-four cards fill a phone as well
+ * as six do. A board of few cards is kept together in the middle.
  */
+/*
+ * The boards of twenty-four cards and more are crowded, so the room between the cards and round the
+ * board is cut down to what a finger needs, and the cards are as big as they can be.
+ */
+.mem-board:is([data-pairs="12"], [data-pairs="16"], [data-pairs="24"], [data-pairs="32"]) {
+  --gap: clamp(3px, calc(1 * var(--vh)), 8px);
+  padding: clamp(4px, calc(1.2 * var(--vh)), 12px) clamp(6px, 1.4vw, 18px) clamp(6px, calc(1.6 * var(--vh)), 14px);
+}
+
 .mem-board[data-pairs="3"] {
-  --cols: 3;
   align-self: center;
   width: min(100%, 520px);
 }
 
 .mem-board[data-pairs="4"] {
-  --cols: 4;
   align-self: center;
   width: min(100%, 680px);
-}
-
-.mem-board[data-pairs="6"] {
-  --cols: 6;
-}
-
-.mem-board[data-pairs="8"] {
-  --cols: 8;
-}
-
-/* Held upright there is more height than width, so there are fewer across and more rows. */
-@media (max-aspect-ratio: 1 / 1) {
-  .mem-board[data-pairs="3"] {
-    --cols: 2;
-    --rows: 3;
-  }
-
-  .mem-board[data-pairs="4"] {
-    --cols: 2;
-    --rows: 4;
-  }
-
-  .mem-board[data-pairs="6"] {
-    --cols: 3;
-    --rows: 4;
-  }
-
-  .mem-board[data-pairs="8"] {
-    --cols: 4;
-    --rows: 4;
-  }
 }
 
 /*
@@ -209,6 +270,7 @@
   --across: calc((100cqw - (var(--cols) - 1) * var(--gap)) / var(--cols));
   --down: calc((100cqh - (var(--rows) - 1) * var(--gap)) / var(--rows));
   position: relative;
+  container: card / size;
   justify-self: center;
   align-self: center;
   width: min(var(--across), calc(var(--down) * 5 / 6));
@@ -297,7 +359,7 @@
 }
 
 .mem-word {
-  font-size: clamp(13px, calc(3.4 * var(--vh)), 25px);
+  font-size: clamp(8px, min(calc(3.4 * var(--vh)), 15cqw), 25px);
   font-weight: 700;
   line-height: 1;
   text-align: center;
@@ -310,6 +372,18 @@
     0 0 0 3px rgb(255 215 94 / 0.6),
     0 4px 0 rgb(38 24 61 / 0.6);
   animation: mem-pop 560ms ease-out both;
+}
+
+/* A card too small to hold a word shows only its picture. */
+@container card (max-width: 46px) {
+  .mem-word {
+    display: none;
+  }
+
+  .mem-face {
+    grid-template-rows: minmax(0, 1fr);
+    padding: 8%;
+  }
 }
 
 @keyframes mem-pop {

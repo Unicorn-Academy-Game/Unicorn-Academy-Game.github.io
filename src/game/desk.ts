@@ -19,17 +19,15 @@ export interface DeskDeps {
  */
 export const WELCOME_GAMES = 2;
 
-/**
- * Whether the screen went up, is not wanted (learning is off), is in the way of itself, or broke.
- */
-export type Started = 'up' | 'off' | 'busy' | 'broke';
+/** Whether the screen went up, is in the way of itself, or broke. */
+export type Started = 'up' | 'busy' | 'broke';
 
 /** What the game around a table asks of the session at it. */
 export interface Desk {
   /** Whether the screen is up, or a round is being played. */
   readonly busy: boolean;
   open(): Started;
-  /** A parent changed the settings, which may turn the table off. */
+  /** A parent changed the settings, and a screen that is up shows them as they are now. */
   settingsChanged(): void;
 }
 

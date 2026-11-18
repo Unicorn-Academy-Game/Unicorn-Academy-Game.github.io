@@ -2,6 +2,7 @@ import { BARN_RECIPES } from './kit/barn';
 import { BARN_PROP_RECIPES } from './kit/barn-props';
 import { BOXED_RECIPES } from './kit/boxed';
 import { BUILDING_RECIPES } from './kit/buildings';
+import { CABIN_RECIPES } from './kit/cabin';
 import { CAVE_RECIPES } from './kit/cave';
 import { FARM_RECIPES } from './kit/farm';
 import { FLORA_RECIPES } from './kit/flora';
@@ -11,13 +12,17 @@ import { FX_RECIPES } from './kit/fx';
 import { GARDEN_RECIPES } from './kit/garden';
 import { GARDEN_NATURE_RECIPES } from './kit/garden-nature';
 import { GARDENERY_RECIPES } from './kit/gardenery';
+import { GROVE_GATE_RECIPES, GROVE_RECIPES } from './kit/grove';
 import { HALL_RECIPES, PALACE_HALL_RECIPES, PALACE_ROOM_RECIPES } from './kit/hall';
+import { HUT_RECIPES } from './kit/hut';
 import { LIFE_RECIPES } from './kit/life';
+import { MAGIC_RECIPES } from './kit/magic';
 import { MANOR_RECIPES } from './kit/manor';
 import { PALACE_RECIPES } from './kit/palace';
 import { PALACE_PROP_RECIPES } from './kit/palace-props';
 import { PLAYGROUND_RECIPES } from './kit/playground';
 import { PRODUCE_RECIPES, RAIN_RECIPES } from './kit/produce';
+import { SHORE_RECIPES } from './kit/shore';
 import { SKY_RECIPES } from './kit/sky';
 import { THRONE_ROOM_RECIPES } from './kit/throne-room';
 import { TREASURE_RECIPES } from './kit/treasure';
@@ -54,6 +59,12 @@ export const RECIPES: readonly Recipe[] = [
   ...MANOR_RECIPES,
   ...FOUNTAIN_RAINBOW_RECIPES,
   ...CAVE_RECIPES,
+  ...HUT_RECIPES,
+  ...SHORE_RECIPES,
+  ...MAGIC_RECIPES,
+  ...GROVE_RECIPES,
+  ...CABIN_RECIPES,
+  ...GROVE_GATE_RECIPES,
 ];
 
 const byId = new Map<string, Recipe>();

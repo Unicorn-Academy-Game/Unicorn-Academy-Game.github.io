@@ -149,6 +149,40 @@ export const SAGE_THEME: HallTheme = {
 };
 
 /**
+ * The Magic Hall: pearl-lilac walls over violet wood, with indigo glass in the windows and gold
+ * trim, glittering like the building outside.
+ */
+export const MAGIC_THEME: HallTheme = {
+  plaster: r6('#e6d8ff', 280, 330),
+  cream: r6('#fff2fd', 300, 60),
+  wood: r6('#7c5ac0', 275, 320),
+  wine: wineOf('#2c2070'),
+  cloth: r6('#e45fcf', 310, 340),
+  ceiling: [44, 30, 100],
+  edge: [86, 62, 150],
+  shadow: [40, 26, 90],
+  lineTint: [255, 240, 255],
+  dotTint: [255, 232, 250],
+};
+
+/**
+ * The witch's hut inside: honey timber walls over worn boards, bottle-green curtains where the
+ * windows are, and a ceiling of smoky rafters. It is bigger on the inside.
+ */
+export const WITCH_THEME: HallTheme = {
+  plaster: r6('#d4aa78', 28, 70),
+  cream: r6('#f1dcb0', 35, 80),
+  wood: r6('#6e4a2c', 18, 60),
+  wine: wineOf('#24523c'),
+  cloth: r6('#3fa874', 190, 120),
+  ceiling: [52, 36, 30],
+  edge: [92, 64, 44],
+  shadow: [48, 32, 28],
+  lineTint: [255, 244, 214],
+  dotTint: [255, 236, 190],
+};
+
+/**
  * The door as seen from inside: the same teal leaves and gold work, but the light behind them is
  * the garden's daylight.
  */
@@ -174,6 +208,30 @@ export const HALL_ROOM_DOOR_STYLE: DoorStyle = {
     [255, 246, 218],
     [255, 232, 180],
     [244, 208, 142],
+  ],
+  kind: 'treasure',
+};
+
+/** The Magic Hall's door from inside: violet leaves with gold work, and the river's light beyond. */
+export const MAGIC_DOOR_STYLE: DoorStyle = {
+  leaf: r6('#8f6ae0', 275, 330),
+  trim: GEM.gold,
+  light: [
+    [232, 250, 255],
+    [180, 226, 255],
+    [140, 196, 250],
+  ],
+  kind: 'treasure',
+};
+
+/** The hut's door from inside: boards held by black iron, and the green-gold light of the cave beyond. */
+export const WITCH_DOOR_STYLE: DoorStyle = {
+  leaf: r6('#8a5a38', 20, 60),
+  trim: GEM.gold,
+  light: [
+    [236, 255, 196],
+    [196, 255, 106],
+    [150, 220, 90],
   ],
   kind: 'treasure',
 };

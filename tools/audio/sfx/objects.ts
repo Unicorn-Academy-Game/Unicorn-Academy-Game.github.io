@@ -3,14 +3,23 @@ import { filter, midiHz, rand, samples, seedOf } from '../dsp';
 import { pad } from '../voices';
 import { bubble, burst, creak, ding, glide, layer, plink, sweep } from './kit';
 
-/** A wooden door swinging open: a latch click, a soft creak that climbs, a rounded stop. */
+/**
+ * A door of the palace opening: a soft latch, a breath of air as the door swings, a rounded wooden
+ * stop and three glass notes that climb, like a door in a story. Nothing in it creaks. A creak is a
+ * run of fast pulses that slides up in pitch, and a child hears a frog in it.
+ */
 export function doorOpen(): Float32Array {
   const r = rand(seedOf('door-open'));
-  return layer([
-    { buf: burst(0.03, r, { kind: 'bandpass', hz: 2400, q: 1.5 }, { tau: 0.006 }), at: 0, gain: 0.8 },
-    { buf: filter(creak(0.55, r, { rate: [46, 78], pitch: [620, 1150] }), 'lowpass', 3200, 0.7), at: 0.06, gain: 0.55 },
-    { buf: glide(110, 70, 0.14, { tau: 0.04 }), at: 0.62, gain: 0.35 },
-  ]);
+  const parts: { buf: Float32Array; at: number; gain: number }[] = [
+    { buf: burst(0.025, r, { kind: 'bandpass', hz: 2100, q: 1.2 }, { tau: 0.005 }), at: 0, gain: 0.55 },
+    { buf: sweep(0.46, r, 380, 1500, 0.9, (u) => Math.sin(Math.PI * u) ** 1.6), at: 0.03, gain: 0.34 },
+    { buf: glide(118, 74, 0.16, { tau: 0.05, attack: 0.004 }), at: 0.4, gain: 0.5 },
+    { buf: burst(0.04, r, { kind: 'bandpass', hz: 640, q: 0.9 }, { tau: 0.01 }), at: 0.4, gain: 0.35 },
+  ];
+  [79, 83, 88].forEach((m, i) => {
+    parts.push({ buf: ding('glass', midiHz(m), 0.5, r, 0.18), at: 0.28 + i * 0.09, gain: 0.55 });
+  });
+  return layer(parts);
 }
 
 /** A door settling shut: a soft knock and a latch. */

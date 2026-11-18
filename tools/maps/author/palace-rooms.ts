@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { PROP_DEFS } from '../../../src/content/props';
-import type { MapId } from '../../../src/shared/ids';
+import type { Facing, MapId } from '../../../src/shared/ids';
+import type { NpcId } from '../../../src/shared/npc';
 import { HALL } from '../../art/world/hall';
 import type { BiomeId } from '../../art/world/terrain';
 import { CHANDELIER_HANG } from '../../art/world/throne-room';
@@ -33,6 +34,15 @@ interface Plan {
   /** Carpet beyond the lanes from the doors. */
   rugs?: readonly Region[];
   furnish: (room: Furnisher) => void;
+  /** Who works here, where they start and where they go about their work. */
+  folk?: readonly Folk[];
+}
+
+/** One of the household, at work in a room: the places they tend, each as x, y and the way they face. */
+interface Folk {
+  npc: NpcId;
+  at: readonly [x: number, y: number, facing: Facing];
+  stops: readonly (readonly [x: number, y: number, facing: Facing])[];
 }
 
 const PIECE = 512;
@@ -168,6 +178,26 @@ const PLANS: readonly Plan[] = [
       [2, 'palace-flowers'],
       [4, 'palace-hall'],
     ],
+    folk: [
+      {
+        npc: 'cook',
+        at: [760, 1010, 'north'],
+        stops: [
+          [700, 1010, 'north'],
+          [820, 1010, 'north'],
+          [1740, 1010, 'north'],
+          [1860, 1010, 'north'],
+        ],
+      },
+      {
+        npc: 'butler',
+        at: [1280, 820, 'south'],
+        stops: [
+          [1280, 820, 'south'],
+          [1280, 1010, 'north'],
+        ],
+      },
+    ],
     furnish: (r) => {
       r.table(760, 940);
       r.table(1800, 940);
@@ -191,6 +221,17 @@ const PLANS: readonly Plan[] = [
       [0, 'palace-bedroom'],
       [2, 'palace-dining'],
     ],
+    folk: [
+      {
+        npc: 'butler',
+        at: [768, 970, 'north'],
+        stops: [
+          [660, 970, 'north'],
+          [768, 970, 'north'],
+          [876, 970, 'north'],
+        ],
+      },
+    ],
     furnish: (r) => {
       r.table(768, 900);
       r.chandelier(768, 700);
@@ -211,6 +252,17 @@ const PLANS: readonly Plan[] = [
     doors: [[2, 'palace-tea']],
     walls: { 0: 'left' },
     rugs: [rect(448, 540, 1056, 900)],
+    folk: [
+      {
+        npc: 'nanny',
+        at: [700, 752, 'east'],
+        stops: [
+          [700, 752, 'east'],
+          [590, 752, 'north'],
+          [820, 752, 'north'],
+        ],
+      },
+    ],
     furnish: (r) => {
       r.napBed(700, 700);
       r.vases('flower', 392, 672, 864);
@@ -229,6 +281,20 @@ const PLANS: readonly Plan[] = [
     tiles: 24,
     doors: [[1, 'palace-dining']],
     rugs: [rect(352, 520, 1184, 1010)],
+    folk: [
+      {
+        npc: 'florist',
+        at: [768, 800, 'south'],
+        stops: [
+          [330, 522, 'north'],
+          [330, 772, 'north'],
+          [560, 1062, 'north'],
+          [976, 1062, 'north'],
+          [1206, 772, 'north'],
+          [1206, 522, 'north'],
+        ],
+      },
+    ],
     furnish: (r) => {
       for (const [x, y] of [
         [330, 470],
@@ -262,6 +328,18 @@ const PLANS: readonly Plan[] = [
       [2, 'palace-library'],
       [4, 'palace-music'],
     ],
+    folk: [
+      {
+        npc: 'guard',
+        at: [400, 800, 'south'],
+        stops: [
+          [400, 800, 'south'],
+          [1280, 1020, 'south'],
+          [2160, 800, 'south'],
+          [1280, 760, 'south'],
+        ],
+      },
+    ],
     furnish: (r) => {
       r.chandelier(768, 700);
       r.chandelier(1792, 700);
@@ -286,6 +364,20 @@ const PLANS: readonly Plan[] = [
       [3, 'palace-jewel'],
     ],
     walls: { 1: 'left', 2: 'right' },
+    folk: [
+      {
+        npc: 'librarian',
+        at: [1024, 1010, 'north'],
+        stops: [
+          [590, 436, 'north'],
+          [760, 436, 'north'],
+          [1190, 436, 'north'],
+          [1360, 436, 'north'],
+          [1530, 436, 'north'],
+          [1024, 1010, 'north'],
+        ],
+      },
+    ],
     furnish: (r) => {
       for (const x of [590, 760, 1190, 1360, 1530]) r.bookcase(x);
       r.table(1024, 940);
@@ -306,6 +398,17 @@ const PLANS: readonly Plan[] = [
     doors: [
       [0, 'palace-gallery'],
       [3, 'palace-ballroom'],
+    ],
+    folk: [
+      {
+        npc: 'maestro',
+        at: [1024, 962, 'north'],
+        stops: [
+          [660, 532, 'north'],
+          [1390, 532, 'north'],
+          [1024, 962, 'north'],
+        ],
+      },
     ],
     furnish: (r) => {
       r.harp(660, 470);
@@ -329,6 +432,18 @@ const PLANS: readonly Plan[] = [
     doors: [[0, 'palace-music']],
     walls: { 4: 'left' },
     rugs: [rect(448, 520, 2112, 1000)],
+    folk: [
+      {
+        npc: 'dancer',
+        at: [1280, 820, 'south'],
+        stops: [
+          [900, 820, 'south'],
+          [1280, 820, 'south'],
+          [1660, 820, 'south'],
+          [1280, 620, 'south'],
+        ],
+      },
+    ],
     furnish: (r) => {
       r.chandelier(800, 700);
       r.chandelier(1280, 700);
@@ -352,6 +467,19 @@ const PLANS: readonly Plan[] = [
     doors: [[0, 'palace-library']],
     walls: { 2: 'right' },
     rugs: [rect(448, 520, 1184, 960)],
+    folk: [
+      {
+        npc: 'jeweller',
+        at: [768, 652, 'north'],
+        stops: [
+          [480, 632, 'north'],
+          [768, 652, 'north'],
+          [1056, 632, 'north'],
+          [866, 1012, 'north'],
+          [670, 1012, 'north'],
+        ],
+      },
+    ],
     furnish: (r) => {
       for (const [x, y] of [
         [480, 580],
@@ -436,6 +564,11 @@ function author(plan: Plan): {
   for (const [slot, to] of plan.doors) doorway(b, slotX(slot), to);
 
   plan.furnish(new Furnisher(b));
+  for (const f of plan.folk ?? []) {
+    for (const [i, [x, y, facing]] of f.stops.entries())
+      b.anchor({ name: `${f.npc}-${i + 1}`, tags: [f.npc], pos: pt(x, y), approach: [E(x, y, facing)] });
+    b.npc(f.npc, pt(f.at[0], f.at[1]), f.at[2]);
+  }
 
   mkdirSync('assets/maps', { recursive: true });
   const built = buildTilesetAsset(plan.biome);

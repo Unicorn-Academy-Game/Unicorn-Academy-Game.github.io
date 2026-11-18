@@ -24,6 +24,7 @@ import {
   type SpawnGroup,
   TILE,
 } from '../../src/shared/map';
+import { depthField } from '../../src/shared/waters';
 import { factsOf } from './facts';
 import { herdRoomProblems } from './herd-room';
 import { prop, propNumber, propString, TiledMap, type TiledObject } from './tiled';
@@ -36,7 +37,7 @@ export interface CompileContext {
   tilesets: Readonly<Record<string, { count: number }>>;
 }
 
-interface Compiled {
+export interface Compiled {
   map: CompiledMap;
   /** Tiled-side names, for messages. */
   file: string;
@@ -270,6 +271,7 @@ function compileTiled(file: string, raw: unknown, ctx: CompileContext): { compil
   const audioMusic = prop(mapProps, 'music');
   const audioAmbience = prop(mapProps, 'ambience');
   const solo = prop(mapProps, 'solo') === true;
+  const watersText = prop(mapProps, 'waters');
   const logicRaw = {
     schemaVersion: 1,
     id: mapId,
@@ -279,6 +281,7 @@ function compileTiled(file: string, raw: unknown, ctx: CompileContext): { compil
     spawns,
     ...(typeof startProp === 'string' ? { start: startProp } : {}),
     ...(solo ? { solo: true } : {}),
+    ...(typeof watersText === 'string' ? { waters: JSON.parse(watersText) as unknown } : {}),
     portals,
     interactables,
     anchors,
@@ -453,6 +456,7 @@ export function crossCheck(map: LogicMap, errors: string[]): void {
 function lifeProblems(map: LogicMap, errors: string[]): void {
   const id = map.id;
   const nav = navFor(map);
+  const depths = depthField(map.waters);
   const w = map.widthTiles * TILE,
     h = map.heightTiles * TILE;
   const zoneIds = new Set<string>();
@@ -476,8 +480,9 @@ function lifeProblems(map: LogicMap, errors: string[]): void {
         inside++;
         const room = nav.clearanceAt({ x, y });
         // A point on the seam between two solid blocks has no room at all, which still counts as
-        // being in the pond.
-        if (home === 'ground' ? room >= CONFIG.life.clearance : room <= 0) fit++;
+        // being in the pond. Water the herd can wade or swim in is water too, though it is not solid.
+        const wet = depths.at(x, y) === 1 || depths.at(x, y) === 2;
+        if (home === 'ground' ? room >= CONFIG.life.clearance : room <= 0 || wet) fit++;
       }
     }
     if (home === 'ground' && fit < Math.max(6, z.count * 5))
@@ -498,10 +503,10 @@ export interface MapOutput extends MapAsset {
 }
 
 /**
- * Compiles every `.tmj` in `srcDir` and writes hashed runtime JSON into `outDir`. Throws with all
- * problems at once.
+ * Compiles every `.tmj` in `srcDir` and says what is wrong with them all, without writing
+ * anything. What did compile is returned too, so an author can look at a map that has a problem.
  */
-export function compileAll(srcDir: string, outDir: string, ctx: CompileContext): MapOutput[] {
+export function compileDraft(srcDir: string, ctx: CompileContext): { compiled: Compiled[]; errors: string[] } {
   const files = readdirSync(srcDir)
     .filter((f) => f.endsWith('.tmj'))
     .sort();
@@ -522,6 +527,15 @@ export function compileAll(srcDir: string, outDir: string, ctx: CompileContext):
         errors.push(`${c.map.logic.id}: portal ${p.portalId} leads to missing spawn ${p.to.spawnId} on ${p.to.mapId}`);
     }
   }
+  return { compiled, errors };
+}
+
+/**
+ * Compiles every `.tmj` in `srcDir` and writes hashed runtime JSON into `outDir`. Throws with all
+ * problems at once.
+ */
+export function compileAll(srcDir: string, outDir: string, ctx: CompileContext): MapOutput[] {
+  const { compiled, errors } = compileDraft(srcDir, ctx);
   if (errors.length > 0) throw new Error(`maps do not compile:\n  ${errors.join('\n  ')}`);
 
   mkdirSync(outDir, { recursive: true });

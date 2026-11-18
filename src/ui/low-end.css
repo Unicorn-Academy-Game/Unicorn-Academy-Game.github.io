@@ -13,7 +13,19 @@
 }
 
 :root[data-profile="low"]
-  :is(.round, .finder, .basket, .codepad-shut, .wonder-stars, .parent, .layer, .bookchip, .start-options) {
+  :is(
+    .round,
+    .finder,
+    .basket,
+    .codepad-shut,
+    .wonder-stars,
+    .parent,
+    .layer,
+    .bookchip,
+    .start-options,
+    .wm-shut,
+    .wm-back
+  ) {
   -webkit-backdrop-filter: none;
   backdrop-filter: none;
 }

@@ -3,7 +3,8 @@ import { focusedIndex, h } from '../../dom';
 import { ICON_AGAIN, ICON_SAY, ICON_STAR, ICON_STAR_EMPTY } from '../icons';
 import { onPress } from '../reading/press';
 import { type Parts, PlayFrame } from './frame';
-import { ICON_GRID, STRAND_ICONS } from './maths-icons';
+import { Keypad } from './keypad';
+import { ICON_GRID, ICON_KEYPAD, ICON_VOICE_OFF, ICON_VOICE_ON, STRAND_ICONS } from './maths-icons';
 import { describeVisual, drawVisual, sharedRoom, type VisualDeps } from './maths-visuals';
 import './maths.css';
 import type { OverlayDeps } from '../../overlay';
@@ -24,6 +25,8 @@ interface Asking {
   readonly show: HTMLElement;
   readonly dots: readonly HTMLElement[];
   readonly choices: readonly HTMLButtonElement[];
+  /** The keypad that answers the question, in place of the choices. */
+  readonly keypad: Keypad | null;
   /** Whether the gap in what is shown has been filled in. */
   filled: boolean;
 }
@@ -39,6 +42,9 @@ export class MathsTable implements MathsScreen {
   private readonly frame: PlayFrame;
   private title: HTMLElement | null = null;
   private hearing: HTMLButtonElement | null = null;
+  /** The child's two switches: the voice at this table, and the keypad that takes the choices' place. */
+  private voice: HTMLButtonElement | null = null;
+  private keys: HTMLButtonElement | null = null;
   private back: HTMLButtonElement | null = null;
   /** The switch between the families of levels, which is in the top bar while the tiles are up. */
   private families: HTMLElement | null = null;
@@ -62,6 +68,7 @@ export class MathsTable implements MathsScreen {
       tint: 'sky',
       close: () => handlers.close(),
       arrow: (across, down) => this.move(across, down),
+      key: (event) => this.asking?.keypad?.type(event) ?? false,
     });
   }
 
@@ -69,6 +76,7 @@ export class MathsTable implements MathsScreen {
     const parts = this.frame.isOpen ? this.frame.open('Maths') : this.up();
     if (this.title) this.title.textContent = view.kind === 'pick' ? 'Maths' : view.name;
     if (this.hearing) this.hearing.hidden = !view.speech;
+    this.drawSwitches(view);
     if (this.back) this.back.hidden = view.kind === 'pick';
     if (this.families) this.families.hidden = view.kind !== 'pick';
     if (view.kind === 'pick') this.drawPick(parts, view);
@@ -82,6 +90,8 @@ export class MathsTable implements MathsScreen {
     this.frame.close();
     this.title = null;
     this.hearing = null;
+    this.voice = null;
+    this.keys = null;
     this.back = null;
     this.families = null;
     this.pills = [];
@@ -112,8 +122,47 @@ export class MathsTable implements MathsScreen {
     this.hearing.innerHTML = ICON_SAY;
     onPress(this.hearing, () => this.handlers.hear());
     this.families = h('div', { class: 'play-sizes', role: 'group', 'aria-label': 'Level', hidden: true });
-    parts.tools.append(this.families, this.back, this.hearing);
+    this.keys = h('button', {
+      type: 'button',
+      class: 'play-switch round',
+      'aria-label': 'Number keys',
+      'data-content-id': 'maths.keys',
+    });
+    this.keys.innerHTML = ICON_KEYPAD;
+    this.keys.addEventListener('mousedown', (event) => event.preventDefault());
+    onPress(this.keys, () => this.handlers.keys(this.keys?.getAttribute('aria-pressed') !== 'true'));
+    this.voice = h('button', {
+      type: 'button',
+      class: 'play-switch round',
+      'aria-label': 'Voice',
+      'data-content-id': 'maths.voice',
+      hidden: true,
+    });
+    // A press with a pointer does not take the keyboard from the screen, or Enter would press the
+    // switch again, and not send the number that was typed.
+    this.voice.addEventListener('mousedown', (event) => event.preventDefault());
+    onPress(this.voice, () => this.handlers.say(this.voice?.getAttribute('aria-pressed') !== 'true'));
+    parts.tools.append(this.families, this.keys, this.voice, this.back, this.hearing);
     return parts;
+  }
+
+  /**
+   * The two switches say how they are now. The voice has one only where there is a voice to turn off,
+   * and neither is in the way on the screen that says a round is done.
+   */
+  private drawSwitches(view: MathsView): void {
+    if (this.keys) {
+      this.keys.setAttribute('aria-pressed', String(view.keys));
+      this.keys.hidden = view.kind === 'done';
+    }
+    if (this.voice) {
+      if (this.voice.dataset.on !== String(view.say)) {
+        this.voice.dataset.on = String(view.say);
+        this.voice.innerHTML = view.say ? ICON_VOICE_ON : ICON_VOICE_OFF;
+      }
+      this.voice.setAttribute('aria-pressed', String(view.say));
+      this.voice.hidden = !view.voice;
+    }
   }
 
   /**
@@ -184,7 +233,8 @@ export class MathsTable implements MathsScreen {
   }
 
   private drawAsk(parts: Parts, view: AskView): void {
-    if (!this.asking || view.serial !== this.serial) this.question(parts, view);
+    if (!this.asking || view.serial !== this.serial || (view.keypad !== null) !== (this.asking.keypad !== null))
+      this.question(parts, view);
     const asking = this.asking!;
     const { question } = view;
     if (asking.filled !== view.solved) {
@@ -192,6 +242,12 @@ export class MathsTable implements MathsScreen {
       this.drawShow(asking, view);
     }
     asking.root.dataset.solved = String(view.solved);
+    asking.keypad?.show({
+      answer: view.keypad?.answer ?? '',
+      misses: view.keypad?.misses ?? 0,
+      solved: view.solved,
+      hint: view.hint,
+    });
     asking.dots.forEach((dot, at) => {
       dot.dataset.state =
         at < view.index || (at === view.index && view.solved) ? 'done' : at === view.index ? 'now' : 'later';
@@ -213,7 +269,12 @@ export class MathsTable implements MathsScreen {
     const hadFocus = parts.body.contains(document.activeElement) && document.activeElement !== document.body;
     this.serial = view.serial;
     const room = sharedRoom(question.choices.map((choice) => choice.visual));
-    const choices = question.choices.map((choice, at) => {
+    // A question that is answered by typing has the keypad where its choices were, and the choices
+    // are not drawn at all.
+    const keypad = view.keypad
+      ? new Keypad({ enter: (value) => this.handlers.enter(value), tap: () => this.handlers.tap() })
+      : null;
+    const choices = (keypad ? [] : question.choices).map((choice, at) => {
       const inside = h(
         'span',
         { class: 'maths-choice-in' },
@@ -256,11 +317,12 @@ export class MathsTable implements MathsScreen {
       'div',
       { class: 'maths-stage', 'data-layout': layout, 'data-kind': kinds.size === 1 ? [...kinds][0] : null },
       show,
-      h(
-        'div',
-        { class: 'maths-choices', 'data-count': choices.length, role: 'group', 'aria-label': 'Choices' },
-        ...choices,
-      ),
+      keypad?.root ??
+        h(
+          'div',
+          { class: 'maths-choices', 'data-count': choices.length, role: 'group', 'aria-label': 'Choices' },
+          ...choices,
+        ),
     );
     const top = h(
       'div',
@@ -279,10 +341,10 @@ export class MathsTable implements MathsScreen {
       stage,
     );
     window.setTimeout(() => delete root.dataset.entering, 600);
-    this.asking = { root, show, dots, choices, filled: false };
+    this.asking = { root, show, dots, choices, keypad, filled: false };
     this.drawShow(this.asking, view);
     parts.body.replaceChildren(root);
-    if (hadFocus) choices[0]?.focus({ preventScroll: true });
+    if (hadFocus) (choices[0] ?? parts.panel).focus({ preventScroll: true });
   }
 
   private drawShow(asking: Asking, view: AskView): void {

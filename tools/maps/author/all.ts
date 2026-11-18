@@ -1,14 +1,20 @@
+import { authorBeach } from './beach';
 import { authorCrystalCave } from './crystal-cave';
 import { authorDanceFloor } from './dance-floor';
 import { authorForest } from './forest';
+import { authorMagicHall } from './magic-hall';
 import { authorManorHall } from './manor-hall';
 import { authorManorUpper } from './manor-upper';
 import { authorPalaceGarden } from './palace-garden';
 import { authorPalaceHall } from './palace-hall';
 import { PALACE_ROOMS } from './palace-rooms';
 import { authorPlayground } from './playground';
+import { authorRiver } from './river';
+import { authorSantaCabin } from './santa-cabin';
+import { authorSantaGrove } from './santa-grove';
 import { authorStable } from './stable';
 import { authorTreasureHouse } from './treasure-house';
+import { authorWitchHut } from './witch-hut';
 
 interface Authored {
   stats: { obstacles: number; decor: number; maskRects: number };
@@ -27,6 +33,12 @@ const AUTHORS: readonly (readonly [string, () => Authored])[] = [
   ['manor-hall', authorManorHall],
   ['manor-upper', authorManorUpper],
   ['crystal-cave', authorCrystalCave],
+  ['river', authorRiver],
+  ['beach', authorBeach],
+  ['magic-hall', authorMagicHall],
+  ['witch-hut', authorWitchHut],
+  ['santa-grove', authorSantaGrove],
+  ['santa-cabin', authorSantaCabin],
 ];
 
 /**

@@ -44,14 +44,35 @@ export type BiomeId =
   | 'manor-hall'
   | 'manor-upper'
   | 'crystal-cave'
-  | 'dance-floor';
+  | 'dance-floor'
+  | 'beach'
+  | 'river'
+  | 'magic-hall'
+  | 'witch-hut'
+  | 'santa-cabin'
+  | 'snow-grove';
+
+/**
+ * What a pond, a river or a sea is made of: the water, the bank, and the colours that glint on it.
+ * The water can also glitter, which is a share of its pixels that twinkle (`sparkle`, 1 for a
+ * sprinkling and 2 for a sky of them), have patches of a second colour in it (`tint`), and flow to
+ * the right, or the left (`flow`).
+ */
+export interface Pool {
+  water: Ramp;
+  bank: Ramp;
+  glints: readonly RGB[];
+  sparkle?: number;
+  tint?: Ramp;
+  flow?: 1 | -1;
+}
 
 export interface Biome {
   id: BiomeId;
   /** The ordinary ground and its ramp, which also colours the soft rim where a path meets it. */
   grass: Ramp;
   /** What the ordinary ground is made of. Default is grass. */
-  ground?: 'marble' | 'straw' | 'rock';
+  ground?: 'marble' | 'straw' | 'rock' | 'sand' | 'snow' | 'boards';
   path: 'dirt' | 'cobble' | 'carpet' | 'brick' | 'rock' | 'disco';
   /** The path's own ramp, when it is not the default for its kind. */
   pathRamp?: Ramp;
@@ -68,7 +89,7 @@ export interface Biome {
    * What a pond is made of, when it is not clear water with a sandy bank: the water, the bank, and
    * the colours that glint on it.
    */
-  pool?: { water: Ramp; bank: Ramp; glints: readonly RGB[] };
+  pool?: Pool;
   /** Blade clusters per axis on the repeating field. Fewer is a tidier lawn. */
   blades: number;
 }
@@ -84,6 +105,12 @@ const carpetRamp = (base: string, shadowHue: number, lightHue: number): Ramp =>
 const MANOR_FLOOR = floorRamp('#a590cc', 275, 320);
 const MANOR_CARPET = carpetRamp('#d2641f', 350, 60);
 const SKY_FLOOR = floorRamp('#e4eee6', 220, 90);
+const MAGIC_FLOOR = floorRamp('#e2d4fa', 285, 330);
+const MAGIC_CARPET = carpetRamp('#a64fd8', 300, 340);
+const HUT_RUG = carpetRamp('#3d9a78', 190, 110);
+/** Santa's cabin: warm pine boards and a red rug. */
+const CABIN_BOARDS = floorRamp('#c88c56', 18, 68);
+const CABIN_RUG = carpetRamp('#c4303f', 350, 40);
 const SKY_CARPET = carpetRamp('#2c9a74', 190, 120);
 /**
  * The rooms of the palace beyond the throne room keep its cream marble and tint it: rose for the
@@ -150,6 +177,85 @@ const DANCE_CURB = ramp(hex('#d2bdff'), {
   lightHue: 330,
   lean: 0.9,
   lightness: [-0.42, -0.3, -0.18, -0.06, 0.04, 0.12],
+});
+
+/**
+ * The beach: pale warm sand that is nearly white where it is dry, a damp tan where the sea has
+ * been, and a sea that is the green of a shallow and the blue of a deep one.
+ */
+const BEACH_SAND = ramp(hex('#f2deaa'), {
+  steps: 6,
+  shadowHue: 340,
+  lightHue: 95,
+  lean: 0.9,
+  lightness: [-0.24, -0.15, -0.08, 0, 0.06, 0.11],
+});
+const WET_SAND = ramp(hex('#cfae78'), {
+  steps: 6,
+  shadowHue: 320,
+  lightHue: 70,
+  lean: 0.9,
+  lightness: [-0.3, -0.2, -0.1, 0, 0.07, 0.13],
+});
+const SEA = ramp(hex('#3fc4cf'), {
+  steps: 6,
+  shadowHue: 255,
+  lightHue: 165,
+  lean: 1.0,
+  lightness: [-0.34, -0.23, -0.12, 0, 0.1, 0.22],
+});
+const SEA_FOAM = ramp(hex('#8ee6dc'), {
+  steps: 6,
+  shadowHue: 225,
+  lightHue: 150,
+  lean: 0.9,
+  lightness: [-0.3, -0.2, -0.1, 0, 0.1, 0.2],
+});
+/** Violet and rose glitter on the water of the magic river and the sea round the island. */
+const MAGIC_GLINTS: readonly RGB[] = [
+  [255, 255, 255],
+  [255, 214, 246],
+  [214, 244, 255],
+  [255, 244, 190],
+  [226, 214, 255],
+];
+/** The magic river is a deeper, bluer teal than the sea, with violet in its shade. */
+const RIVER_WATER = ramp(hex('#37b8e6'), {
+  steps: 6,
+  shadowHue: 285,
+  lightHue: 175,
+  lean: 1.1,
+  lightness: [-0.34, -0.23, -0.12, 0, 0.1, 0.22],
+});
+const RIVER_TINT = ramp(hex('#a07cf2'), {
+  steps: 6,
+  shadowHue: 290,
+  lightHue: 200,
+  lean: 1.0,
+  lightness: [-0.3, -0.2, -0.1, 0, 0.1, 0.2],
+});
+const RIVER_BANK = ramp(hex('#e9d9f5'), {
+  steps: 6,
+  shadowHue: 300,
+  lightHue: 85,
+  lean: 0.8,
+  lightness: [-0.3, -0.2, -0.1, -0.03, 0.04, 0.1],
+});
+
+/** Snow: white that goes blue in the shade, and a trodden trail of grey-blue. */
+const SNOW_GROUND = ramp(hex('#f1f6ff'), {
+  steps: 6,
+  shadowHue: 232,
+  lightHue: 50,
+  lean: 0.9,
+  lightness: [-0.24, -0.15, -0.08, -0.02, 0.03, 0.06],
+});
+const SNOW_TRAIL = ramp(hex('#cfdaf0'), {
+  steps: 6,
+  shadowHue: 240,
+  lightHue: 60,
+  lean: 0.9,
+  lightness: [-0.3, -0.2, -0.1, 0, 0.07, 0.13],
 });
 
 export const BIOMES: Record<Biome['id'], Biome> = {
@@ -255,6 +361,72 @@ export const BIOMES: Record<Biome['id'], Biome> = {
     pathRamp: DANCE_CURB,
     crisp: true,
     water: false,
+    blades: 9,
+  },
+  // The Magic Hall inside: pearl-lilac marble with a violet carpet.
+  'magic-hall': {
+    id: 'magic-hall',
+    grass: MAGIC_FLOOR,
+    ground: 'marble',
+    path: 'carpet',
+    pathRamp: MAGIC_CARPET,
+    crisp: true,
+    water: false,
+    blades: 0,
+  },
+  // The witch's hut inside: swept earth strewn with straw, and a green rug.
+  'witch-hut': {
+    id: 'witch-hut',
+    grass: INTERIOR.earth,
+    ground: 'straw',
+    path: 'carpet',
+    pathRamp: HUT_RUG,
+    crisp: true,
+    water: false,
+    blades: 0,
+  },
+  // Santa's cabin inside: pine boards laid in rows, and a red rug.
+  'santa-cabin': {
+    id: 'santa-cabin',
+    grass: CABIN_BOARDS,
+    ground: 'boards',
+    path: 'carpet',
+    pathRamp: CABIN_RUG,
+    crisp: true,
+    water: false,
+    blades: 0,
+  },
+  // The island's rim. The ground is sand, a path is the damp sand the sea leaves, and the water is
+  // the glittering sea.
+  beach: {
+    id: 'beach',
+    grass: BEACH_SAND,
+    ground: 'sand',
+    path: 'dirt',
+    pathRamp: WET_SAND,
+    water: true,
+    pool: { water: SEA, bank: WET_SAND, glints: MAGIC_GLINTS, sparkle: 1.6, tint: SEA_FOAM, flow: 1 },
+    blades: 0,
+  },
+  // Santa's grove: deep snow, and a trodden trail through it.
+  'snow-grove': {
+    id: 'snow-grove',
+    grass: SNOW_GROUND,
+    ground: 'snow',
+    path: 'dirt',
+    pathRamp: SNOW_TRAIL,
+    water: false,
+    blades: 0,
+  },
+  // The magic river and the lawns along it. A path is pale sand where the river meets the sea, and
+  // the water flows to the sea, glittering and shot with violet.
+  river: {
+    id: 'river',
+    grass: PAL.lawn,
+    path: 'dirt',
+    pathRamp: BEACH_SAND,
+    water: true,
+    pool: { water: RIVER_WATER, bank: RIVER_BANK, glints: MAGIC_GLINTS, sparkle: 2, tint: RIVER_TINT, flow: 1 },
     blades: 9,
   },
 };
@@ -503,6 +675,33 @@ function strawTexture(e: Ramp, seed: number): Tex {
 }
 
 /**
+ * Pine boards laid in rows: a dark seam between rows, a lit lip under each, butt joints that fall
+ * in a different place on every row, a nail at each end and the odd streak of grain.
+ */
+function boardsTexture(b: Ramp, seed: number): Tex {
+  const PH = 16,
+    PL = 64;
+  return (X, Y) => {
+    const row = Math.floor(Y / PH);
+    const ly = Y - row * PH;
+    const shift = Math.floor(hash2(row, 1, seed) * PL);
+    const xs = wrapTo(X + shift, FIELD);
+    const col = Math.floor(xs / PL);
+    const lx = xs - col * PL;
+    if (ly === 0 || lx === 0) return b[1]!;
+    if (ly === 1) return b[5]!;
+    if (ly === PH - 1) return b[2]!;
+    if (ly === 8 && (lx === 4 || lx === PL - 5)) return b[1]!;
+    const tone = hash2(col, row, seed + 3);
+    let base = tone > 0.72 ? 4 : tone < 0.25 ? 2 : 3;
+    const streak = hash2(Math.floor(lx / 10), row * PH + ly, seed + 7);
+    if (streak > 0.94) base -= 1;
+    else if (streak < 0.05) base += 1;
+    return b[Math.max(1, Math.min(5, base))]!;
+  };
+}
+
+/**
  * Running-bond brick, wide and low, with a pale mortar line and a lit lip so the floor reads as
  * laid.
  */
@@ -619,25 +818,135 @@ function caveRockTexture(r: Ramp, seed: number): Tex {
   };
 }
 
-function waterTexture(w: Ramp, seed: number, glints?: readonly RGB[]): Tex {
+/**
+ * Sand: dry and pale, raked into faint ripples by the wind, with the odd white fleck of shell, a
+ * darker grain and now and then a grain of gold that catches the light.
+ */
+function sandTexture(s: Ramp, seed: number): Tex {
+  const overlay: Overlay = new Map();
+  const grit = scatter(10, 1.0, seed + 9);
+  for (const t of grit) {
+    const roll = hash2(t.id, 5, seed);
+    if (roll < 0.45) continue;
+    const x = Math.round(t.x),
+      y = Math.round(t.y);
+    if (roll > 0.93) {
+      // A fleck of shell: two pale pixels with a shadow under them.
+      plot(overlay, x, y, [255, 252, 240]);
+      plot(overlay, x + 1, y, [255, 246, 226]);
+      plot(overlay, x + 1, y + 1, s[1]!);
+    } else if (roll > 0.8) {
+      plot(overlay, x, y, s[1]!);
+      plot(overlay, x + 1, y, s[2]!);
+    } else {
+      plot(overlay, x, y, s[3]!);
+    }
+  }
+  const macro = [
+    { cell: 64, weight: 0.3 },
+    { cell: 32, weight: 0.45 },
+    { cell: 16, weight: 0.25 },
+  ];
+  return (X, Y) => {
+    const o = overlay.get(key(X, Y));
+    if (o) return o;
+    // Wind ripples: long shallow bands that wander across the field, a pale crest and a soft
+    // shadow after it.
+    const wander = (tileNoise(X, Y, FIELD, 64, seed + 21) - 0.5) * 36;
+    const phase = wrapTo(Math.floor((Y + wander) / 2), 14);
+    const speck = hash2(wrapTo(X, FIELD), wrapTo(Y, FIELD), seed + 2);
+    if (speck > 0.996) return [255, 226, 130];
+    if (speck < 0.012) return s[1]!;
+    const f = tileMix(X, Y, FIELD, macro, seed);
+    const v = f + (bayer(X, Y) - 0.5) * 0.1;
+    let tone = 3 + band(v, [0.28, 0.72]) - 1;
+    if (phase === 0) tone += 1;
+    else if (phase === 1) tone -= 1;
+    return s[Math.max(1, Math.min(5, tone))]!;
+  };
+}
+
+/**
+ * Snow: soft drifts of white that go blue in their hollows, with specks of ice that catch the light
+ * and the odd blue shadow where a boot has been.
+ */
+function snowTexture(s: Ramp, seed: number): Tex {
+  const macro = [
+    { cell: 64, weight: 0.35 },
+    { cell: 32, weight: 0.4 },
+    { cell: 16, weight: 0.25 },
+  ];
+  return (X, Y) => {
+    const speck = hash2(wrapTo(X, FIELD), wrapTo(Y, FIELD), seed + 2);
+    if (speck > 0.9968) return [255, 255, 255];
+    if (speck > 0.9945) return [206, 232, 255];
+    if (speck < 0.008) return s[1]!;
+    const f = tileMix(X, Y, FIELD, macro, seed);
+    const v = f + (bayer(X, Y) - 0.5) * 0.09;
+    const tone = 3 + band(v, [0.26, 0.74]) - 1;
+    return s[Math.max(1, Math.min(5, tone))]!;
+  };
+}
+
+/** One bright pixel that twinkles, or a small star, the colour of a glint. */
+function twinkle(X: number, Y: number, frame: number, glints: readonly RGB[], seed: number, rate: number): RGB | null {
+  // A pixel is lit by a star centred on it, or beside it when the star is at its brightest.
+  const centres: readonly (readonly [number, number, number])[] = [
+    [0, 0, 0],
+    [1, 0, 1],
+    [-1, 0, 1],
+    [0, 1, 1],
+    [0, -1, 1],
+  ];
+  for (const [dx, dy, arm] of centres) {
+    const cx = X + dx,
+      cy = Y + dy;
+    const born = hash2(wrapTo(cx, FIELD), wrapTo(cy, FIELD), seed + 31);
+    if (born < 1 - 0.004 * rate) continue;
+    const phase = Math.floor(hash2(wrapTo(cx, FIELD), wrapTo(cy, FIELD), seed + 32) * WATER_FRAMES);
+    const age = (frame + phase) % WATER_FRAMES;
+    const colour = glints[Math.floor(hash2(wrapTo(cx, FIELD), wrapTo(cy, FIELD), seed + 33) * glints.length)]!;
+    if (age === 0 && !arm) return colour;
+    if (age === 1 && !arm) return mix(colour, [255, 255, 255], 0.6);
+    // The star is at its brightest the frame after it is born, and has arms then.
+    if (age === 1 && arm) return colour;
+  }
+  return null;
+}
+
+function waterTexture(pool: Pool, seed: number): Tex {
+  const { water: w, glints, tint, sparkle } = pool;
+  const flow = pool.flow ?? -1;
   const macro = [
     { cell: 64, weight: 0.1 },
     { cell: 32, weight: 0.25 },
     { cell: 16, weight: 0.4 },
     { cell: 8, weight: 0.25 },
   ];
+  const patches = [
+    { cell: 64, weight: 0.5 },
+    { cell: 32, weight: 0.5 },
+  ];
   return (X, Y, frame) => {
+    // A sparkle stays where it is and twinkles, so it is not carried by the drift of the water.
+    if (sparkle && glints.length > 0) {
+      const star = twinkle(X, Y, frame, glints, seed, sparkle);
+      if (star) return star;
+    }
     // Drift the field by a quarter of its width per frame, so four frames loop exactly.
-    const sx = wrapTo(X + (FIELD / WATER_FRAMES) * frame, FIELD);
+    const sx = wrapTo(X - flow * (FIELD / WATER_FRAMES) * frame, FIELD);
     const f = tileMix(sx, Y, FIELD, macro, seed);
     // Short pale ripples: thin bands of a stretched noise, kept to the lighter half of the surface.
     const ridge = Math.abs(tileNoise(sx, Y * 3, FIELD, 32, seed + 77) - 0.5);
     if (ridge < 0.02 && tileNoise(sx, Y, FIELD, 8, seed + 5) > 0.55)
-      return glints && hash2(sx >> 2, Y >> 2, seed + 3) > 0.7
+      return glints.length > 0 && hash2(sx >> 2, Y >> 2, seed + 3) > 0.7
         ? glints[Math.floor(hash2(sx >> 3, Y >> 3, seed + 4) * glints.length)]!
         : w[4]!;
     const v = 0.5 + (f - 0.5) * 0.75 + (bayer(X, Y) - 0.5) * 0.1;
-    return w[1 + band(v, [0.36, 0.66])]!;
+    const shade = 1 + band(v, [0.36, 0.66]);
+    // Patches of a second colour, which move with the water.
+    if (tint && tileMix(sx, Y, FIELD, patches, seed + 55) > 0.64) return tint[shade]!;
+    return w[shade]!;
   };
 }
 
@@ -691,18 +1000,24 @@ export function buildTileset(biome: Biome): Tileset {
         ? strawTexture(biome.grass, 101)
         : biome.ground === 'rock'
           ? caveFloorTexture(biome.grass, 101)
-          : grassTexture(biome.grass, biome.blades, 101);
+          : biome.ground === 'sand'
+            ? sandTexture(biome.grass, 101)
+            : biome.ground === 'snow'
+              ? snowTexture(biome.grass, 101)
+              : biome.ground === 'boards'
+                ? boardsTexture(biome.grass, 101)
+                : grassTexture(biome.grass, biome.blades, 101);
   const pathRamp = biome.pathRamp ?? (biome.path === 'dirt' ? PAL.dirt : PAL.cobble);
   const pathTex = {
-    dirt: () => dirtTexture(PAL.dirt, 202),
+    dirt: () => dirtTexture(biome.pathRamp ?? PAL.dirt, 202),
     cobble: () => cobbleTexture(PAL.cobble, 202),
     carpet: () => carpetTexture(pathRamp, 202),
     brick: () => brickTexture(pathRamp, 202),
     rock: () => caveRockTexture(pathRamp, 202),
     disco: () => discoTexture(202),
   }[biome.path]();
-  const pool = biome.pool ?? { water: PAL.water, bank: PAL.sand, glints: undefined };
-  const waterTex = waterTexture(pool.water, 303, pool.glints);
+  const pool: Pool = biome.pool ?? { water: PAL.water, bank: PAL.sand, glints: [] };
+  const waterTex = waterTexture(pool, 303);
   const g = biome.grass;
   const wobble = (X: number, Y: number): number =>
     tileMix(

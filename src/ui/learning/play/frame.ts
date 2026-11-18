@@ -18,6 +18,11 @@ export interface FrameSpec {
   close: () => void;
   /** An arrow key was pressed, as a step to the side and a step down. */
   arrow?: (across: number, down: number) => void;
+  /**
+   * Any other key, before it is let through to what is under focus. True when the screen took it,
+   * as the keypad takes a digit, and then it does nothing else.
+   */
+  key?: (event: KeyboardEvent) => boolean;
 }
 
 export interface Parts {
@@ -173,6 +178,11 @@ export class PlayFrame {
         event.preventDefault();
         event.stopPropagation();
         this.spec.arrow(arrow[0]!, arrow[1]!);
+        return;
+      }
+      if (this.spec.key?.(event)) {
+        event.preventDefault();
+        event.stopPropagation();
         return;
       }
       // Anything else, Enter and space on a button included, does what the button under focus does,

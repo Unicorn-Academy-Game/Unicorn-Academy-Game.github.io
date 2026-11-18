@@ -1,13 +1,14 @@
 import type { MathsLevel, PlayRecord } from '../../../shared/play';
 import type { Random } from '../random';
-import { FAMILIES, type Family, type Question, type StrandId } from './question';
+import { FAMILIES, type Family, type Question, type StrandId, typedAnswer } from './question';
 import { ask } from './strands';
 
 /**
  * A round of the maths game, with no screen and no clock. A round is five questions of one kind at
  * one level. A question has one right choice. A choice that is not the right one rests, with
  * nothing said about it, and the player tries another. After two rests the right choice shines. A
- * question counts as clean when the first choice they touched was the right one, and a round that
+ * question counts as clean when the first choice they touched, or the first number they typed in,
+ * was the right one, and a round that
  * is finished earns stars by how many were clean. The player never goes down a level, and they go
  * up after a round with at most one question that was not clean.
  */
@@ -30,6 +31,8 @@ export interface Round {
   readonly asked: readonly string[];
   /** The choices of this question that were touched and were not right. */
   readonly rested: readonly number[];
+  /** How many numbers typed in on the keypad for this question were not right. */
+  readonly typed: number;
   /** Whether the right choice of this question has been touched. */
   readonly solved: boolean;
   /** How many questions so far were clean. */
@@ -55,7 +58,7 @@ function fresh(strand: StrandId, level: MathsLevel, asked: readonly string[], ra
 
 export function begin(strand: StrandId, level: MathsLevel, random: Random): Round {
   const question = fresh(strand, level, [], random);
-  return { strand, level, index: 0, question, asked: [keyOf(question)], rested: [], solved: false, clean: 0 };
+  return { strand, level, index: 0, question, asked: [keyOf(question)], rested: [], typed: 0, solved: false, clean: 0 };
 }
 
 /**
@@ -69,11 +72,29 @@ export function choose(round: Round, at: number): { round: Round; result: Chosen
   if (round.solved || !Number.isInteger(at) || at < 0 || at >= question.choices.length || rested.includes(at))
     return { round, result: 'ignored' };
   if (at !== question.answer) return { round: { ...round, rested: [...rested, at] }, result: 'rest' };
-  return { round: { ...round, solved: true, clean: round.clean + (rested.length === 0 ? 1 : 0) }, result: 'right' };
+  return { round: solve(round), result: 'right' };
 }
 
-/** Whether the right choice should shine, because the player has tried enough others. */
-export const hinted = (round: Round): boolean => !round.solved && round.rested.length >= RESTS_TO_HINT;
+/**
+ * The player types a number in on the keypad. A number that is not the answer rests, as a choice
+ * does, and nothing is said about it. A question that cannot be typed, or is solved, takes nothing.
+ */
+export function enter(round: Round, value: number): { round: Round; result: Chosen } {
+  const answer = typedAnswer(round.question);
+  if (round.solved || answer === null || !Number.isSafeInteger(value) || value < 0) return { round, result: 'ignored' };
+  if (value !== answer) return { round: { ...round, typed: round.typed + 1 }, result: 'rest' };
+  return { round: solve(round), result: 'right' };
+}
+
+/** The question solved, and clean when nothing was tried before the right answer. */
+const solve = (round: Round): Round => ({
+  ...round,
+  solved: true,
+  clean: round.clean + (round.rested.length === 0 && round.typed === 0 ? 1 : 0),
+});
+
+/** Whether the right answer should shine, because the player has tried enough others. */
+export const hinted = (round: Round): boolean => !round.solved && round.rested.length + round.typed >= RESTS_TO_HINT;
 
 /** Whether the round is over: the last question is solved. */
 export const finished = (round: Round): boolean => round.solved && round.index === ROUND_LENGTH - 1;
@@ -91,6 +112,7 @@ export function next(round: Round, random: Random): Round {
     question,
     asked: [...round.asked, keyOf(question)],
     rested: [],
+    typed: 0,
     solved: false,
   };
 }

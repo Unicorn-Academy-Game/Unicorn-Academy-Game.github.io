@@ -16,6 +16,7 @@ type TapKind =
   | 'brush'
   | 'treasure'
   | 'harvest'
+  | 'build'
   | 'delight'
   | 'minigame'
   | 'clue'
@@ -104,6 +105,8 @@ export interface PropDef {
     produce: readonly ProduceId[];
     count: readonly [number, number] /** How high above the ground it starts to fall, in world units. */;
     height: number;
+    /** What flies up when it is tapped, where sparkles are not the thing: sand from a dig. */
+    effect?: EffectId;
   };
   /** For something to enjoy: what it does when tapped. */
   delight?: Delight;
@@ -184,6 +187,9 @@ const defs: PropDef[] = [
       'stable-in',
       'manor-out',
       'manor-in',
+      'magic-in',
+      'hut-in',
+      'cabin-in',
     ],
   },
   { id: 'palace-door', tap: 'palace-door' },
@@ -341,15 +347,168 @@ const defs: PropDef[] = [
   { id: 'pumpkin-bed', tap: 'harvest', harvest: { produce: ['pumpkin'], count: [2, 3], height: 34 } },
   { id: 'cabbage-bed', tap: 'harvest', harvest: { produce: ['cabbage'], count: [2, 3], height: 34 } },
   { id: 'berry-bed', tap: 'harvest', harvest: { produce: ['sky-berry'], count: [3, 4], height: 34 } },
+  // The beach and the river: a mound to dig shells from, a clam with a pearl in it, a castle to
+  // admire, shells that sing the sea, a lighthouse, and plants round the Magic Hall that throw
+  // glitter. None of them is saved, and none of them runs out.
+  { id: 'dig-spot', tap: 'harvest', harvest: { produce: ['shell'], count: [2, 3], height: 30, effect: 'dig' } },
+  {
+    id: 'clam',
+    tap: 'harvest',
+    harvest: { produce: ['pearl'], count: [1, 1], height: 44, effect: 'treasure-sparkle' },
+  },
+  {
+    id: 'sand-castle',
+    tap: 'delight',
+    looks: ['grand', 'small'],
+    delight: { effect: 'sparkle', sound: 'fx-glow', seconds: 2, hop: 0, lift: 110 },
+  },
+  {
+    id: 'seashell',
+    tap: 'delight',
+    looks: ['scallop-pink', 'scallop-lilac', 'turret-cream', 'turret-gold', 'conch-pink', 'conch-cream'],
+    delight: { effect: 'bubbles', sound: 'splash', seconds: 1.6, hop: 6, lift: 40 },
+  },
+  {
+    id: 'lighthouse',
+    tap: 'delight',
+    delight: { effect: 'light-burst', sound: 'fx-glow', seconds: 3, hop: 0, lift: 380 },
+  },
+  {
+    id: 'glitter-plant',
+    tap: 'delight',
+    looks: ['bush-1', 'bush-2', 'bush-3', 'flowers-1', 'flowers-2', 'flowers-3'],
+    delight: { effect: 'glitter', sound: 'fx-glow', seconds: 2.2, hop: 0, lift: 60 },
+  },
+  {
+    id: 'glitter-tree',
+    tap: 'delight',
+    delight: { effect: 'glitter', sound: 'fx-glow', seconds: 2.6, hop: 0, lift: 190 },
+  },
+  // Santa's grove. A present opens on a toy and a burst of confetti, the tree's lights chase, and
+  // the rest of what stands in the snow answers a tap with a puff of its own. None of it is saved.
+  {
+    id: 'present',
+    tap: 'delight',
+    looks: ['red', 'green', 'blue', 'gold', 'pink'],
+    delight: { effect: 'confetti', sound: 'gem', seconds: 2.4, hop: 8, lift: 70 },
+  },
+  {
+    id: 'xmas-tree',
+    tap: 'delight',
+    delight: { effect: 'sparkle', sound: 'palace-welcome', seconds: 5, hop: 0, lift: 330 },
+  },
+  {
+    id: 'snowman',
+    tap: 'delight',
+    looks: ['red', 'green'],
+    delight: { effect: 'ice-burst', sound: 'hop', seconds: 1.8, hop: 10, lift: 150 },
+  },
+  {
+    id: 'sleigh',
+    tap: 'delight',
+    delight: { effect: 'light-burst', sound: 'fx-glow', seconds: 2.4, hop: 0, lift: 80 },
+  },
+  { id: 'reindeer', tap: 'delight', delight: { effect: 'hearts', sound: 'hearts', seconds: 2, hop: 8, lift: 140 } },
+  {
+    id: 'snow-pile',
+    tap: 'delight',
+    looks: ['1', '2'],
+    delight: { effect: 'ice-burst', sound: 'fx-bloom', seconds: 1.6, hop: 0, lift: 40 },
+  },
+  {
+    id: 'candy-lamp',
+    tap: 'delight',
+    looks: ['red', 'green'],
+    delight: { effect: 'sparkle', sound: 'gem', seconds: 1.8, hop: 0, lift: 140 },
+  },
+  // Santa's cabin. Its door lights up and takes the herd in. Inside, the fire in the hearth never
+  // goes out, the tree's lights run, and everything else answers a tap with something to enjoy.
+  { id: 'cabin-door', tap: 'door' },
+  {
+    id: 'cabin-hearth',
+    tap: 'delight',
+    delight: { effect: 'embers', sound: 'fx-glow', seconds: 2.6, hop: 0, lift: 130 },
+  },
+  { id: 'armchair', tap: 'delight', delight: { effect: 'hearts', sound: 'hearts', seconds: 2, hop: 0, lift: 110 } },
+  { id: 'cookie-table', tap: 'delight', delight: { effect: 'sparkle', sound: 'gem', seconds: 1.8, hop: 5, lift: 80 } },
+  { id: 'santa-sack', tap: 'delight', delight: { effect: 'confetti', sound: 'gem', seconds: 2.2, hop: 8, lift: 120 } },
+  { id: 'toy-shelf', tap: 'delight', delight: { effect: 'sparkle', sound: 'gem', seconds: 2, hop: 0, lift: 150 } },
+  { id: 'toy-bench', tap: 'delight', delight: { effect: 'confetti', sound: 'hop', seconds: 2, hop: 4, lift: 100 } },
+  {
+    id: 'room-tree',
+    tap: 'delight',
+    delight: { effect: 'sparkle', sound: 'palace-welcome', seconds: 4, hop: 0, lift: 230 },
+  },
+  // A patch of sand where a castle goes up a step at a tap, and comes down again with the next.
+  { id: 'castle-site', tap: 'build', initial: { kind: 'castle', stage: 0 } },
+  { id: 'hall-door', tap: 'palace-door', invisible: true },
+  // Inside the Magic Hall: books that float and turn their pages, star globes whose rings go round,
+  // candles in the air, a cauldron, a fountain, chandeliers and a circle of spells on the floor.
+  {
+    id: 'spell-book',
+    tap: 'delight',
+    looks: ['rose', 'sky', 'gold', 'mint'],
+    delight: { effect: 'fairy-dust', sound: 'fx-bloom', seconds: 2.2, hop: 0, lift: 120 },
+  },
+  {
+    id: 'star-globe',
+    tap: 'delight',
+    delight: { effect: 'light-burst', sound: 'fx-glow', seconds: 2.6, hop: 0, lift: 150 },
+  },
+  {
+    id: 'floating-candles',
+    tap: 'delight',
+    delight: { effect: 'sparkle', sound: 'fx-glow', seconds: 2.2, hop: 0, lift: 110 },
+  },
+  {
+    id: 'hall-cauldron',
+    tap: 'delight',
+    delight: { effect: 'bubbles', sound: 'splash', seconds: 2, hop: 0, lift: 80 },
+  },
+  {
+    id: 'hall-fountain',
+    tap: 'delight',
+    delight: { effect: 'water-spray', sound: 'fx-spray', seconds: 2.4, hop: 0, lift: 100 },
+  },
+  {
+    id: 'hall-chandelier',
+    tap: 'delight',
+    delight: { effect: 'sparkle', sound: 'gem', seconds: 2.4, hop: 5, lift: 80 },
+  },
+  {
+    id: 'spell-circle',
+    tap: 'delight',
+    invisible: true,
+    delight: { effect: 'rainbow-arc', sound: 'fx-rainbow', seconds: 2.8, hop: 0, lift: 20 },
+  },
   // The crystal cave: a cluster for each gem, and what wakes, glows and answers to magic. A cluster
   // gives gems again and again.
   ...GEM_IDS.map(
     (gem): PropDef => ({ id: clusterOf(gem), tap: 'harvest', harvest: { produce: [gem], count: [2, 3], height: 40 } }),
   ),
-  { id: 'sleeping-crystals', tap: 'none' },
-  { id: 'storm-pillar', tap: 'none' },
-  { id: 'glow-pool', tap: 'none' },
-  { id: 'cave-bed', tap: 'none', initial: { kind: 'flowerbed', state: 'leafy' }, looks: ['long', 'round'] },
+  // What waits for a friend's magic also answers a touch, so nothing in the cave is dead to a tap.
+  {
+    id: 'sleeping-crystals',
+    tap: 'delight',
+    delight: { effect: 'sparkle', sound: 'gem', seconds: 1.8, hop: 0, lift: 50 },
+  },
+  {
+    id: 'storm-pillar',
+    tap: 'delight',
+    delight: { effect: 'lightning-burst', sound: 'spell-lightning', seconds: 1.6, hop: 0, lift: 150 },
+  },
+  {
+    id: 'glow-pool',
+    tap: 'delight',
+    delight: { effect: 'water-spray', sound: 'splash', seconds: 2, hop: 0, lift: 10 },
+  },
+  {
+    id: 'cave-bed',
+    tap: 'delight',
+    initial: { kind: 'flowerbed', state: 'leafy' },
+    looks: ['long', 'round'],
+    delight: { effect: 'bloom', sound: 'fx-bloom', seconds: 1.8, hop: 0, lift: 40 },
+  },
   {
     id: 'heart-crystal',
     tap: 'delight',
@@ -366,7 +525,10 @@ const defs: PropDef[] = [
     tap: 'delight',
     delight: { effect: 'bubbles', sound: 'cup-fill', seconds: 2.4, hop: 0, lift: 70 },
   },
-  { id: 'hut-door', tap: 'delight', delight: { effect: 'mote', sound: 'door-open', seconds: 3, hop: 0, lift: 90 } },
+  // The witch's hut is a house you can walk into: its door swings and takes the herd inside.
+  { id: 'hut-door', tap: 'door' },
+  // On the shelves inside the hut.
+  { id: 'jar-shelf', tap: 'delight', delight: { effect: 'sparkle', sound: 'gem', seconds: 2, hop: 0, lift: 100 } },
   // The stable: a unicorn in each stall, in a coat none of the friends wear. She nuzzles and hearts
   // float up.
   {

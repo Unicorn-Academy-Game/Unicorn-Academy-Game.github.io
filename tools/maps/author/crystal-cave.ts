@@ -383,6 +383,16 @@ export function authorCrystalCave(): {
     toMap: 'forest',
     toSpawn: 'from-cave',
   });
+  // The hut: its door takes the herd inside, and brings her out in front of it
+  b.portal({
+    name: 'hut-gate',
+    bounds: { x: HUT.x - 52, y: HUT.y + 28, w: 104, h: 56 },
+    approach: pt(HUT.x, HUT.y + 62),
+    toMap: 'witch-hut',
+    toSpawn: 'from-cave',
+    door: 'hut-door-1',
+  });
+  b.spawn('from-hut', 'south', [pt(2819, 1593), pt(2649, 1763), pt(2649, 1329)]);
   b.spawn('from-forest', 'north', [pt(1664, 2317), pt(1834, 2487), pt(1400, 2487)]);
 
   // Who drinks at the pool

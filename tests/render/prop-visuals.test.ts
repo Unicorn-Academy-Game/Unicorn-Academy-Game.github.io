@@ -236,7 +236,7 @@ describe('the garden', () => {
 
 describe('the farm and the orchard', () => {
   const harvest = Object.values(PROP_DEFS).filter(
-    (d) => d.tap === 'harvest' && d.harvest!.produce.every((p) => PRODUCE[p].grows !== 'rock'),
+    (d) => d.tap === 'harvest' && d.harvest!.produce.every((p) => ['tree', 'bed'].includes(PRODUCE[p].grows)),
   );
 
   it('draws every harvest prop, still, with a picture of what it gives', () => {

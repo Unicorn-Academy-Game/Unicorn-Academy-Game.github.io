@@ -50,7 +50,7 @@ function layoutTileset(set: Tileset, columns: number): { image: Rgba; width: num
  * ground takes whichever covers more of its corners.
  */
 function surfacesOf(biome: Biome, set: Tileset): string {
-  const hardGround = biome.ground === 'marble' || biome.ground === 'rock';
+  const hardGround = biome.ground === 'marble' || biome.ground === 'rock' || biome.ground === 'boards';
   const hardPath = biome.path === 'cobble' || biome.path === 'brick' || biome.path === 'rock' || biome.path === 'disco';
   const bits = (mask: number): number => [1, 2, 4, 8].filter((b) => mask & b).length;
   return set.meta

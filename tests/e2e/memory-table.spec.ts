@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { wordClip } from '../../src/learning';
-import { pastTheLeadIn, spoken, toTheGarden, touch } from './computer';
+import { spoken, toTheGarden, touch } from './computer';
 import {
   learningOn,
   listenForSounds,
@@ -9,7 +9,6 @@ import {
   play,
   SCRATCH,
   shot,
-  soundsHeard,
   spotOn,
   standBelow,
   step,
@@ -120,6 +119,28 @@ async function playItThrough(page: Page): Promise<void> {
 
 const record = (page: Page) => page.evaluate(() => window.__ua!.play.get().memory);
 
+/**
+ * Chooses a size of board: the button of the size where the sizes are in a row, and on a screen too
+ * short for that the steps back and on, as many as it takes.
+ */
+async function chooseSize(page: Page, count: number): Promise<void> {
+  const pill = screen(page).locator(`[data-content-id="memory.size"][data-pairs="${count / 2}"]`);
+  if (await pill.isVisible()) {
+    await pill.click();
+    return;
+  }
+  const now = screen(page).locator('[data-content-id="memory.now"]');
+  for (let steps = 0; steps < 8; steps++) {
+    const shown = Number(await now.getAttribute('data-pairs'));
+    if (shown === count / 2) return;
+    await screen(page)
+      .locator(`[data-content-id="memory.step-${shown < count / 2 ? 'more' : 'less'}"]`)
+      .click();
+    await expect(now).not.toHaveAttribute('data-pairs', String(shown));
+  }
+  throw new Error(`no way to choose ${count} cards`);
+}
+
 test.describe('the memory table', () => {
   test('a tap on it makes it sparkle, and the player sits down at a board of six cards, face down, while the world rests', async ({
     page,
@@ -136,7 +157,7 @@ test.describe('the memory table', () => {
     await expect(cards(page)).toHaveCount(6);
     for (let place = 0; place < 6; place++) await expect(stateOf(page, place)).toHaveAttribute('data-state', 'down');
     await expect(pill(page, 6)).toHaveAttribute('aria-pressed', 'true');
-    await expect(screen(page).locator('[data-content-id="memory.size"]')).toHaveCount(4);
+    await expect(screen(page).locator('[data-content-id="memory.size"]')).toHaveCount(8);
     await expect(control(page, 'close')).toBeVisible();
     expect(await worldRuns(page)).toBe(false);
     await expect(page.locator('[data-reading="true"]')).toBeAttached();
@@ -177,6 +198,33 @@ test.describe('the memory table', () => {
     expect(await spoken(page)).toEqual([]);
   });
 
+  test('a game of thirty-two cards and a game of sixty-four cards can be chosen, played to the end, and are kept', async ({
+    page,
+  }, info) => {
+    test.setTimeout(300_000);
+    const noise = watchConsole(page);
+    await sitDown(page);
+    await pill(page, 32).click();
+    await expect(cards(page)).toHaveCount(32);
+    expect(pairsOf(await faces(page))).toHaveLength(16);
+    await expect(screen(page).locator('.mem-board')).not.toHaveAttribute('data-entering', 'true');
+    await shot(page, `${SCRATCH}/memory-32-${info.project.name}.png`);
+    await playItThrough(page);
+    await expect(control(page, 'won')).toBeVisible({ timeout: 30_000 * PATIENCE });
+    expect(await record(page)).toMatchObject({ played: 1, sizes: { '16': { wins: 1 } } });
+
+    await pill(page, 64).click();
+    await expect(cards(page)).toHaveCount(64);
+    expect(pairsOf(await faces(page))).toHaveLength(32);
+    await expect(screen(page).locator('.mem-board')).not.toHaveAttribute('data-entering', 'true');
+    await shot(page, `${SCRATCH}/memory-64-${info.project.name}.png`);
+    await playItThrough(page);
+    await expect(control(page, 'won')).toBeVisible({ timeout: 30_000 * PATIENCE });
+    expect(await record(page)).toMatchObject({ played: 2, sizes: { '16': { wins: 1 }, '32': { wins: 1 } } });
+    await expect(control(page, 'more')).toHaveCount(0);
+    expect(noise).toEqual([]);
+  });
+
   test('every size of board fits every screen it may be played on, with cards big enough for a finger and the buttons clear of each other', async ({
     page,
   }, info) => {
@@ -191,9 +239,9 @@ test.describe('the memory table', () => {
     ];
     for (const view of views) {
       await page.setViewportSize({ width: view.width, height: view.height });
-      for (const count of [6, 8, 12, 16]) {
+      for (const count of [6, 8, 12, 16, 24, 32, 48, 64]) {
         const where = `${view.name}, ${count} cards`;
-        await pill(page, count).click();
+        await chooseSize(page, count);
         await expect(cards(page)).toHaveCount(count);
         // What comes in grows to its size, so it is measured once it is there.
         await expect(screen(page).locator('.mem-board')).not.toHaveAttribute('data-entering', 'true');
@@ -210,7 +258,10 @@ test.describe('the memory table', () => {
             panel: box(root.querySelector('.read-panel')!),
             body: box(root.querySelector('.play-body')!),
             cards: [...root.querySelectorAll('[data-content-id="memory.card"]')].map(box),
-            buttons: [...root.querySelectorAll('.read-close, .read-level, .play-size, .play-hear:not([hidden])')]
+            stepping: getComputedStyle(root.querySelector('.play-stepper')!).display !== 'none',
+            buttons: [
+              ...root.querySelectorAll('.read-close, .read-level, .play-size, .play-step, .play-hear:not([hidden])'),
+            ]
               .filter((el) => el.getClientRects().length > 0)
               .map(box),
             hear: box(root.querySelector('.play-hear')!),
@@ -230,13 +281,22 @@ test.describe('the memory table', () => {
           b: { left: number; top: number; right: number; bottom: number },
         ) => a.right <= b.left + 1 || b.right <= a.left + 1 || a.bottom <= b.top + 1 || b.bottom <= a.top + 1;
         const screenBox = { left: 0, top: 0, right: found.view.width, bottom: found.view.height };
+        // Looked at before it is measured, so a board that does not pass can be seen.
+        if (count === 64 || count === 32 || count === 6)
+          await shot(page, `${SCRATCH}/memory-fit-${view.name}-${count}-${info.project.name}.png`);
 
         expect(found.across, `${where}: nothing to scroll across`).toBeLessThanOrEqual(found.view.width);
         expect(inside(found.panel, screenBox), `${where}: the screen is on the screen`).toBe(true);
         for (const [place, card] of found.cards.entries()) {
           expect(inside(card, found.body), `${where}: card ${place} is inside the board`).toBe(true);
-          expect(card.width, `${where}: card ${place} is wide enough to touch`).toBeGreaterThanOrEqual(44);
-          expect(card.height, `${where}: card ${place} is tall enough to touch`).toBeGreaterThanOrEqual(44);
+          // The big boards trade the size of a card for the number of them, so the smallest a card
+          // may be is a thumb for the boards that were there, and less for the ones that came after.
+          // Thirty-two cards on the smallest phone held sideways, 568 by 320, are 36 or more wide, and
+          // sixty-four on the narrowest, 320 across, come out 27.9, which is over the 24 pixels that
+          // WCAG 2.2 asks of a target.
+          const least = count <= 16 ? 44 : count <= 32 ? 36 : 26;
+          expect(card.width, `${where}: card ${place} is wide enough to touch`).toBeGreaterThanOrEqual(least);
+          expect(card.height, `${where}: card ${place} is tall enough to touch`).toBeGreaterThanOrEqual(least);
         }
         for (const [place, card] of found.cards.entries()) {
           for (const other of found.cards.slice(place + 1))
@@ -247,18 +307,19 @@ test.describe('the memory table', () => {
           `${where}: the voice button is round, and not squeezed`,
         ).toBeLessThan(1.5);
         expect(found.hear.width, `${where}: the voice button is wide enough to touch`).toBeGreaterThanOrEqual(44);
+        expect(found.stepping, `${where}: only the shortest screens step through the sizes`).toBe(
+          view.width <= 680 && view.height <= 480,
+        );
         expect(
           found.buttons.length,
-          `${where}: the close button, the four sizes and the voice button are all there, and the title when there is room`,
-        ).toBeGreaterThanOrEqual(6);
+          `${where}: the close button, the sizes (eight, or the two steps) and the voice button are all there`,
+        ).toBeGreaterThanOrEqual(found.stepping ? 4 : 10);
         const everything = found.hud ? [...found.buttons, found.hud] : found.buttons;
         for (const [place, one] of found.buttons.entries()) {
           expect(inside(one, found.panel), `${where}: a thing of the top bar is on the screen`).toBe(true);
           for (const other of everything.slice(place + 1))
             expect(apart(one, other), `${where}: two things of the top bar are apart`).toBe(true);
         }
-        if (count === 16 || count === 6)
-          await shot(page, `${SCRATCH}/memory-fit-${view.name}-${count}-${info.project.name}.png`);
       }
     }
   });
@@ -294,6 +355,42 @@ test.describe('the memory table', () => {
     await expect(stateOf(page, a)).toHaveAttribute('data-state', 'down');
     await expect(stateOf(page, b)).toHaveAttribute('data-state', 'down');
     await expect(stateOf(page, c)).toHaveAttribute('data-state', 'up');
+  });
+
+  test('a second finger turns a card while the first is still down, and two fingers that land together turn two cards', async ({
+    page,
+    browserName,
+  }) => {
+    test.skip(browserName !== 'chromium', 'only Chromium takes touches from the protocol');
+    await sitDown(page);
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+    const [first, second] = pairsOf(await faces(page));
+    const finger = async (place: number, id: number): Promise<{ x: number; y: number; id: number }> => {
+      const box = (await cards(page).nth(place).boundingBox())!;
+      return { x: box.x + box.width / 2, y: box.y + box.height / 2, id };
+    };
+    // One finger is still down on a card when another lands on its pair, as when a child taps with
+    // both thumbs and the touches overlap.
+    const held = await finger(first![0], 1);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [held] });
+    await expect(stateOf(page, first![0])).toHaveAttribute('data-state', 'up');
+    await cdp.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [held, await finger(first![1], 2)],
+    });
+    await expect(stateOf(page, first![1])).toHaveAttribute('data-state', 'paired');
+    await expect(stateOf(page, first![0])).toHaveAttribute('data-state', 'paired');
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    // Two fingers that land in the same instant on the two cards of a pair.
+    await cdp.send('Input.dispatchTouchEvent', {
+      type: 'touchStart',
+      touchPoints: [await finger(second![0], 1), await finger(second![1], 2)],
+    });
+    await expect(stateOf(page, second![0])).toHaveAttribute('data-state', 'paired');
+    await expect(stateOf(page, second![1])).toHaveAttribute('data-state', 'paired');
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    expect((await record(page)).played, 'the game is not won until the last pair is found').toBe(0);
   });
 
   test('every size can be chosen, and a new game of the same size has other pictures', async ({ page }) => {
@@ -343,36 +440,37 @@ test.describe('the memory table', () => {
     await expect(cards(page).nth(0)).toBeFocused();
     await page.keyboard.press('ArrowRight');
     await expect(cards(page).nth(1)).toBeFocused();
+    // The board is laid out in the columns that give the biggest cards, so one step down is a row
+    // of them on, or the last card where there is no row below.
+    const columns = await page.evaluate(
+      () => getComputedStyle(document.querySelector('.mem-board')!).gridTemplateColumns.split(' ').length,
+    );
+    const below = Math.min(5, 1 + columns);
     await page.keyboard.press('ArrowDown');
-    await expect(cards(page).nth(4)).toBeFocused();
+    await expect(cards(page).nth(below)).toBeFocused();
     await page.keyboard.press('ArrowLeft');
-    await expect(cards(page).nth(3)).toBeFocused();
+    await expect(cards(page).nth(below - 1)).toBeFocused();
     await page.keyboard.press('Enter');
-    await expect(stateOf(page, 3)).toHaveAttribute('data-state', 'up');
+    await expect(stateOf(page, below - 1)).toHaveAttribute('data-state', 'up');
     expect(await leading(), 'the keys went to the cards, and Wildstar was not asked to walk').toEqual(before);
   });
 
-  test('with learning off a tap on the table only makes it sparkle, and no screen comes', async ({ page }) => {
-    await openGame(page);
-    await play(page);
-    await toTheGarden(page);
+  test('with learning off a tap on the table sits the player down at the cards all the same, and nothing is said', async ({
+    page,
+  }) => {
+    await inTheGarden(page);
+    expect(await page.evaluate(() => window.__ua!.settings.get().learning.on), 'learning is off').toBe(false);
     await listenForSounds(page);
     await tapTheTable(page);
-    await expect
-      .poll(
-        async () => {
-          await step(page, 1);
-          return (await soundsHeard(page)).some((s) => s.family === 'fx-glow' && s.played);
-        },
-        { message: 'the table to sparkle', timeout: 30_000 * PATIENCE, intervals: [100] },
-      )
-      .toBe(true);
-    await pastTheLeadIn(page);
-    await step(page, 1);
-    await expect(screen(page)).toHaveCount(0);
-    expect(await page.evaluate(() => window.__ua!.memory.game), 'nothing was fetched for it').toBeNull();
-    expect(await worldRuns(page)).toBe(true);
+    await untilSitting(page);
+    await expect(cards(page)).toHaveCount(6);
+    await turnCard(page, 0);
+    await expect(stateOf(page, 0)).toHaveAttribute('data-state', 'up');
+    expect(await page.evaluate(() => [...window.__ua!.voice.heard]), 'the voice belongs to learning').toEqual([]);
     expect(await spoken(page)).toEqual([]);
+    await control(page, 'close').click();
+    await expect(screen(page)).toHaveCount(0);
+    expect(await worldRuns(page)).toBe(true);
   });
 
   test('with the voice on, a card says its word as it is turned, and the device is never asked to speak', async ({
@@ -473,21 +571,18 @@ test.describe('the memory table', () => {
     expect(await spoken(page)).toEqual([]);
   });
 
-  test('its chunk comes down by itself once play has begun with learning on, and not with it off', async ({ page }) => {
-    await openGame(page, 'kept', '', { learning: true });
-    await play(page);
-    expect(await page.evaluate(() => window.__ua!.memory.game), 'the world starts without it').toBeNull();
-    await expect
-      .poll(() => page.evaluate(() => window.__ua!.memory.game !== null), {
-        message: 'the chunk to come down',
-        timeout: 60_000 * PATIENCE,
-      })
-      .toBe(true);
-
-    await page.goto('about:blank');
-    await openGame(page);
-    await play(page);
-    await page.waitForTimeout(7000);
-    expect(await page.evaluate(() => window.__ua!.memory.game), 'with learning off nothing is fetched').toBeNull();
+  test('its chunk comes down by itself once play has begun, with learning on or off', async ({ page }) => {
+    for (const learning of [true, false]) {
+      await openGame(page, 'kept', '', { learning });
+      await play(page);
+      expect(await page.evaluate(() => window.__ua!.memory.game), 'the world starts without it').toBeNull();
+      await expect
+        .poll(() => page.evaluate(() => window.__ua!.memory.game !== null), {
+          message: `the chunk to come down with learning ${learning ? 'on' : 'off'}`,
+          timeout: 60_000 * PATIENCE,
+        })
+        .toBe(true);
+      await page.goto('about:blank');
+    }
   });
 });

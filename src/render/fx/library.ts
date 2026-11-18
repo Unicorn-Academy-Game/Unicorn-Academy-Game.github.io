@@ -434,6 +434,146 @@ const MAKERS: Record<EffectId, Maker> = {
     }
   },
 
+  // A hoof in the shallows: a small ring, a few drops and a glint or two.
+  wade(k, { at }) {
+    wave(k, at, TINT.water, 0.4);
+    for (let i = 0; i < k.n(5); i++) {
+      const a = k.r(0, TAU);
+      k.fx.spawn({
+        sprite: 'fx-drop',
+        x: at.x,
+        y: at.y,
+        z: 6,
+        vx: Math.cos(a) * k.r(14, 40),
+        vy: Math.sin(a) * k.r(6, 16),
+        vz: k.r(90, 150),
+        gravity: 520,
+        life: 0.9,
+        scale: [0.7, 0.6],
+        layer: 'air',
+      });
+    }
+    for (let i = 0; i < k.n(3); i++)
+      k.fx.spawn({
+        sprite: k.pick(['fx-spark', 'fx-spark-mint', 'fx-spark-pink']),
+        x: at.x + k.r(-20, 20),
+        y: at.y + k.r(-6, 6),
+        z: k.r(8, 36),
+        vz: k.r(8, 26),
+        life: 0.6,
+        delay: k.r(0, 0.25),
+        scale: [0.8, 0.3],
+        layer: 'air',
+      });
+  },
+
+  // A leap into the sea: two rings, a burst of drops and a spray of glitter.
+  dive(k, { at }) {
+    wave(k, at, TINT.water, 0.65);
+    wave(k, at, TINT.white, 0.42, 0.14);
+    for (let i = 0; i < k.n(14); i++) {
+      const a = k.r(0, TAU);
+      k.fx.spawn({
+        sprite: 'fx-drop',
+        x: at.x,
+        y: at.y,
+        z: 10,
+        vx: Math.cos(a) * k.r(26, 78),
+        vy: Math.sin(a) * k.r(10, 30),
+        vz: k.r(150, 250),
+        gravity: 560,
+        life: 1.1,
+        scale: [0.9, 0.8],
+        layer: 'air',
+      });
+    }
+    for (let i = 0; i < k.n(10); i++)
+      k.fx.spawn({
+        sprite: k.pick(['fx-spark', 'fx-spark-mint', 'fx-spark-pink']),
+        x: at.x + k.r(-34, 34),
+        y: at.y + k.r(-10, 10),
+        z: k.r(20, 80),
+        vz: k.r(20, 60),
+        life: 0.9,
+        delay: k.r(0, 0.35),
+        scale: [1, 0.3],
+        layer: 'air',
+      });
+  },
+
+  // Sand flung up from a dig, in puffs that fall back to the beach.
+  dig(k, { at }) {
+    const sand = [0xf2deaa, 0xe2c98f, 0xfff0c8];
+    for (let i = 0; i < k.n(10); i++) {
+      const side = i % 2 === 0 ? -1 : 1;
+      k.fx.spawn({
+        sprite: 'fx-dust',
+        x: at.x + side * k.r(4, 26),
+        y: at.y + k.r(-4, 6),
+        z: k.r(8, 30),
+        vx: side * k.r(20, 70),
+        vz: k.r(70, 150),
+        gravity: 420,
+        life: k.r(0.5, 0.8),
+        anim: 'life',
+        tint: k.pick(sand),
+        alpha: 0.95,
+        layer: 'air',
+        scale: [k.r(0.8, 1.1), 1.3],
+      });
+    }
+    for (let i = 0; i < k.n(4); i++)
+      k.fx.spawn({
+        sprite: 'fx-spark-gold',
+        x: at.x + k.r(-20, 20),
+        y: at.y + k.r(-4, 4),
+        z: k.r(26, 60),
+        vz: k.r(30, 70),
+        life: 0.7,
+        delay: k.r(0, 0.2),
+        scale: [0.9, 0.4],
+        layer: 'air',
+      });
+  },
+
+  // A plant by the Magic Hall throws glitter: a cloud of sparks of every colour, and a soft glow.
+  glitter(k, { at, seconds }) {
+    flash(k, at, 0xffe6fb, 1.7, 0.5, 0, 60);
+    wave(k, at, 0xe6c8ff, 0.5);
+    for (let i = 0; i < k.n(26); i++) {
+      const a = k.r(0, TAU);
+      k.fx.spawn({
+        sprite: k.pick(['fx-spark', 'fx-spark-pink', 'fx-spark-mint', 'fx-spark-gold', 'fx-spark-ice']),
+        x: at.x + Math.cos(a) * k.r(4, 52),
+        y: at.y + Math.sin(a) * 6,
+        z: k.r(10, 120),
+        vz: k.r(8, 40),
+        sway: [k.r(6, 16), k.r(0.6, 1.2)],
+        delay: (i / 26) * Math.min(seconds, 1.4) * 0.8,
+        life: k.r(0.7, 1.3),
+        scale: [k.r(1.1, 1.9), 0.4],
+        fadeOut: 0.5,
+        layer: 'air',
+      });
+    }
+  },
+
+  // A hoof on a stone in the river: a pinch of glitter flies up.
+  'stone-glint'(k, { at }) {
+    for (let i = 0; i < k.n(5); i++)
+      k.fx.spawn({
+        sprite: k.pick(['fx-spark', 'fx-spark-mint', 'fx-spark-pink']),
+        x: at.x + k.r(-24, 24),
+        y: at.y + k.r(-8, 8),
+        z: k.r(6, 30),
+        vz: k.r(30, 80),
+        life: 0.7,
+        delay: k.r(0, 0.15),
+        scale: [0.9, 0.2],
+        layer: 'air',
+      });
+  },
+
   relocate(k, { at }) {
     k.fx.spawn({
       sprite: 'fx-ring',

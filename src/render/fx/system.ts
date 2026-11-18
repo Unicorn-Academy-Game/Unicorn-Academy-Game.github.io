@@ -85,7 +85,7 @@ interface Emitter {
   spawn: Spawner;
 }
 
-const POOL = 420;
+const POOL = 480;
 
 /**
  * Added to an additive glow's depth when glows go last. It is more than the whole range of the

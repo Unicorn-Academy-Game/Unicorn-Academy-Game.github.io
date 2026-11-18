@@ -57,8 +57,8 @@ type Timer = 'settle' | 'won';
  * The memory game. The player sits down at the table, gets a board that is dealt at random from all
  * the pictures the game has, and turns two cards at a time. It never says that a try was wrong: two
  * cards that are not the same turn back down, and the voice has said what each one is, so the next
- * look knows more. A game won earns stars, and the next size is offered. It is only ever opened
- * with learning on, and learning turned off takes it away.
+ * look knows more. A game won earns stars, and the next size is offered. It opens whether learning
+ * is on or off: the voice is the part that belongs to learning.
  */
 export class MemoryGame {
   private readonly screen: MemoryScreen;
@@ -92,7 +92,6 @@ export class MemoryGame {
    */
   open(): Started {
     if (this.game) return 'busy';
-    if (!this.deps.settings().on) return 'off';
     this.deps.rest.freeze();
     const record = this.deps.play.get();
     this.deal(startSize(record));
@@ -105,12 +104,9 @@ export class MemoryGame {
     return 'up';
   }
 
-  /**
-   * A parent changed something. With learning off the screen goes away, and what the player earned
-   * is kept.
-   */
+  /** A parent changed something. A screen that is up shows the voice as it is now. */
   settingsChanged(): void {
-    if (this.game && !this.deps.settings().on) this.end();
+    if (this.game) this.render();
   }
 
   /**

@@ -176,6 +176,6 @@ describe('what the seasons do to the world', () => {
 
   it('says for every map whether the sky is over it, and has the open air under the sky and nothing roofed', () => {
     expect(Object.keys(OPEN_AIR).sort()).toEqual([...MAP_IDS].sort());
-    expect(MAP_IDS.filter((id) => OPEN_AIR[id])).toEqual(['forest', 'palace-garden', 'playground']);
+    expect(MAP_IDS.filter((id) => OPEN_AIR[id])).toEqual(['forest', 'palace-garden', 'playground', 'river', 'beach']);
   });
 });

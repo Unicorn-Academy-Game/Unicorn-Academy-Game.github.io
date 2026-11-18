@@ -19,7 +19,6 @@ import {
   spotOn,
   standAt,
   step,
-  stepUntil,
   stepWatching,
   tapWorld,
   walkThrough,
@@ -77,25 +76,6 @@ async function colourAround(page: Page, at: Pt, half: number, lively: boolean): 
     n++;
   }
   return n === 0 ? { r: 0, g: 0, b: 0, n } : { r: r / n, g: g / n, b: b / n, n };
-}
-
-/**
- * How many pixels of a rectangle of the canvas, centred on a point of the world, are greener than
- * they are blue. The floor of the cave is lilac, so a green light lying on it turns it.
- */
-async function greener(page: Page, at: Pt, wide: number, high: number): Promise<number> {
-  const size = page.viewportSize()!;
-  const screen = await page.evaluate((p) => window.__ua!.controller.toScreen(p), at);
-  const x = Math.max(0, Math.min(size.width - wide, Math.round(screen.x - wide / 2)));
-  const y = Math.max(0, Math.min(size.height - high, Math.round(screen.y - high / 2)));
-  const png = decodePng(
-    new Uint8Array(
-      await page.screenshot({ clip: { x, y, width: wide, height: high }, style: '#ui { display: none !important }' }),
-    ),
-  );
-  let count = 0;
-  for (let i = 0; i < png.data.length; i += 4) if (png.data[i + 1]! > png.data[i + 2]! + 8) count++;
-  return count;
 }
 
 /**
@@ -475,30 +455,21 @@ test.describe('the crystal cave', () => {
     expect(thawed.r, `the water is back (${JSON.stringify({ water, ice, thawed })})`).toBeLessThan(ice.r - 20);
   });
 
-  test('opens the door of the hut when she touches it, and lights the floor in front of it', async ({ page }) => {
-    await inTheCave(page);
+  test('takes her into the witch hut when she touches its door, and the door inside brings her out again', async ({
+    page,
+  }) => {
+    await inTheCave(page, FRIENDS);
+    const watch = newWatch();
     const door = await placeOf(page, CAVE('hut-door-1'));
     await standHere(page, door.stand);
-    const lit = { x: door.pos.x, y: door.pos.y + 20 };
-    const closed = await greener(page, lit, 130, 150);
-    await tapWorld(page, await spotOn(page, CAVE('hut-door-1')));
-    await stepUntil(
-      page,
-      'the door to start to open',
-      () => window.__ua!.controller.world.transient.get('crystal-cave/hut-door-1')?.kind === 'delight',
-      12,
-    );
-    await step(page, 1.2);
-    const open = await greener(page, lit, 130, 150);
-    await shot(page, `${SCRATCH}/cave-door-open.png`);
-    expect(open, `the open door lights the floor and the doorway (${closed} then ${open})`).toBeGreaterThan(
-      closed + 400,
-    );
-    await step(page, 4);
-    expect(
-      await page.evaluate(() => window.__ua!.controller.world.transient.get('crystal-cave/hut-door-1')),
-    ).toBeUndefined();
-    expect(await greener(page, lit, 130, 150), 'the door is shut and the floor is dark again').toBeLessThan(open - 200);
+    await walkThrough(page, 'witch-hut', watch);
+    expect(await mapId(page)).toBe('witch-hut');
+    expect(await page.evaluate(() => window.__ua!.controller.world.npcs.length)).toBeGreaterThanOrEqual(1);
+    await step(page, 1.5);
+    await shot(page, `${SCRATCH}/witch-hut-inside.png`);
+    await walkThrough(page, 'crystal-cave', watch);
+    expect(await mapId(page)).toBe('crystal-cave');
+    expect(watch.problems).toEqual([]);
   });
 
   test('keeps its summer when it is winter outside, and the snow is back when she walks out', async ({ page }) => {

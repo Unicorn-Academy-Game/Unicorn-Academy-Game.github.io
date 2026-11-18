@@ -63,9 +63,13 @@ const ONES = [
 ] as const;
 const TENS = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'] as const;
 
-/** A whole number from 0 to 99 in words, for the voice to read. */
+/** A whole number from 0 to 999 in words, for the voice to read: "one hundred forty-five". */
 export function numberWords(n: number): string {
-  if (!Number.isInteger(n) || n < 0 || n > 99) throw new RangeError(`${n} is not a number from 0 to 99`);
+  if (!Number.isInteger(n) || n < 0 || n > 999) throw new RangeError(`${n} is not a number from 0 to 999`);
+  if (n >= 100) {
+    const rest = n % 100;
+    return rest === 0 ? `${ONES[n / 100]} hundred` : `${ONES[Math.floor(n / 100)]} hundred ${numberWords(rest)}`;
+  }
   if (n < 20) return ONES[n]!;
   const ones = n % 10;
   return ones === 0 ? TENS[n / 10]! : `${TENS[Math.floor(n / 10)]}-${ONES[ones]}`;

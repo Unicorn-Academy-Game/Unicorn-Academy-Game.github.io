@@ -239,8 +239,20 @@ function applyInteraction(world: World, instanceId: string): void {
     }
     case 'harvest': {
       dropProduce(world, inst, def);
+      startTransient(world, instanceId, 'harvest', 1.2);
       emit(world, { type: 'prop-activity', instanceId, activity: 'harvest', seconds: 0.8 });
-      effect(world, 'sparkle', inst.pos, 1.2);
+      effect(world, def.harvest?.effect ?? 'sparkle', inst.pos, 1.2);
+      break;
+    }
+    case 'build': {
+      // Bare sand, a mound, a small castle, a grand one; and then the sea takes it.
+      const cur = world.persistent.props[instanceId];
+      const stage = ((cur?.kind === 'castle' ? cur.stage : 0) + 1) % 4;
+      world.persistent.props[instanceId] = { kind: 'castle', stage };
+      emit(world, { type: 'prop-changed', instanceId });
+      startTransient(world, instanceId, 'build', 0.7);
+      emit(world, { type: 'save-needed', reason: 'prop' });
+      effect(world, stage === 3 ? 'treasure-sparkle' : 'dig', inst.pos, 1.2);
       break;
     }
     case 'delight': {

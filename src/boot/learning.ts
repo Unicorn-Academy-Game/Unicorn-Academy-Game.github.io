@@ -30,6 +30,10 @@ export interface Learning {
   tables: Tables;
   /** How the guide asks the lessons for the word the player is being shown the way to. */
   seeking: Seeking;
+  /** Holds the world still for as long as a screen of the game's own is up. */
+  rest: Rest;
+  /** True when nothing else has the screen, so another screen may go up. */
+  idle: () => boolean;
 }
 
 interface LearningDeps {
@@ -145,7 +149,7 @@ export function makeLearning({
     // The book and its button stay with learning off, so the player can look at the words. A word
     // in it only asks for its card while learning is on.
     spellBook.refresh();
-    // With learning off the screens of the tables go away, and what was done there is kept.
+    // A table that is up shows the voice as it is now.
     for (const desk of Object.values(desks)) desk?.settingsChanged();
   });
 
@@ -173,5 +177,6 @@ export function makeLearning({
     picture: wordPicture,
     stop: () => lessons.stopSeeking(),
   };
-  return { lessons, spellBook, bookChip, tables, seeking };
+  const idle = (): boolean => free() && !lessons.busy && !spellBook.isOpen;
+  return { lessons, spellBook, bookChip, tables, seeking, rest, idle };
 }

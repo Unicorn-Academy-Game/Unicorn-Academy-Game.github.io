@@ -81,3 +81,6 @@ export const BRICK = tone('#d9774a', 335, 45);
 export const JADE = tone('#3fbf8c', 205, 125);
 export const ONYX = tone('#3b3a4a', 265, 250);
 export const BURLAP = tone('#cfa467', 330, 65);
+export const SAND = tone('#ecc98f', 20, 70);
+export const IRON = tone('#7d8aa6', 265, 215);
+export const BROWN = tone('#8a5a3a', 320, 50);

@@ -5,9 +5,9 @@ import { args, flag, flags } from '../lib/args';
 
 /**
  * Takes pictures of the parent controls in the lab page, for looking at every state.
- *   tsx tools/qa/lab-shot.ts <out.png> [--w 863] [--h 360] [--dpr 2] [--base http://localhost:5173] [--query name=value] [--hold] [--tab Saving]
+ *   tsx tools/qa/lab-shot.ts <out.png> [--w 863] [--h 360] [--dpr 2] [--base http://localhost:5173] [--query name=value] [--open] [--tab Saving]
  *     [--eval "lab.shelf.set([])"] [--click "Start over…"] [--then "document.querySelector('.words').open = true"] [--wait 400] [--scroll 300]
- * Steps run in the order: eval, hold the gear, choose the tab, click, then (the same as eval, once
+ * Steps run in the order: eval, tap the gear, choose the tab, click, then (the same as eval, once
  * the page is open), scroll. `--eval`, `--click` and `--then` may repeat.
  */
 const out = args[0] ?? 'assets/source/_scratch/lab.png';
@@ -31,12 +31,8 @@ await page.waitForFunction(() => (window as unknown as { lab?: unknown }).lab !=
 await page.waitForTimeout(500);
 
 for (const code of flags('eval')) await page.evaluate(code);
-if (args.includes('--hold')) {
-  const box = (await page.getByRole('button', { name: /Parent controls/ }).boundingBox())!;
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-  await page.mouse.down();
-  await page.waitForTimeout(Number(flag('holdms', '1300')));
-  await page.mouse.up();
+if (args.includes('--open')) {
+  await page.getByRole('button', { name: /Parent controls/ }).click();
   await page.waitForTimeout(400);
 }
 const tab = flag('tab');

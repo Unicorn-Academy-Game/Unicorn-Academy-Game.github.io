@@ -7,6 +7,25 @@ import type { MathsLevel } from '../shared/play';
  * screen is a picture of the view and nothing more.
  */
 
+/**
+ * What every screen of the table shows of the child's own two switches, and of the voice they sit
+ * under.
+ */
+interface Switches {
+  /** Whether the table is speaking: the voice is on, can be heard, and the child has not stopped it. */
+  readonly speech: boolean;
+  /**
+   * Whether there is a voice to switch off: a parent has it on and it can be heard. Without it the
+   * switch is not shown, since there is nothing for it to stop.
+   */
+  readonly voice: boolean;
+  /** The child's switch for the voice at this table. */
+  readonly say: boolean;
+  /** The child's switch for answering on the keypad, where an answer is a number. */
+  readonly keys: boolean;
+  readonly caption: string;
+}
+
 /** One kind of sum on the tiles, with the level the player plays it at. */
 interface StrandView {
   readonly id: StrandId;
@@ -28,16 +47,22 @@ interface FamilyView {
 }
 
 /** The tiles the player chooses a kind of sum from, the ones of the family they are in. */
-export interface PickView {
+export interface PickView extends Switches {
   readonly kind: 'pick';
   readonly families: readonly FamilyView[];
   readonly strands: readonly StrandView[];
-  readonly speech: boolean;
-  readonly caption: string;
+}
+
+/** The keypad that answers a question in place of its choices. */
+export interface KeypadView {
+  /** The digits of the right answer, which shine on the keys once enough tries have missed. */
+  readonly answer: string;
+  /** How many numbers typed in were not the answer, so a screen can tell a new miss from the last. */
+  readonly misses: number;
 }
 
 /** A question of a round. */
-export interface AskView {
+export interface AskView extends Switches {
   readonly kind: 'ask';
   readonly strand: StrandId;
   readonly name: string;
@@ -57,12 +82,15 @@ export interface AskView {
   readonly solved: boolean;
   /** Whether the right choice should shine, because enough others have been tried. */
   readonly hint: boolean;
-  readonly speech: boolean;
-  readonly caption: string;
+  /**
+   * The keypad, when the question is answered by typing a number. The choices are still the
+   * question's own, and are not shown.
+   */
+  readonly keypad: KeypadView | null;
 }
 
 /** A round that is finished. */
-export interface DoneView {
+export interface DoneView extends Switches {
   readonly kind: 'done';
   readonly strand: StrandId;
   readonly name: string;
@@ -72,8 +100,6 @@ export interface DoneView {
   readonly clean: number;
   readonly length: number;
   readonly stars: 1 | 2 | 3;
-  readonly speech: boolean;
-  readonly caption: string;
 }
 
 export type MathsView = PickView | AskView | DoneView;
@@ -89,6 +115,14 @@ export interface MathsHandlers {
   pick: (strand: StrandId) => void;
   /** The choice at this place was touched. */
   choose: (at: number) => void;
+  /** A number was typed in on the keypad and sent. */
+  enter: (value: number) => void;
+  /** A key of the keypad was pressed, for the sound of it. */
+  tap: () => void;
+  /** The child turned the voice at this table on or off. */
+  say: (on: boolean) => void;
+  /** The child turned the keypad on or off. */
+  keys: (on: boolean) => void;
   /** Says the question again, or what to do at the tiles. */
   hear: () => void;
   /** Another round of the same kind of sum, after one is finished. */

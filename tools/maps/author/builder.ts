@@ -3,6 +3,7 @@ import type { AmbienceId } from '../../../src/shared/audio';
 import type { Facing, MapId } from '../../../src/shared/ids';
 import type { LifeKind } from '../../../src/shared/life';
 import type { Obstacle } from '../../../src/shared/map';
+import { packWaters, type Waters } from '../../../src/shared/waters';
 import { type EdgeKind, pickTile, type Tileset } from '../../art/world/terrain';
 import { type TiledObject, toProperties } from '../tiled';
 import { type Pt, type Region, T } from './geom';
@@ -17,7 +18,7 @@ export interface BuilderOpts {
   /** Tileset id in the manifest, and the file name of its image for Tiled. */
   tileset: string;
   bundle: string;
-  music: 'forest' | 'garden' | 'quiet';
+  music: 'forest' | 'garden' | 'quiet' | 'snow';
   ambience: AmbienceId;
   start?: string;
   /** Only Wildstar goes in. The rest of the herd waits outside. */
@@ -48,6 +49,9 @@ export class MapBuilder {
   private readonly openRegions: Region[] = [];
   private readonly pathRegions: Region[] = [];
   private readonly pondRegions: Region[] = [];
+  private readonly seaRegions: Region[] = [];
+  private readonly stones: { x: number; y: number; rx: number; ry: number }[] = [];
+  private readonly hops: { a: Pt; b: Pt; hw: number }[] = [];
   private extraObstacles: Obstacle[] = [];
   private objs: Obj[] = [];
   private vertex: Corner[] = [];
@@ -63,6 +67,56 @@ export class MapBuilder {
   open(...r: Region[]): this {
     this.openRegions.push(...r);
     return this;
+  }
+
+  /**
+   * Water the herd can go into: drawn as water and walked through, wading where it is shallow by
+   * the shore and swimming farther out. Water outside it is deep and out of bounds, as a pond is.
+   * It must lie inside open ground, as everything the herd walks on does.
+   */
+  sea(...r: Region[]): this {
+    this.seaRegions.push(...r);
+    this.pondRegions.push(...r);
+    return this;
+  }
+
+  /**
+   * A flat stone standing in the water that the herd can step onto: the ellipse `rx` wide and `ry`
+   * deep round (x, y). Its picture is the author's to place.
+   */
+  stone(x: number, y: number, rx: number, ry: number): this {
+    this.stones.push({ x, y, rx, ry });
+    this.mask = undefined;
+    this.index = undefined;
+    return this;
+  }
+
+  /**
+   * The little jump from one stone to the next: a strip of walkable water `hw` either side of the
+   * line from `a` to `b`, so a gap between two stones is crossed and a stream of stones is a route.
+   */
+  hop(a: Pt, b: Pt, hw = 32): this {
+    this.hops.push({ a, b, hw });
+    this.mask = undefined;
+    this.index = undefined;
+    return this;
+  }
+
+  private onStone(x: number, y: number): boolean {
+    return (
+      this.stones.some((s) => ((x - s.x) / s.rx) ** 2 + ((y - s.y) / s.ry) ** 2 <= 1) ||
+      this.hops.some((h) => {
+        const ex = h.b.x - h.a.x,
+          ey = h.b.y - h.a.y;
+        const l2 = ex * ex + ey * ey;
+        const t = l2 === 0 ? 0 : Math.max(0, Math.min(1, ((x - h.a.x) * ex + (y - h.a.y) * ey) / l2));
+        return Math.hypot(x - (h.a.x + ex * t), y - (h.a.y + ey * t)) <= h.hw;
+      })
+    );
+  }
+
+  private inSea(x: number, y: number): boolean {
+    return this.seaRegions.some((r) => r(x, y) > 0);
   }
 
   pathBand(...r: Region[]): this {
@@ -424,7 +478,8 @@ export class MapBuilder {
       for (let c = 0; c < cols; c++) {
         const x = (c + 0.5) * CELL,
           y = (r + 0.5) * CELL;
-        solid[r * cols + c] = this.openness(x, y) <= 0 || this.waterAt(x, y) > 0.5 ? 1 : 0;
+        const water = this.waterAt(x, y) > 0.5 && !this.inSea(x, y) && !this.onStone(x, y);
+        solid[r * cols + c] = this.openness(x, y) <= 0 || water ? 1 : 0;
       }
     }
     // Horizontal runs, then merge identical runs on consecutive rows.
@@ -468,6 +523,57 @@ export class MapBuilder {
       w: (o.x1 - o.x0) * CELL,
       h: (o.y1 - o.y0) * CELL,
     }));
+  }
+
+  /**
+   * How deep the water is under each cell of the 32 unit grid: shallow within three cells of the
+   * shore, deep beyond, and a stone where one stands in it. Undefined for a map with no sea and no
+   * stones.
+   */
+  private waters(): Waters | undefined {
+    if (this.seaRegions.length === 0 && this.stones.length === 0 && this.hops.length === 0) return undefined;
+    const cols = Math.ceil(this.width / CELL),
+      rows = Math.ceil(this.height / CELL);
+    const wet = new Uint8Array(cols * rows);
+    const depth = new Uint8Array(cols * rows);
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const x = (c + 0.5) * CELL,
+          y = (r + 0.5) * CELL;
+        const here = r * cols + c;
+        if (this.onStone(x, y)) depth[here] = 3;
+        else if (this.waterAt(x, y) > 0.5 && this.inSea(x, y) && this.openness(x, y) > 0) wet[here] = 1;
+      }
+    }
+    // How many cells from dry ground each wet cell is, by a sweep out from the shore.
+    const dist = new Int16Array(cols * rows).fill(-1);
+    const queue: number[] = [];
+    for (let i = 0; i < wet.length; i++) {
+      if (wet[i]) continue;
+      dist[i] = 0;
+      queue.push(i);
+    }
+    for (let head = 0; head < queue.length; head++) {
+      const i = queue[head]!;
+      const c = i % cols,
+        r = Math.floor(i / cols);
+      for (const [dc, dr] of [
+        [1, 0],
+        [-1, 0],
+        [0, 1],
+        [0, -1],
+      ] as const) {
+        const nc = c + dc,
+          nr = r + dr;
+        if (nc < 0 || nr < 0 || nc >= cols || nr >= rows) continue;
+        const j = nr * cols + nc;
+        if (dist[j] !== -1) continue;
+        dist[j] = dist[i]! + 1;
+        queue.push(j);
+      }
+    }
+    for (let i = 0; i < wet.length; i++) if (wet[i] && depth[i] === 0) depth[i] = dist[i]! <= 3 ? 1 : 2;
+    return packWaters(cols, rows, depth);
   }
 
   build(
@@ -552,6 +658,7 @@ export class MapBuilder {
         ambience: this.opts.ambience,
         start: this.opts.start,
         solo: this.opts.solo,
+        waters: JSON.stringify(this.waters()),
       }),
       tilesets: [
         {

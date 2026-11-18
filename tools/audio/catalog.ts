@@ -9,6 +9,7 @@ import type { Stereo } from './dsp';
 import { dbToGain, fadeEdges, peakOf, SR } from './dsp';
 import { forestTheme } from './music/forest';
 import { gardenTheme } from './music/garden';
+import { snowTheme } from './music/snow';
 import { forestAmbience, gardenAmbience, stableRoomAmbience, treasureRoomAmbience } from './sfx/ambience';
 import { computerWake } from './sfx/computer';
 import {
@@ -156,6 +157,7 @@ export function* allTakes(): Generator<{ id: SoundFamilyId; variant: number }> {
 export const LOOP_RENDERERS = {
   'music-forest': () => forestTheme(),
   'music-garden': () => gardenTheme(),
+  'music-snow': () => snowTheme(),
   'ambience-forest': () => forestAmbience(),
   'ambience-garden': () => gardenAmbience(),
   'ambience-treasure-room': () => treasureRoomAmbience(),

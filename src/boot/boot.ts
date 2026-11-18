@@ -20,6 +20,7 @@ import { makeSound } from './sound';
 import { noDesks } from './tables';
 import { showTitle } from './title';
 import { noOverlays, startWorld } from './world';
+import { makeWorldMap } from './world-map';
 
 /**
  * Brings the game up behind the loading screen, in the order the parts need each other: what the
@@ -107,6 +108,7 @@ export async function boot(ui: Ui): Promise<void> {
     desks,
   });
   overlays.sitDown = learning.tables.sitDown;
+  const { map: worldMap, openMap } = makeWorldMap({ overlay, controller, sound, learning });
   Object.assign(seeking, learning.seeking);
 
   showTitle({
@@ -125,6 +127,7 @@ export async function boot(ui: Ui): Promise<void> {
         offline,
         screens,
         bookChip: learning.bookChip,
+        openMap,
         fullscreen: input.fullscreen,
         panel,
         tables: learning.tables,
@@ -158,6 +161,7 @@ export async function boot(ui: Ui): Promise<void> {
     voice: sound.voice,
     spellBook: learning.spellBook,
     bookChip: learning.bookChip,
+    worldMap,
     durable,
     play,
     reading: {

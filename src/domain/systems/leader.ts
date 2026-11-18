@@ -431,6 +431,7 @@ function arriveAtGoal(world: World): void {
     case 'chest':
     case 'treasure':
     case 'harvest':
+    case 'build':
     case 'delight':
     case 'minigame':
     case 'palace-door':

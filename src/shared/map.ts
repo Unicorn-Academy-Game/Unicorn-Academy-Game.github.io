@@ -3,6 +3,7 @@ import { AMBIENCE_IDS } from './audio';
 import { FACINGS, MAP_IDS, UNICORN_IDS, type Vec2 } from './ids';
 import { LIFE_KINDS } from './life';
 import { NPC_IDS } from './npc';
+import { Waters } from './waters';
 
 /**
  * The logic half of a compiled map: everything the simulation needs and nothing about how it is
@@ -160,7 +161,7 @@ export const LifeZone = z.object({
 export type LifeZone = z.infer<typeof LifeZone>;
 
 const MapAudio = z.object({
-  music: z.enum(['forest', 'garden', 'quiet']),
+  music: z.enum(['forest', 'garden', 'quiet', 'snow']),
   ambience: z.enum(AMBIENCE_IDS),
 });
 
@@ -181,6 +182,8 @@ export const LogicMap = z.object({
   encounters: z.array(Encounter).max(6),
   npcs: z.array(NpcPlacement).max(4),
   life: z.array(LifeZone).max(64),
+  /** How deep the water is, where the herd can go into it. A map with none has dry feet. */
+  waters: Waters.optional(),
   audio: MapAudio,
 });
 export type LogicMap = z.infer<typeof LogicMap>;

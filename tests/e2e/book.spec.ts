@@ -580,15 +580,20 @@ const wrongWithThePage = (page: Page): Promise<string[]> =>
       );
     for (const part of ['.book-head', '.book-tabs', '.book-page'])
       if (!inside(rect(document.querySelector(part)!), sheet, 1)) wrong.push(`${part} is outside the sheet`);
-    const row = rect(document.querySelector('.book-tabs')!);
+    const strip = document.querySelector<HTMLElement>('.book-tabs')!;
+    const row = rect(strip);
+    // More tabs than go across a screen keep to one row that is swiped along, and what it shows is
+    // the page that is open. Fewer than that are all in it.
+    const swiped = strip.scrollWidth > strip.clientWidth + 1;
     const tabs = [...document.querySelectorAll<HTMLElement>('.book-tab')].map((tab, i) => ({
       i,
+      open: tab.getAttribute('aria-selected') === 'true',
       box: rect(tab),
       emblem: rect(tab.querySelector('.book-emblem')!),
       dots: rect(tab.querySelector('.book-pips')!),
     }));
-    for (const { i, box, emblem, dots } of tabs) {
-      if (!inside(box, row, 1)) wrong.push(`tab ${i} is outside the row of tabs`);
+    for (const { i, open, box, emblem, dots } of tabs) {
+      if ((open || !swiped) && !inside(box, row, 1)) wrong.push(`tab ${i} is outside the row of tabs`);
       if (!inside(emblem, box, 1)) wrong.push(`tab ${i}: its picture is outside the tab`);
       if (!inside(dots, box, 1)) wrong.push(`tab ${i}: its dots are outside the tab`);
       if (Math.abs(emblem.width - emblem.height) > 1) wrong.push(`tab ${i}: its picture is not square`);

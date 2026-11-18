@@ -104,12 +104,13 @@ export function planOf(w: number, h: number, unit: number): Plan {
   const scale = clamp(1.08 / unit, 0.5, 1);
   const from = ch.wayOut.x1;
   const to = ch.meter.y0 > 0 ? ch.corner.x0 : ch.meter.x0;
-  const clock = {
-    x: from + Math.min((to - from) / 2, 52),
-    y: (ch.wayOut.y1 - ch.wayOut.y0) / 2,
-    r: CLOCK_R * scale,
-    scale,
-  };
+  const r = CLOCK_R * scale;
+  // On a narrow screen the four buttons in the corner leave no gap that is wide enough, so the clock
+  // goes to the left of the row of stars, under the way out.
+  const clock =
+    to - from >= 2 * r + 12
+      ? { x: from + Math.min((to - from) / 2, 52), y: (ch.wayOut.y1 - ch.wayOut.y0) / 2, r, scale }
+      : { x: ch.meter.x0 / 2, y: (ch.meter.y0 + ch.meter.y1) / 2, r, scale };
   return { w, h, portrait, sky, floor, chest, centre, clock, friendScale, friendStep, friendY, fadeFrom: friendY - 54 };
 }
 

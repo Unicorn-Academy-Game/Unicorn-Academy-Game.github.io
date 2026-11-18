@@ -75,7 +75,8 @@ export function authorPalaceGarden(): {
   const southGate = rect(1376, 2150, 1696, 2230);
   const eastMeadow = rect(3000, 1140, 4980, 2330);
   const eastGap = rect(2900, 1696, 3010, 1888);
-  b.open(garden, forecourt, lawn, southGate, eastMeadow, eastGap);
+  const riverGate = rect(4960, 1696, 5100, 1888);
+  b.open(garden, forecourt, lawn, southGate, eastMeadow, eastGap, riverGate);
 
   // Path edges sit half a tile off the vertex grid so each one is a clean, whole number of tiles
   // wide.
@@ -93,6 +94,7 @@ export function authorPalaceGarden(): {
     rect(544, 2848, 900, 2976), // the farm's west gate, and the lane along to the pond
     rect(544, 2848, 672, 3040), // and down to its north bank
     rect(2912, 1696, 4608, 1888), // the east path, out of the gap in the east hedge
+    rect(4832, 1696, 5100, 1888), // and on to the river gate at its far end
     disc(pt(4700, 1792), 150), // the plaza at its end
     rect(4576, 1792, 4832, 2160), // and the way south from it to the rainbow gate
   );
@@ -143,6 +145,7 @@ export function authorPalaceGarden(): {
   // Keep scenery off the places the herd arrives and the doors it walks to.
   for (const [x, y, r] of [
     [300, 1792, 210],
+    [4900, 1792, 210],
     [TH.x, TH.y + 80, 140],
     [ST.x, ST.y + 80, 140],
     [K.x, K.y + 120, 170],
@@ -273,7 +276,9 @@ export function authorPalaceGarden(): {
   }
   // The edges of the lawn and the east meadow.
   hedgeRow(110, 4992, 3918);
-  hedgeCol(4992, 1150, 3900);
+  // The east hedge has a gate of its own, across from the forest gate, for the river.
+  hedgeCol(4992, 1150, 1636);
+  hedgeCol(4992, 1948, 3900);
   hedgeRow(3000, 4980, 1138);
 
   // The forest gate: two pillars on the west edge.
@@ -281,6 +286,12 @@ export function authorPalaceGarden(): {
   b.place('gate-pillar', 124, 1912);
   b.block({ kind: 'circle', x: 124, y: 1672, r: 28 });
   b.block({ kind: 'circle', x: 124, y: 1912, r: 28 });
+
+  // The river gate: two pillars on the east edge, across the garden from the forest gate.
+  b.place('gate-pillar', 4996, 1672);
+  b.place('gate-pillar', 4996, 1912);
+  b.block({ kind: 'circle', x: 4996, y: 1672, r: 28 });
+  b.block({ kind: 'circle', x: 4996, y: 1912, r: 28 });
 
   // Props the game draws from their saved state
   const prop = (sprite: string, x: number, y: number): void => {
@@ -563,6 +574,13 @@ export function authorPalaceGarden(): {
     door: 'stable-door',
   });
   b.portal({
+    name: 'river-gate',
+    bounds: { x: 4930, y: 1717, w: 150, h: 150 },
+    approach: pt(4950, 1792),
+    toMap: 'river',
+    toSpawn: 'from-garden',
+  });
+  b.portal({
     name: 'forest-gate',
     bounds: { x: 40, y: 1717, w: 150, h: 150 },
     approach: pt(170, 1792),
@@ -574,6 +592,7 @@ export function authorPalaceGarden(): {
   // along it a gap apart in the order they were found. `tools/maps/herd-line.ts` suggests lines,
   // and the compile step checks that each one holds every herd.
   b.spawn('from-forest', 'east', [pt(600, 1746), pt(280, 1746), pt(280, 2100)]);
+  b.spawn('from-river', 'west', [pt(4840, 1792), pt(4585, 1537), pt(4807, 1315)]);
   // A row east of her would end on the computer, so the herd stands in an L along the west side of
   // the road.
   b.spawn('from-palace', 'south', [pt(K.x, K.y + 310), pt(K.x - 160, K.y + 310), pt(K.x - 160, K.y + 824)]);

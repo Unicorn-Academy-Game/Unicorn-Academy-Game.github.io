@@ -8,18 +8,10 @@ import {
   openParent,
   PARENT,
   play,
-  pressGear,
   SCRATCH,
   shot,
   watchConsole,
 } from './helpers';
-
-/** Rests on the gear for `ms` and lets go. Short enough to be a tap or a hold that gave up. */
-async function hold(page: Page, ms: number): Promise<void> {
-  await pressGear(page);
-  await page.waitForTimeout(ms);
-  await page.mouse.up();
-}
 
 /** Starts a game with the controls reachable and the console watched. */
 async function ready(page: Page): Promise<string[]> {
@@ -48,65 +40,34 @@ const befriend = (page: Page) =>
   });
 
 test.describe('getting into the parent controls', () => {
-  test('a quick tap on the gear only explains it', async ({ page }) => {
+  test('a tap on the gear opens the controls, with nothing to hold', async ({ page }) => {
     await ready(page);
     await page.getByRole('button', { name: GEAR }).click();
-    await expect(page.getByText('Hold the gear to open parent controls')).toBeVisible();
-    await expect(page.getByRole('dialog')).toHaveCount(0);
-    await shot(page, `${SCRATCH}/gear-hint.png`);
-  });
-
-  test('a hold that ends early does nothing, and a full hold opens the controls', async ({ page }) => {
-    await ready(page);
-    await hold(page, 500);
-    await expect(page.getByRole('dialog')).toHaveCount(0);
-    await expect(page.getByRole('button', { name: GEAR })).not.toHaveAttribute('data-holding', 'true');
-
-    const box = (await page.getByRole('button', { name: GEAR }).boundingBox())!;
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-    await page.mouse.down();
-    await expect(page.getByRole('button', { name: GEAR })).toHaveAttribute('data-holding', 'true');
-    await shot(page, `${SCRATCH}/gear-holding.png`);
     await expect(page.getByRole('dialog', PARENT)).toBeVisible();
-    await page.mouse.up();
-    await expect(page.getByRole('button', { name: GEAR })).not.toHaveAttribute('data-holding', 'true');
+    await shot(page, `${SCRATCH}/gear-open.png`);
   });
 
-  test('sliding off the gear lets go', async ({ page }) => {
+  test('a tap on the touch screen opens them too', async ({ page }) => {
     await ready(page);
     const box = (await page.getByRole('button', { name: GEAR }).boundingBox())!;
-    await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-    await page.mouse.down();
-    await page.waitForTimeout(300);
-    await page.mouse.move(box.x - 120, box.y + 200, { steps: 4 });
-    await page.waitForTimeout(1300);
-    await page.mouse.up();
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+    await expect(page.getByRole('dialog', PARENT)).toBeVisible();
   });
 
-  test('a held key opens it too, and closing it with Escape puts focus back on the gear', async ({ page }) => {
+  test('Enter on the gear opens it, and closing it with Escape puts focus back on the gear', async ({ page }) => {
     await ready(page);
     await page.getByRole('button', { name: GEAR }).focus();
-    await page.keyboard.down('Enter');
-    await expect(page.getByRole('dialog', PARENT)).toBeVisible();
-    await page.keyboard.up('Enter');
+    await page.keyboard.press('Enter');
     await expect(page.getByRole('dialog', PARENT)).toBeVisible();
     await closeParent(page);
     await expect(page.getByRole('button', { name: GEAR })).toBeFocused();
   });
 
-  test('a press on a gear that has focus still opens the controls, though Safari takes focus off a pressed button', async ({
-    page,
-  }) => {
+  test('closing the controls and tapping the gear again opens them again', async ({ page }) => {
     await ready(page);
-    // Closing the controls leaves focus on the gear, so the next hold begins on a focused button.
     await openParent(page);
     await closeParent(page);
-    await expect(page.getByRole('button', { name: GEAR })).toBeFocused();
-    await pressGear(page);
-    await page.evaluate(() => (document.activeElement as HTMLElement).blur());
-    await expect(page.getByRole('dialog', PARENT)).toBeVisible();
-    await page.mouse.up();
+    await openParent(page);
   });
 
   test('Tab and Shift+Tab go round the controls and never reach the page behind', async ({ page }) => {
@@ -239,7 +200,7 @@ test.describe('sound', () => {
     await expect(page.getByRole('tab', { name: 'Saving' })).toHaveAttribute('aria-selected', 'true');
     await expect(page.getByRole('heading', { name: 'Saving', exact: true })).toBeVisible();
     await page.keyboard.press('End');
-    await expect(page.getByRole('heading', { name: 'Unicorn Academy' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Unicorn Academy', level: 3 })).toBeVisible();
     await page.keyboard.press('Home');
     await expect(page.getByRole('heading', { name: 'Sound and effects' })).toBeVisible();
   });

@@ -32,10 +32,10 @@ All sizes are as sent compressed. `pnpm build` prints them for each release, and
 | Budget | Limit |
 |---|---|
 | First playable download | 5 MiB |
-| The game kept for offline play | 13 MiB |
-| The spoken lessons | 24 MiB |
+| The game kept for offline play | 15 MiB |
+| The spoken lessons | 36 MiB |
 | Graphics memory, eight facings | 160 MiB |
-| Graphics memory, fine facings of all six unicorns | 256 MiB |
+| Graphics memory, fine facings of all six unicorns | 272 MiB |
 | Decoded audio in a crossfade | 48 MiB |
 
 ## What keeps it small

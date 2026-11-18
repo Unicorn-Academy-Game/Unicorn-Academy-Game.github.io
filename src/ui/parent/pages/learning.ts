@@ -72,7 +72,7 @@ export const learning: Page = (ctx) => {
 
   const on = toggle(
     'Learning mode',
-    'Tapping a creature, a gem, a fruit tree or a friend can bring up a card where your child spells its name on an on-screen keyboard, and the computer by the palace teaches reading. Nothing is marked wrong, and either can be closed at any moment. Off, the game is just the game they know.',
+    'Tapping a creature, a gem, a fruit tree or a friend can bring up a card where your child spells its name on an on-screen keyboard, and the computer by the palace teaches reading. Nothing is marked wrong, and either can be closed at any moment. Off, no card comes up and nothing is said aloud. The computer by the palace and the memory and maths tables still open when your child taps them, and play on without the voice.',
     start.on,
     (value) => change({ on: value }),
   );

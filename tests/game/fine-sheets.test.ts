@@ -43,7 +43,7 @@ describe('bringing in the fine sheets of the unicorns who are out', () => {
   it('loads every sheet of a unicorn who is asked for, in order, with a rest after each', async () => {
     const l = loader();
     const waits: number[] = [];
-    const sheets = new FineSheets(l.textures, manifest, true, async (ms) => void waits.push(ms));
+    const sheets = new FineSheets(l.textures, manifest, 'herd', async (ms) => void waits.push(ms));
     sheets.want('wildstar');
     await settle();
     expect(l.log).toEqual(Array.from({ length: PAGES }, (_, p) => `load wildstar ${p}`));
@@ -53,7 +53,7 @@ describe('bringing in the fine sheets of the unicorns who are out', () => {
 
   it('brings the unicorns in the order they were asked for, one sheet at a time', async () => {
     const l = loader();
-    const sheets = new FineSheets(l.textures, manifest, true, () => Promise.resolve());
+    const sheets = new FineSheets(l.textures, manifest, 'herd', () => Promise.resolve());
     const order = ['storm', 'wildstar', 'leaf'] as const;
     for (const id of order) sheets.want(id);
     await settle();
@@ -65,7 +65,7 @@ describe('bringing in the fine sheets of the unicorns who are out', () => {
     const l = loader();
     let release: () => void = () => undefined;
     let resting = 0;
-    const sheets = new FineSheets(l.textures, manifest, true, () => {
+    const sheets = new FineSheets(l.textures, manifest, 'herd', () => {
       resting += 1;
       return new Promise<void>((resolve) => (release = resolve));
     });
@@ -80,7 +80,7 @@ describe('bringing in the fine sheets of the unicorns who are out', () => {
 
   it('asks for a unicorn once however often she is put on screen', async () => {
     const l = loader();
-    const sheets = new FineSheets(l.textures, manifest, true, () => Promise.resolve());
+    const sheets = new FineSheets(l.textures, manifest, 'herd', () => Promise.resolve());
     sheets.want('river');
     sheets.want('river');
     await settle();
@@ -91,7 +91,7 @@ describe('bringing in the fine sheets of the unicorns who are out', () => {
 
   it('takes an ask that comes while another unicorn is coming, and brings her after', async () => {
     const l = loader();
-    const sheets = new FineSheets(l.textures, manifest, true, () => Promise.resolve());
+    const sheets = new FineSheets(l.textures, manifest, 'herd', () => Promise.resolve());
     sheets.want('glacier');
     await Promise.resolve();
     sheets.want('cinder');
@@ -99,9 +99,17 @@ describe('bringing in the fine sheets of the unicorns who are out', () => {
     expect(l.log.map((entry) => entry.split(' ')[1])).toEqual(eachSheetOf(['glacier', 'cinder']));
   });
 
+  it('loads only Wildstar for a device that shows the fine facings of the leader alone', async () => {
+    const l = loader();
+    const sheets = new FineSheets(l.textures, manifest, 'leader', () => Promise.resolve());
+    for (const id of ['leaf', 'wildstar', 'storm']) sheets.want(id as UnicornId);
+    await settle();
+    expect(l.log).toEqual(Array.from({ length: PAGES }, (_, p) => `load wildstar ${p}`));
+  });
+
   it('loads nothing on a device that does not show the fine facings', async () => {
     const l = loader();
-    const sheets = new FineSheets(l.textures, manifest, false, () => Promise.resolve());
+    const sheets = new FineSheets(l.textures, manifest, 'none', () => Promise.resolve());
     sheets.want('wildstar');
     await settle();
     expect(l.log).toEqual([]);
@@ -110,7 +118,7 @@ describe('bringing in the fine sheets of the unicorns who are out', () => {
   it('leaves a unicorn with the eight she has when a sheet does not come, goes on to the next, and asks for her again when she is next put on screen', async () => {
     let failing = true;
     const l = loader((id) => id === 'leaf' && failing);
-    const sheets = new FineSheets(l.textures, manifest, true, () => Promise.resolve());
+    const sheets = new FineSheets(l.textures, manifest, 'herd', () => Promise.resolve());
     sheets.want('leaf');
     sheets.want('storm');
     await settle();

@@ -67,11 +67,21 @@ const balloons = (page: Page): Promise<BalloonView> =>
 /** A real touch on the screen at a place in the game's units. */
 const touch = (page: Page, x: number, y: number, unit: number): Promise<void> => page.mouse.click(x * unit, y * unit);
 
+/** How far from a friend's middle a touch is taken as a touch on the friend. */
+const FRIEND_REACH = 44;
+
 /**
  * The balloon a child who has understood would go for: one that sings the note the song asks for
- * and that can be reached.
+ * and that can be reached. A touch goes to the bouquet first, then a friend, then what floats, and
+ * to whatever is drawn on top where balloons overlap. So the one to pick is the one with the most
+ * clear sky around its middle, which no other balloon or friend can take a touch away from.
  */
 function wanted(v: BalloonView): { x: number; y: number } | null {
+  const clearance = (b: BalloonView['balloons'][number]): number =>
+    Math.min(
+      ...v.balloons.filter((o) => o !== b && o.ready).map((o) => Math.hypot(o.x - b.x, o.y - b.y) - o.r),
+      ...v.friends.map((f) => Math.hypot(f.x - b.x, f.y - b.y) - FRIEND_REACH),
+    );
   const seen = v.balloons.filter(
     (b) =>
       b.kind === 'note' &&
@@ -82,8 +92,7 @@ function wanted(v: BalloonView): { x: number; y: number } | null {
       b.x > 12 &&
       b.x < v.view.w - 12,
   );
-  // The bouquet last, since it is the one that is always there.
-  return seen.sort((a, b) => Number(a.tied) - Number(b.tied))[0] ?? null;
+  return seen.sort((a, b) => clearance(b) - clearance(a))[0] ?? null;
 }
 
 async function openStand(page: Page, which: string = STANDS.party): Promise<void> {

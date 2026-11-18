@@ -216,28 +216,43 @@
 }
 
 /*
- * All the tabs go across when each has room for its picture. On a sheet too narrow for that they
- * sit in two rows, half to a row.
+ * One row of tabs, each as wide as its picture needs. There are more pages than go across a phone,
+ * so the row is swiped along, and the page that is open is kept in the middle of it. When they all
+ * go across, the auto margins at the two ends keep them in the middle of the sheet instead.
  */
 .book-tabs {
   --tab-gap: clamp(4px, 1vw, 10px);
-  --across: var(--tabs, 6);
+  --tab-w: clamp(46px, calc(var(--tab-pic) + 14px), 64px);
+  position: relative;
   display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+  flex-wrap: nowrap;
   gap: var(--tab-gap);
+  /* Room for the star on a finished page, which the edge of a row that scrolls would cut off. */
+  padding: 5px 7px 3px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
-@container book (max-width: 480px) {
-  .book-tabs {
-    --across: var(--half, 3);
-  }
+.book-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.book-tab:first-child {
+  margin-left: auto;
+}
+
+.book-tab:last-child {
+  margin-right: auto;
 }
 
 .book-tab {
   position: relative;
-  flex: 0 0 calc((100% - (var(--across) - 1) * var(--tab-gap)) / var(--across));
-  max-width: 112px;
+  flex: 0 0 var(--tab-w);
+  scroll-snap-align: center;
   min-width: 0;
   /* The picture and the dots are made to fit the tab, so the tab says how wide it is. */
   container-type: inline-size;
@@ -266,14 +281,14 @@
 
 /* A page that is finished glows, and carries a star. */
 .book-tab[data-complete="true"] {
-  box-shadow: 0 0 12px rgb(255 215 94 / 0.45);
+  box-shadow: 0 0 6px rgb(255 215 94 / 0.5);
 }
 
 .book-tab[data-complete="true"]::after {
   content: "";
   position: absolute;
-  top: -7px;
-  right: -5px;
+  top: -4px;
+  right: -4px;
   width: 17px;
   height: 17px;
   background:
@@ -366,6 +381,10 @@
     gap: 2px;
     padding: 2px 2px 3px;
     border-width: 2px;
+  }
+
+  .book-tabs {
+    padding: 3px 5px 0;
   }
 }
 

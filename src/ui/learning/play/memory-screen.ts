@@ -2,9 +2,10 @@ import type { WordId } from '../../../content/lexicon';
 import type { CardView, MemoryHandlers, MemoryScreen, MemoryView, SizeView } from '../../../game/play-ports';
 import { focusedIndex, h } from '../../dom';
 import type { OverlayDeps } from '../../overlay';
-import { ICON_SAY, ICON_STAR, ICON_STAR_EMPTY } from '../icons';
+import { ICON_NEXT, ICON_SAY, ICON_STAR, ICON_STAR_EMPTY } from '../icons';
 import { onPress } from '../reading/press';
 import { type Parts, PlayFrame } from './frame';
+import { fitGrid } from './grid';
 
 export interface MemoryScreenDeps extends OverlayDeps {
   /** The picture of a word, as an image the page can show. */
@@ -32,9 +33,16 @@ export class MemoryTable implements MemoryScreen {
   private deal = -1;
   private cards: HTMLButtonElement[] = [];
   private pills: HTMLButtonElement[] = [];
+  /**
+   * The same choice of size as a step back, what is chosen and a step on, for a screen that is too
+   * short to hold eight pills in a row without taking the height from the cards.
+   */
+  private stepper: { less: HTMLButtonElement; more: HTMLButtonElement; now: HTMLElement } | null = null;
   private board: HTMLElement | null = null;
   private won: HTMLElement | null = null;
   private hearing: HTMLButtonElement | null = null;
+  /** Watches the board for a change of its room, which turns the cards another way. */
+  private watching: ResizeObserver | null = null;
 
   constructor(
     private readonly deps: MemoryScreenDeps,
@@ -59,10 +67,13 @@ export class MemoryTable implements MemoryScreen {
   }
 
   close(): void {
+    this.watching?.disconnect();
+    this.watching = null;
     this.frame.close();
     this.deal = -1;
     this.cards = [];
     this.pills = [];
+    this.stepper = null;
     this.board = null;
     this.won = null;
     this.hearing = null;
@@ -79,8 +90,37 @@ export class MemoryTable implements MemoryScreen {
     this.hearing.innerHTML = ICON_SAY;
     onPress(this.hearing, () => this.handlers.hear());
     const sizes = h('div', { class: 'play-sizes', role: 'group', 'aria-label': 'How many cards' });
-    parts.tools.append(sizes, this.hearing);
+    parts.tools.append(sizes, this.step(), this.hearing);
     return parts;
+  }
+
+  /** The stepper, which a short screen shows in place of the pills. */
+  private step(): HTMLElement {
+    const button = (name: string, label: string, flip: boolean): HTMLButtonElement => {
+      const b = h('button', {
+        type: 'button',
+        class: 'play-step round',
+        'aria-label': label,
+        'data-content-id': `memory.${name}`,
+        'data-flip': String(flip),
+      });
+      b.innerHTML = ICON_NEXT;
+      return b;
+    };
+    const less = button('step-less', 'Fewer cards', true);
+    const more = button('step-more', 'More cards', false);
+    const now = h('span', { class: 'play-step-now', 'data-content-id': 'memory.now', role: 'status' });
+    this.stepper = { less, more, now };
+    onPress(less, () => this.stepBy(-1));
+    onPress(more, () => this.stepBy(1));
+    return h('div', { class: 'play-stepper', role: 'group', 'aria-label': 'How many cards' }, less, now, more);
+  }
+
+  /** A step to the next size that is smaller or bigger than the one chosen. */
+  private stepBy(way: -1 | 1): void {
+    const at = this.pills.findIndex((pill) => pill.getAttribute('aria-pressed') === 'true');
+    const next = this.pills[at + way];
+    if (next) this.handlers.size(Number(next.dataset.pairs));
   }
 
   /**
@@ -111,6 +151,15 @@ export class MemoryTable implements MemoryScreen {
       );
       pill.innerHTML = `<span class="play-size-n">${size.pairs * 2}</span><span class="play-size-stars" aria-hidden="true">${stars(size.stars)}</span>`;
     });
+    const chosen = view.sizes.findIndex((size) => size.chosen);
+    if (this.stepper && chosen >= 0) {
+      const size = view.sizes[chosen]!;
+      this.stepper.now.dataset.pairs = String(size.pairs);
+      this.stepper.now.innerHTML = `<span class="play-size-n">${size.pairs * 2}</span><span class="play-size-stars" aria-hidden="true">${stars(size.stars)}</span>`;
+      this.stepper.now.setAttribute('aria-label', `${size.pairs * 2} cards`);
+      this.stepper.less.setAttribute('aria-disabled', String(chosen === 0));
+      this.stepper.more.setAttribute('aria-disabled', String(chosen === view.sizes.length - 1));
+    }
   }
 
   private drawBoard(parts: Parts, view: MemoryView): void {
@@ -150,18 +199,41 @@ export class MemoryTable implements MemoryScreen {
         },
         h('span', { class: 'mem-flip' }, back, face),
       );
-      onPress(node, () => this.handlers.turn(place));
+      onPress(node, () => this.handlers.turn(place), { everyFinger: true });
       return node;
     });
     const board = h('div', { class: 'mem-board', 'data-pairs': view.pairs, 'data-entering': 'true' }, ...this.cards);
     window.setTimeout(() => delete board.dataset.entering, 700);
     this.board = board;
     parts.body.replaceChildren(board);
+    this.lay(board, view.cards.length);
+  }
+
+  /**
+   * Chooses how many cards go across and down from the room the board has, now and whenever the
+   * room changes, as it does when a phone is turned over.
+   */
+  private lay(board: HTMLElement, count: number): void {
+    this.watching?.disconnect();
+    const set = (): void => {
+      const style = getComputedStyle(board);
+      const across = board.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight);
+      const down = board.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+      const { cols, rows } = fitGrid(count, across, down, parseFloat(style.columnGap) || 0);
+      board.style.setProperty('--cols', String(cols));
+      board.style.setProperty('--rows', String(rows));
+    };
+    set();
+    if (typeof ResizeObserver !== 'function') return;
+    this.watching = new ResizeObserver(set);
+    this.watching.observe(board);
   }
 
   private drawWon(parts: Parts, view: MemoryView): void {
     const won = view.won!;
     if (this.board) {
+      this.watching?.disconnect();
+      this.watching = null;
       this.board.remove();
       this.board = null;
       this.cards = [];

@@ -15,7 +15,7 @@ import {
   SKY_THEME,
   type WallPiece,
 } from '../../../art/world/hall';
-import type { Recipe } from '../types';
+import type { BundleId, Recipe } from '../types';
 
 const SRC = [
   'assets/env/kit/hall.ts',
@@ -44,8 +44,8 @@ const copy = (img: Rgba): Rgba => crop(img, 0, 0, img.width, img.height);
  * The architecture of a hall: the back wall in pieces, the columns over its joints, the side walls,
  * and the door seen from inside.
  */
-function shell(
-  bundle: 'treasure-house' | 'palace-hall',
+export function shell(
+  bundle: BundleId,
   pieces: readonly WallPiece[],
   prefix: string,
   doorId: string | null,

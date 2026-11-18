@@ -9,6 +9,14 @@ import type { LowEndChoice } from '../shared/save';
  */
 export type ProfileId = 'standard' | 'low';
 
+/**
+ * Whose fine facings a device is given. Each unicorn who is out holds about 18 MiB of graphics
+ * memory for hers. `herd` is all of them. `leader` is Wildstar's alone, the one the child steers
+ * and watches turn: it is a seventh of the memory, and the followers behind her are drawn at the
+ * nearest of the eight they have. `none` is the eight of the first sheet for everyone.
+ */
+export type FineReach = 'herd' | 'leader' | 'none';
+
 export interface Profile {
   id: ProfileId;
   /**
@@ -59,14 +67,15 @@ export interface Profile {
    */
   soundBudget: number;
   /**
-   * Whether a unicorn is drawn at every one of her 32 facings. The 26 facings of walking and
+   * Which unicorns are drawn at every one of their 32 facings. The 26 facings of walking and
    * standing that the first sheet does not draw come in sheets after play has begun, and each
-   * unicorn who is out holds about 18 MiB of graphics memory for them. A device that does not take
-   * them shows the nearest of the eight, as every unicorn did before there were 32. Low-end mode
-   * does not take them, and nor does a device that says it has little memory
-   * (`FINE_FACINGS_MIN_GB`).
+   * unicorn who is out holds about 18 MiB of graphics memory for them. One who does not get them
+   * shows the nearest of the eight, as every unicorn did before there were 32. Low-end mode gives
+   * them to Wildstar only, so that the unicorn a child steers still turns smoothly on a tablet
+   * that is short of memory and of frames, and a device that says it has little memory gets the
+   * same (`FINE_HERD_MIN_GB`, `FINE_LEADER_MIN_GB`).
    */
-  fineFacings: boolean;
+  fineFacings: FineReach;
 }
 
 export const PROFILES: Readonly<Record<ProfileId, Profile>> = {
@@ -80,7 +89,7 @@ export const PROFILES: Readonly<Record<ProfileId, Profile>> = {
     glowsLast: false,
     wonderQuality: 2,
     soundBudget: 600,
-    fineFacings: true,
+    fineFacings: 'herd',
   },
   low: {
     id: 'low',
@@ -92,7 +101,7 @@ export const PROFILES: Readonly<Record<ProfileId, Profile>> = {
     glowsLast: true,
     wonderQuality: 0,
     soundBudget: 250,
-    fineFacings: false,
+    fineFacings: 'leader',
   },
 };
 
@@ -102,19 +111,25 @@ const FIRE_TABLET = /\bSilk\/|\bKF[A-Z]{2,6}\b/;
 export const looksLowEnd = (userAgent: string): boolean => FIRE_TABLET.test(userAgent);
 
 /**
- * The least memory, in gigabytes, a device must say it has to be given the fine facings. The fine
- * sheets of all six unicorns are 109 MiB of graphics memory on top of the 143 MiB that everything
- * else takes, and a device with 2 GB or less is not asked for that. Chromium says how much memory a
- * device has, rounded down to a power of two (0.25, 0.5, 1, 2, 4 or 8). Safari and Firefox do not
- * say, and a device that does not say is given them.
+ * The least memory, in gigabytes, a device must say it has to be given the fine facings of the
+ * whole herd. The fine sheets of all six unicorns are 109 MiB of graphics memory on top of the 143
+ * MiB that everything else takes, and a device with under 4 GB is not asked for that. Chromium says
+ * how much memory a device has, rounded down to a power of two (0.25, 0.5, 1, 2, 4 or 8). Safari
+ * and Firefox do not say, and a device that does not say is given them.
  */
-const FINE_FACINGS_MIN_GB = 4;
+const FINE_HERD_MIN_GB = 4;
+
+/**
+ * The least a device must say it has to be given Wildstar's fine facings, 18 MiB. A device with
+ * under 2 GB keeps the eight for everyone.
+ */
+const FINE_LEADER_MIN_GB = 2;
 
 /**
  * The standard picture on a device that says it is short of memory: everything but the fine
- * facings.
+ * facings of the followers, and all of them when it is very short.
  */
-const STANDARD_SHORT_OF_MEMORY: Profile = { ...PROFILES.standard, fineFacings: false };
+const shortOfMemory = (fineFacings: FineReach): Profile => ({ ...PROFILES.standard, fineFacings });
 
 /**
  * The parent's choice, with automatic settled by what this device says it is and how much memory it
@@ -123,6 +138,7 @@ const STANDARD_SHORT_OF_MEMORY: Profile = { ...PROFILES.standard, fineFacings: f
  */
 export function chooseProfile(choice: LowEndChoice, userAgent: string, memoryGB?: number): Profile {
   if (choice === 'on' || (choice === 'auto' && looksLowEnd(userAgent))) return PROFILES.low;
-  if (choice === 'auto' && memoryGB !== undefined && memoryGB < FINE_FACINGS_MIN_GB) return STANDARD_SHORT_OF_MEMORY;
+  if (choice === 'auto' && memoryGB !== undefined && memoryGB < FINE_LEADER_MIN_GB) return shortOfMemory('none');
+  if (choice === 'auto' && memoryGB !== undefined && memoryGB < FINE_HERD_MIN_GB) return shortOfMemory('leader');
   return PROFILES.standard;
 }

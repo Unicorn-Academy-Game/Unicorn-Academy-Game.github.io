@@ -178,14 +178,14 @@ describe('sitting down at the memory table', () => {
     expect(r.said).toEqual([[MEMORY_START_CLIP]]);
   });
 
-  it('is never put over itself, and is not wanted with learning off', () => {
+  it('is never put over itself, and sits the player down with learning off as well', () => {
     const r = rig();
     expect(r.game.open()).toBe('up');
     expect(r.game.open()).toBe('busy');
     const off = rig({ settings: { on: false } });
-    expect(off.game.open()).toBe('off');
-    expect(off.screen.views).toHaveLength(0);
-    expect(off.log).toEqual([]);
+    expect(off.game.open()).toBe('up');
+    expect(off.screen.views).toHaveLength(1);
+    expect(off.log).toEqual(['freeze']);
   });
 
   it('stops saying what to do once the player has played a couple of games, and says it again when they ask', () => {
@@ -380,12 +380,17 @@ describe('winning', () => {
     winIt(r);
     r.screen.handlers.more();
     expect(r.screen.latest.pairs).toBe(8);
+    for (const pairs of [12, 16, 24, 32]) {
+      winIt(r);
+      r.screen.handlers.more();
+      expect(r.screen.latest.pairs).toBe(pairs);
+    }
     winIt(r);
     expect(r.screen.latest.won!.next).toBeNull();
     const deal = r.screen.latest.deal;
     r.screen.handlers.more();
     expect(r.screen.latest.deal, 'nothing happens').toBe(deal);
-    expect(r.record().memory.played).toBe(5);
+    expect(r.record().memory.played).toBe(9);
   });
 
   it('ignores Play again and More cards while a game is being played', () => {
@@ -459,16 +464,16 @@ describe('leaving', () => {
     expect(states(r).every((s) => s === 'down')).toBe(true);
   });
 
-  it('goes away when a parent turns learning off, and stays when something else changes', () => {
-    const r = rig();
+  it('stays up when a parent turns learning off, keeps what was earned, and shows the voice as it is now', () => {
+    const r = rig({ settings: { say: true } });
     r.game.open();
-    r.setSettings({ say: false });
+    expect(r.screen.latest.speech).toBe(true);
+    r.setSettings({ on: false, say: false });
     r.game.settingsChanged();
     expect(r.game.busy).toBe(true);
-    r.setSettings({ on: false });
-    r.game.settingsChanged();
-    expect(r.game.busy).toBe(false);
-    expect(r.log.at(-1)).toBe('thaw');
+    expect(r.screen.up).toBe(true);
+    expect(r.screen.latest.speech).toBe(false);
+    expect(r.log).toEqual(['freeze']);
   });
 
   it('leaves the voice and the sounds to fail without ever stopping the game', () => {

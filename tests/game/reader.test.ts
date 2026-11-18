@@ -51,12 +51,12 @@ describe('sitting down', () => {
     expect(spoken(r)).toEqual([]);
   });
 
-  it('is not put over itself, and is not wanted with learning off', () => {
+  it('is not put over itself, and sits the player down with learning off as well', () => {
     const off = rig({ settings: { on: false } });
-    expect(off.reader.open()).toBe('off');
-    expect(off.reader.busy).toBe(false);
-    expect(off.log).toEqual([]);
-    expect(off.screen.views).toEqual([]);
+    expect(off.reader.open()).toBe('up');
+    expect(off.reader.busy).toBe(true);
+    expect(off.log).toEqual(['freeze']);
+    expect(off.screen.views).toHaveLength(1);
     const r = rig();
     r.reader.open();
     expect(r.reader.open()).toBe('busy');
@@ -74,18 +74,17 @@ describe('sitting down', () => {
     expect(r.reader.open()).toBe('up');
   });
 
-  it('puts the screen away when a parent turns learning off, and not for any other change', () => {
+  it('stays up when a parent changes what is on, and does nothing when it is not up', () => {
     const r = rig();
+    r.reader.settingsChanged();
+    expect(r.screen.views).toEqual([]);
     r.reader.open();
     r.setSettings({ say: false });
     r.reader.settingsChanged();
-    expect(r.reader.busy).toBe(true);
     r.setSettings({ on: false });
     r.reader.settingsChanged();
-    expect(r.reader.busy).toBe(false);
-    expect(r.log.slice(-2)).toEqual(['close', 'thaw']);
-    r.reader.settingsChanged();
-    expect(r.log.filter((entry) => entry === 'thaw')).toHaveLength(1);
+    expect(r.reader.busy).toBe(true);
+    expect(r.log).toEqual(['freeze']);
   });
 });
 

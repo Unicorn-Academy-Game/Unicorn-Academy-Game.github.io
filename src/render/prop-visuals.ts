@@ -186,6 +186,9 @@ const DOORS: Readonly<Record<string, { sprite: string; bias: number }>> = {
   'stable-in': { sprite: 'door-stable-in', bias: 1 },
   'manor-out': { sprite: 'door-manor-out', bias: 0.5 },
   'manor-in': { sprite: 'door-manor-in', bias: 1 },
+  'magic-in': { sprite: 'door-magic-in', bias: 1 },
+  'hut-in': { sprite: 'door-hut-in', bias: 1 },
+  'cabin-in': { sprite: 'door-cabin-in', bias: 1 },
 };
 
 /**
@@ -399,13 +402,16 @@ export function swellOf(seconds: number, total: number): number {
 }
 
 /**
- * How far the door of the hut is open, from 0 to 1: it swings wide, stays a moment and swings shut.
+ * How far the door of the hut is open, from 0 to 1, `seconds` after it was tapped: it swings wide
+ * and stays open while the herd goes in.
  */
-export function doorwayOf(seconds: number, total: number): number {
-  return smooth(seconds / 0.7) * smooth((total - seconds) / 0.7);
+export function doorwayOf(seconds: number): number {
+  return smooth(seconds / 0.6);
 }
 
 const GLOW = 'cc-halo';
+/** The same glow, as the beach and the river have it in their own bundle. */
+const SHORE_GLOW = 'sh-cc-halo';
 /** How wide the glow picture is drawn, in pixels. */
 export const GLOW_ACROSS = 128;
 
@@ -413,8 +419,8 @@ export const GLOW_ACROSS = 128;
  * The soft round glow that lies on the floor behind a thing that shines, `across` pixels wide, with
  * its middle `rise` pixels above the thing's ground point.
  */
-const halo = (tint: number, across: number, rise: number, alpha: number): Layer => ({
-  sprite: GLOW,
+const halo = (tint: number, across: number, rise: number, alpha: number, sprite = GLOW): Layer => ({
+  sprite,
   show: { kind: 'frame', index: 0 },
   tint,
   glow: true,
@@ -584,13 +590,13 @@ const DOOR_LIGHT = 0xc4ff6a;
 const DOOR_SPILL = 58;
 
 /**
- * The door of the hut opens when the player taps it, shows the light inside, and closes again.
+ * The door of the hut swings open when the player taps it, shows the light inside and takes her in.
  * Wildstar stands in front of it, so the light also lies on the floor round her feet. The hut
  * itself is scenery.
  */
 const hutDoor = (f: PropFacts): Picture => {
-  const m = during(f, 'delight');
-  const open = m ? doorwayOf(m.seconds, m.total) : 0;
+  const m = during(f, 'door-opening');
+  const open = m ? doorwayOf(m.seconds) : 0;
   return {
     under: open > 0 ? halo(DOOR_LIGHT, 280, -DOOR_SPILL, 0.9 * open) : null,
     body: null,
@@ -644,6 +650,129 @@ const stageLight = (f: PropFacts): Picture => {
       alpha: 0.3 + 0.1 * breath + 0.45 * swell,
       bias: 0.5,
     }),
+  };
+};
+
+/**
+ * The clam lies shut until she taps it: then it opens on its pearl, which glows on the sand, and
+ * shuts again as the pearl is gathered.
+ */
+const clam = (f: PropFacts): Picture => {
+  const m = during(f, 'harvest');
+  return {
+    under: m ? halo(0xfff0ff, 150, 26, 0.85 * swellOf(m.seconds, m.total), SHORE_GLOW) : null,
+    body: still(m ? 'sh-clam-open' : 'sh-clam-shut'),
+    overlay: null,
+  };
+};
+
+/** The lighthouse lamp is dark and lights while it is tapped, with a glow round the lamp. */
+const lighthouse = (f: PropFacts): Picture => {
+  const m = during(f, 'delight');
+  return {
+    under: m ? halo(0xfff3a8, 380, 392, 0.8 * swellOf(m.seconds, m.total), SHORE_GLOW) : null,
+    body: still(m ? 'sh-lighthouse-lit' : 'sh-lighthouse-dark'),
+    overlay: null,
+  };
+};
+
+/** A castle site shows the stage it is at, and bounces a little as a new one goes up. */
+const CASTLE_STAGES = ['sh-bucket-pink', 'sh-mound', 'sh-castle-small', 'sh-castle-grand'] as const;
+const castleSite = (f: PropFacts): Picture => {
+  const stage = f.state?.kind === 'castle' ? f.state.stage : 0;
+  const m = during(f, 'build');
+  return body(still(CASTLE_STAGES[stage]!, m ? { dy: -delightHop(m.seconds, m.total, 16) } : {}));
+};
+
+/** The glow in the grove's own bundle, and the tint of the lamp light in the snow. */
+const GROVE_GLOW = 'xm-halo';
+const CHRISTMAS_LIGHT = 0xffe7a0;
+
+/**
+ * A present is shut with its bow on until she taps it. Then the lid comes off, the toy light shines
+ * out of it and the confetti flies.
+ */
+const present = (f: PropFacts): Picture => {
+  const wrap = lookOf(f, 'red');
+  const m = during(f, 'delight');
+  if (!m) return body(still(`xm-present-${wrap}`));
+  const hop = PROP_DEFS.present!.delight!.hop;
+  return {
+    under: halo(CHRISTMAS_LIGHT, 190, 40, 0.9 * swellOf(m.seconds, m.total), GROVE_GLOW),
+    body: still(`xm-present-open-${wrap}`, { dy: -delightHop(m.seconds, m.total, hop) }),
+    overlay: null,
+  };
+};
+
+/**
+ * A Christmas tree's lights run round it all the time, a third of the bulbs at a time, and a tap
+ * makes them dazzle: faster, brighter, with a warm light over the floor round the foot of the tree.
+ * `across` is how wide that light is, in pixels.
+ */
+const litTree =
+  (tree: string, lights: string, across: number) =>
+  (f: PropFacts): Picture => {
+    const m = during(f, 'delight');
+    const swell = m ? swellOf(m.seconds, m.total) : 0;
+    const breath = 0.5 + 0.5 * Math.sin((f.now ?? 0) * 1.6 + phaseOf(f) * Math.PI * 2);
+    return {
+      under: m ? halo(CHRISTMAS_LIGHT, across, 40, 0.55 * swell, GROVE_GLOW) : null,
+      body: still(tree),
+      overlay: loop(lights, { glow: true, alpha: 0.55 + 0.15 * breath + 0.3 * swell, bias: 1 }),
+    };
+  };
+const christmasTree = litTree('xm-tree', 'xm-tree-lights', 520);
+/** The little tree in Santa's cabin. */
+const roomTree = litTree('xw-tree', 'xw-tree-lights', 260);
+
+/**
+ * The fire in the cabin's hearth never goes out, and a tap makes it roar: the flames burn brighter
+ * and a warm light fills the floor in front of the hearth.
+ */
+const hearthFire = (f: PropFacts): Picture => {
+  const m = during(f, 'delight');
+  const swell = m ? swellOf(m.seconds, m.total) : 0;
+  const flicker = 0.5 + 0.5 * Math.sin((f.now ?? 0) * 7 + phaseOf(f) * 6);
+  return {
+    under: halo(CHRISTMAS_LIGHT, 440, -30, 0.2 + 0.08 * flicker + 0.55 * swell, GROVE_GLOW),
+    body: still('xw-hearth'),
+    overlay: loop('xw-fire', { glow: true, alpha: 0.85 + 0.15 * flicker, bias: 1 }),
+  };
+};
+
+/**
+ * The cabin's door glows warm as the herd goes in, and the light spills over the snow in front of
+ * it. The cabin is scenery, and the lit doorway is drawn on its own anchor so it lines up.
+ */
+const CABIN_SPILL = 70;
+const cabinDoor = (f: PropFacts): Picture => {
+  const m = during(f, 'door-opening');
+  const open = m ? doorwayOf(m.seconds) : 0;
+  return {
+    under: open > 0 ? halo(CHRISTMAS_LIGHT, 250, -CABIN_SPILL, 0.9 * open, GROVE_GLOW) : null,
+    body: null,
+    overlay: open > 0 ? { sprite: 'xm-cabin-lit', show: { kind: 'frame', index: 0 }, alpha: open, bias: 0.5 } : null,
+  };
+};
+
+/** The sleigh shines while it is tapped, as if it had just landed. */
+const sleigh = (f: PropFacts): Picture => {
+  const m = during(f, 'delight');
+  return {
+    under: m ? halo(CHRISTMAS_LIGHT, 260, 60, 0.7 * swellOf(m.seconds, m.total), GROVE_GLOW) : null,
+    body: still('xm-sleigh'),
+    overlay: null,
+  };
+};
+
+/** The lamp posts hold a lantern that glows warmer when it is tapped. */
+const candyLamp = (f: PropFacts): Picture => {
+  const m = during(f, 'delight');
+  const look = lookOf(f, 'red');
+  return {
+    under: halo(CHRISTMAS_LIGHT, m ? 190 : 120, 120, m ? 0.85 * swellOf(m.seconds, m.total) : 0.28, GROVE_GLOW),
+    body: still(`xm-lamp-${look}`),
+    overlay: null,
   };
 };
 
@@ -751,8 +880,38 @@ const DRAWN: Readonly<Record<string, (f: PropFacts) => Picture>> = {
   'cave-chimes': caveChimes,
   'witch-cauldron': witchCauldron,
   'hut-door': hutDoor,
+  'jar-shelf': delighted('cc-jars'),
   'cave-bed': caveBed,
   'glow-pool': glowPool,
+  'dig-spot': () => body(still('sh-mound')),
+  'castle-site': castleSite,
+  'spell-book': (f) => body(loop(`mh-book-${lookOf(f, 'rose')}`)),
+  'star-globe': () => body(loop('mh-globe')),
+  'floating-candles': () => body(loop('mh-candles')),
+  'hall-cauldron': () => body(loop('mh-cauldron')),
+  'hall-fountain': () => body(loop('mh-fountain-lotus')),
+  'hall-chandelier': delighted('mh-chandelier'),
+  clam,
+  'sand-castle': hops((f) => `sh-castle-${lookOf(f, 'grand')}`),
+  seashell: hops((f) => `sh-shell-${lookOf(f, 'scallop-pink')}`),
+  lighthouse,
+  'glitter-plant': (f) => body(loop(`sh-gl-${lookOf(f, 'bush-1')}`)),
+  'glitter-tree': () => body(loop('sh-gl-tree')),
+  present,
+  'xmas-tree': christmasTree,
+  'cabin-door': cabinDoor,
+  'cabin-hearth': hearthFire,
+  armchair: delighted('xw-armchair'),
+  'cookie-table': delighted('xw-cookies'),
+  'santa-sack': delighted('xw-sack'),
+  'toy-shelf': delighted('xw-toy-shelf'),
+  'toy-bench': delighted('xw-bench'),
+  'room-tree': roomTree,
+  sleigh,
+  'candy-lamp': candyLamp,
+  snowman: hops((f) => `xm-snowman-${lookOf(f, 'red')}`),
+  reindeer: hops(() => 'xm-reindeer'),
+  'snow-pile': hops((f) => `xm-pile-${lookOf(f, '1')}`),
 };
 
 /**

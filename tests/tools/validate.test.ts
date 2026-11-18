@@ -587,7 +587,7 @@ describe.skipIf(!hasFfmpeg())('the sound files', () => {
   it('decode to what the manifest says: loud enough, repeating cleanly, with every sound inside its window', () => {
     const { found, measured } = checkAudioFiles(SHIPPED, manifestOf(SHIPPED).audio!);
     expect(found).toEqual([]);
-    expect(Object.keys(measured!.loops)).toHaveLength(9);
+    expect(Object.keys(measured!.loops)).toHaveLength(10);
     for (const loop of Object.values(measured!.loops)) {
       expect(Math.abs(loop.joinLag)).toBeLessThanOrEqual(4);
       expect(loop.joinMatch).toBeGreaterThan(0.8);

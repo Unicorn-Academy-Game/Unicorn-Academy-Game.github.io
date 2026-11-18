@@ -54,7 +54,7 @@ interface Asset {
 }
 interface Hooks {
   stage: { scene: Scene };
-  profile: { id: string; fineFacings: boolean };
+  profile: { id: string; fineFacings: string };
   manifest: { unicorns: Record<string, Asset> };
   fine: { want(id: string): void };
   controller: {
@@ -128,6 +128,22 @@ const fromFirstSheet =
     return { sheet: 'unicorn:wildstar', picture: String(clip.frames[0]!.rect), flipped: clip.flip === true };
   };
 
+/**
+ * What is drawn for a body once her fine sheets are in: the picture made for the facing, or the
+ * first sheet's for the six it draws.
+ */
+const fromFineSheets =
+  (asset: Asset) =>
+  (row: Body): { sheet: string; picture: string; flipped: boolean } => {
+    const fine = asset.fine!.clips[row.clip]![facingKey(row.facing)];
+    const drawn = fine ?? asset.clips[row.clip]![facingKey(row.facing)]!;
+    return {
+      sheet: fine ? `unicorn:wildstar:${fine.page}` : 'unicorn:wildstar',
+      picture: String(drawn.frames[0]!.rect),
+      flipped: !fine && drawn.flip === true,
+    };
+  };
+
 test.describe('the fine facings, in the real game', () => {
   test.setTimeout(480_000);
 
@@ -140,16 +156,7 @@ test.describe('the fine facings, in the real game', () => {
     await waitForFine(page, 'wildstar');
     const asset = await wildstarAsset(page);
     const rows = await bodies(page, EVERY);
-    const first = (clip: string, facing: UnicornFacing): { sheet: string; picture: string; flipped: boolean } => {
-      const fine = asset.fine!.clips[clip]![facingKey(facing)];
-      const drawn = fine ?? asset.clips[clip]![facingKey(facing)]!;
-      return {
-        sheet: fine ? `unicorn:wildstar:${fine.page}` : 'unicorn:wildstar',
-        picture: String(drawn.frames[0]!.rect),
-        flipped: !fine && drawn.flip === true,
-      };
-    };
-    expect(wrong(rows, (r) => first(r.clip, r.facing))).toEqual([]);
+    expect(wrong(rows, fromFineSheets(asset))).toEqual([]);
     // Nothing is turned about once the picture drawn for the facing is there, and the six that the
     // first sheet draws stay on it.
     expect(rows.filter((r) => r.flipped)).toEqual([]);
@@ -314,8 +321,8 @@ test.describe('the fine facings, in the real game', () => {
     expect(await page.evaluate(() => window.__ua!.faults.total)).toBe(0);
   });
 
-  // A device that is not up to the fine facings is never asked for them: not in the network, not in
-  // the engine's memory. It keeps the eight facings it has had.
+  // A device that is not up to the fine facings at all is never asked for them: not in the network,
+  // not in the engine's memory. It keeps the eight facings it has had.
   async function keepsTheEight(page: Page, profile: { id: string }): Promise<void> {
     const asked: string[] = [];
     page.on('request', (request) => {
@@ -324,7 +331,7 @@ test.describe('the fine facings, in the real game', () => {
     await openGame(page);
     expect(await page.evaluate(() => (window.__ua as unknown as Hooks).profile)).toMatchObject({
       ...profile,
-      fineFacings: false,
+      fineFacings: 'none',
     });
     expect(await page.evaluate(() => document.documentElement.dataset.profile)).toBe(profile.id);
     await play(page);
@@ -353,18 +360,58 @@ test.describe('the fine facings, in the real game', () => {
     expect(await page.evaluate(() => window.__ua!.faults.total)).toBe(0);
   }
 
+  // A device that is short of memory is given the fine facings of Wildstar alone: the sheets of the
+  // six come to 109 MiB, hers are 18, and she is the one a child steers and watches turn. The
+  // followers keep the eight they have.
+  async function leaderOnly(page: Page, profile: { id: string }): Promise<void> {
+    const asked: string[] = [];
+    page.on('request', (request) => {
+      if (FINE_SHEET.test(request.url())) asked.push(request.url());
+    });
+    await openGame(page);
+    expect(await page.evaluate(() => (window.__ua as unknown as Hooks).profile)).toMatchObject({
+      ...profile,
+      fineFacings: 'leader',
+    });
+    expect(await page.evaluate(() => document.documentElement.dataset.profile)).toBe(profile.id);
+    await play(page);
+    await freeze(page);
+    await page.evaluate(
+      (ids) =>
+        ids.forEach((id) => {
+          (window.__ua as unknown as Hooks).fine.want(id);
+        }),
+      [...UNICORN_IDS],
+    );
+    await waitForFine(page, 'wildstar');
+    await page.waitForTimeout(1_000);
+    expect([...new Set(asked.map((url) => /\/unicorns\/([a-z]+)\.fine/.exec(url)![1]))]).toEqual(['wildstar']);
+    expect(
+      await page.evaluate(
+        (ids) => ids.filter((id) => (window.__ua as unknown as Hooks).stage.scene.textures.exists(`unicorn:${id}:0`)),
+        [...UNICORN_IDS],
+      ),
+    ).toEqual(['wildstar']);
+    const asset = await wildstarAsset(page);
+    const rows = await bodies(page, EVERY);
+    expect(wrong(rows, fromFineSheets(asset))).toEqual([]);
+    expect(rows.filter((r) => r.flipped)).toEqual([]);
+    expect(await page.evaluate(() => window.__ua!.invariants())).toEqual([]);
+    expect(await page.evaluate(() => window.__ua!.faults.total)).toBe(0);
+  }
+
   test.describe('on a Fire tablet', () => {
     test.use({ userAgent: SILK });
 
-    test('no fine sheet is asked for, none is made into a texture, and the eight facings are drawn as they were', async ({
+    test("only Wildstar's fine sheets are asked for and drawn, and she turns through all 32 facings as she does anywhere", async ({
       page,
     }) => {
-      await keepsTheEight(page, { id: 'low' });
+      await leaderOnly(page, { id: 'low' });
     });
   });
 
-  // Chromium says how much memory a device has, and a device with 2 GB or less is not asked for 109
-  // MiB of unicorns on top of the rest. It is otherwise drawn the standard way.
+  // Chromium says how much memory a device has. A device with 2 GB is given Wildstar's fine
+  // facings and is otherwise drawn the standard way, and one with less keeps the eight for all.
   test.describe('on a Chrome that says it has 2 GB of memory', () => {
     test.beforeEach(async ({ page }) => {
       await page.addInitScript(() =>
@@ -372,17 +419,19 @@ test.describe('the fine facings, in the real game', () => {
       );
     });
 
-    test('the picture is the standard one, no fine sheet is asked for, and the eight facings are drawn as they were', async ({
+    test("the picture is the standard one and only Wildstar's fine sheets are asked for and drawn", async ({
       page,
     }) => {
-      await keepsTheEight(page, { id: 'standard' });
+      await leaderOnly(page, { id: 'standard' });
     });
 
-    test('a parent who has turned low-end mode off is given the fine facings all the same', async ({ page }) => {
+    test('a parent who has turned low-end mode off is given the fine facings of the whole herd all the same', async ({
+      page,
+    }) => {
       await openGame(page);
       expect(await page.evaluate(() => (window.__ua as unknown as Hooks).profile)).toMatchObject({
         id: 'standard',
-        fineFacings: false,
+        fineFacings: 'leader',
       });
       await page.evaluate(async () => {
         window.__ua!.settings.update({ lowEnd: 'off' } as never);
@@ -391,12 +440,26 @@ test.describe('the fine facings, in the real game', () => {
       await openGame(page);
       expect(await page.evaluate(() => (window.__ua as unknown as Hooks).profile)).toMatchObject({
         id: 'standard',
-        fineFacings: true,
+        fineFacings: 'herd',
       });
       await play(page);
       await freeze(page);
       await waitForFine(page, 'wildstar');
       expect(await page.evaluate(() => window.__ua!.faults.total)).toBe(0);
+    });
+  });
+
+  test.describe('on a Chrome that says it has 1 GB of memory', () => {
+    test.beforeEach(async ({ page }) => {
+      await page.addInitScript(() =>
+        Object.defineProperty(navigator, 'deviceMemory', { value: 1, configurable: true }),
+      );
+    });
+
+    test('the picture is the standard one, no fine sheet is asked for, and the eight facings are drawn as they were', async ({
+      page,
+    }) => {
+      await keepsTheEight(page, { id: 'standard' });
     });
   });
 
@@ -408,7 +471,7 @@ test.describe('the fine facings, in the real game', () => {
       await openGame(page);
       expect(await page.evaluate(() => (window.__ua as unknown as Hooks).profile)).toMatchObject({
         id: 'standard',
-        fineFacings: true,
+        fineFacings: 'herd',
       });
       await play(page);
       await freeze(page);

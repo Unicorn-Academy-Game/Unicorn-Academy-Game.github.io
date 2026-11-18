@@ -82,6 +82,16 @@ export const LearningSettings = z.object({
    * walking up.
    */
   friends: z.boolean().default(true),
+  /**
+   * The child's own switch at the maths table: whether it says its questions aloud, under the
+   * voice above, which a parent has the say of. On unless the child turns it off.
+   */
+  mathsSay: z.boolean().default(true),
+  /**
+   * The child's own switch at the maths table: whether a question whose answer is a number is
+   * answered by typing it on a keypad, as on a calculator, and not by touching one of the choices.
+   */
+  mathsKeys: z.boolean().default(false),
 });
 export type LearningSettings = z.infer<typeof LearningSettings>;
 

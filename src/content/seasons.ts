@@ -33,6 +33,22 @@ export const OPEN_AIR: Readonly<Record<MapId, boolean>> = {
   'palace-flowers': false,
   'palace-bedroom': false,
   'palace-jewel': false,
+  river: true,
+  beach: true,
+  'magic-hall': false,
+  'witch-hut': false,
+  // Drawn in winter whatever the calendar says, so its pictures are never recoloured (see SKY_OVER).
+  'santa-grove': false,
+  'santa-cabin': false,
+};
+
+/**
+ * A sky that keeps to one season all year, whatever the calendar says. It is in the weather and in
+ * the haze, and the creatures who sleep through that season are not on the map. The pictures are
+ * drawn so and are not recoloured, which is why such a map is not in `OPEN_AIR`.
+ */
+export const SKY_OVER: Readonly<Partial<Record<MapId, SeasonId>>> = {
+  'santa-grove': 'winter',
 };
 
 /** What falls from the sky. */

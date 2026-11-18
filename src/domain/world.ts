@@ -29,6 +29,7 @@ import { commandPoke, LIFE_SEED, populateLife, stepLife } from './systems/life';
 import { commandCast, scheduleResets, stepCasts, stepResets } from './systems/magic';
 import { placeNpc, stepNpcs } from './systems/npcs';
 import { newPickups, stepPickups } from './systems/pickups';
+import { stepWading } from './systems/wading';
 import { Trail } from './trail';
 import type {
   Command,
@@ -289,6 +290,7 @@ export function step(world: World): void {
   stepNpcs(world, dt);
   stepLife(world);
   stepPickups(world);
+  stepWading(world);
   stepResets(world);
 
   for (const [id, t] of world.transient) if (t.until <= world.time) world.transient.delete(id);

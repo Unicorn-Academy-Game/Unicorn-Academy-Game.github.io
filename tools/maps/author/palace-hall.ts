@@ -1,4 +1,5 @@
 import { mkdirSync, writeFileSync } from 'node:fs';
+import type { Facing } from '../../../src/shared/ids';
 import { HALL } from '../../art/world/hall';
 import { CHANDELIER_HANG, DAIS_DEPTH } from '../../art/world/throne-room';
 import { RECIPES } from '../../assets/env/registry';
@@ -229,6 +230,24 @@ export function authorPalaceHall(): {
     shape: 'ellipse',
     count: 2,
   });
+
+  // The household: the steward looks after the treasures and the guard keeps the garden door.
+  const stops = (npc: string, at: readonly (readonly [number, number, Facing])[]): void => {
+    for (const [i, [x, y, facing]] of at.entries())
+      b.anchor({ name: `${npc}-${i + 1}`, tags: [npc], pos: pt(x, y), approach: [E(x, y, facing)] });
+  };
+  stops('steward', [
+    [1792, 502, 'north'],
+    [1280, 760, 'south'],
+    [2060, 436, 'north'],
+    [500, 970, 'north'],
+  ]);
+  b.npc('steward', pt(1280, 760), 'south');
+  stops('guard', [
+    [640, 640, 'south'],
+    [900, 640, 'south'],
+  ]);
+  b.npc('guard', pt(640, 640), 'south');
 
   mkdirSync('assets/maps', { recursive: true });
   const built = buildTilesetAsset('palace-hall');

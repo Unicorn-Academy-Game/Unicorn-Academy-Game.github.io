@@ -1,5 +1,5 @@
 {
-  "sourceHash": "fd75d1d0903e",
+  "sourceHash": "320fd5e0340b",
   "loops": {
     "music-forest": {
       "lufs": -20,
@@ -15,6 +15,14 @@
       "samplePeak": -8.179741023271935,
       "bytes": 578852,
       "decodedMiB": 13.916015625,
+      "drift": 0
+    },
+    "music-snow": {
+      "lufs": -20,
+      "truePeak": -8.7,
+      "samplePeak": -8.83976411359766,
+      "bytes": 654344,
+      "decodedMiB": 12.451171875,
       "drift": 0
     },
     "ambience-forest": {
@@ -90,9 +98,9 @@
       "sounds": 14
     },
     "objects": {
-      "seconds": 46.55179138321996,
-      "bytes": 300932,
-      "decodedMiB": 8.523887634277344,
+      "seconds": 47.0272335600907,
+      "bytes": 301184,
+      "decodedMiB": 8.610946655273438,
       "drift": 0,
       "sounds": 26
     }
@@ -406,9 +414,9 @@
     },
     {
       "id": "door-open.0",
-      "seconds": 0.76,
+      "seconds": 1.2354421768707482,
       "peakDb": -10.999999854613165,
-      "rmsDb": -27.87195875854181
+      "rmsDb": -30.706982264913023
     },
     {
       "id": "door-close.0",
@@ -561,5 +569,5 @@
       "rmsDb": -29.058766774543557
     }
   ],
-  "totalBytes": 3666516
+  "totalBytes": 4321112
 }

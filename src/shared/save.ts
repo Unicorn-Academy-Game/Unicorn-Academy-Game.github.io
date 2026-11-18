@@ -18,6 +18,8 @@ export const SavedPropState = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('flowerbed'), state: z.enum(['leafy', 'flowering']) }),
   z.object({ kind: z.literal('lantern'), lit: z.boolean() }),
   z.object({ kind: z.literal('brazier'), lit: z.boolean() }),
+  // A place on the beach where a castle is built: bare sand, a mound, a small castle, a grand one.
+  z.object({ kind: z.literal('castle'), stage: z.number().int().min(0).max(3) }),
 ]);
 export type SavedPropState = z.infer<typeof SavedPropState>;
 

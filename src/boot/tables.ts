@@ -57,8 +57,8 @@ const BROKE: Record<TableId, string> = {
  * The reading computer, the memory table and the maths table. Each one's session, screen and sounds
  * are a chunk of their own, so the world starts as fast without them. They come down while the game
  * is quiet after Play, or else when the player first sits down, and a chunk that did not come is
- * asked for again at the next tap. Learning is the only way to them: with that off, a tap on a
- * table only makes it sparkle.
+ * asked for again at the next tap. A tap on a table opens it whether learning is on or off, and only
+ * the voice at the table is learning's.
  */
 export function makeTables({
   ui,
@@ -119,6 +119,7 @@ export function makeTables({
       ]);
       return new MathsGame({
         ...shared,
+        setSettings: (patch) => settings.update({ learning: { ...settings.get().learning, ...patch } }),
         play,
         makeScreen: (handlers) => new MathsTable({ ...overlay, picture }, handlers),
         sounds: new PlaySoundBank(wonderSound),
@@ -147,12 +148,11 @@ export function makeTables({
 
   const sitAt = (table: TableId): (() => void) => {
     const sit = (): void => {
-      // A parent may have switched learning off, or something else may have come up, in the moment
-      // it took for the tap to get here and the chunk to come.
-      const may = (): boolean => settings.get().learning.on && free();
-      if (!may()) return;
+      // Something else may have come up in the moment it took for the tap to get here and the chunk
+      // to come.
+      if (!free()) return;
       void seat[table]().then((desk) => {
-        if (!may()) return;
+        if (!free()) return;
         if (desk === null || desk.open() === 'broke') ui.showNotice(BROKE[table], { label: 'Try again', run: sit });
       });
     };

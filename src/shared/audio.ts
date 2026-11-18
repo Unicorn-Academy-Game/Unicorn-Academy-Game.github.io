@@ -113,6 +113,7 @@ export const spriteId = (id: SoundFamilyId, variant: number): string => `${id}.$
 export const LOOPS = {
   'music-forest': { kind: 'music', seconds: 36, lufs: -20 },
   'music-garden': { kind: 'music', seconds: 36, lufs: -20 },
+  'music-snow': { kind: 'music', seconds: 32, lufs: -20 },
   'ambience-forest': { kind: 'ambience', seconds: 24, lufs: -27 },
   'ambience-garden': { kind: 'ambience', seconds: 24, lufs: -27 },
   'ambience-treasure-room': { kind: 'ambience', seconds: 16, lufs: -33 },

@@ -218,7 +218,7 @@ describe('what the voice says in reading', () => {
 });
 
 describe('numbers in words', () => {
-  it('reads every number from nought to ninety-nine, and refuses anything else', () => {
+  it('reads every number from nought to nine hundred and ninety-nine, and refuses anything else', () => {
     expect([0, 5, 10, 13, 20, 21, 30, 45, 99].map(numberWords)).toEqual([
       'zero',
       'five',
@@ -230,6 +230,14 @@ describe('numbers in words', () => {
       'forty-five',
       'ninety-nine',
     ]);
-    for (const n of [-1, 100, 2.5, Number.NaN]) expect(() => numberWords(n)).toThrow(RangeError);
+    expect([100, 110, 145, 200, 290, 999].map(numberWords)).toEqual([
+      'one hundred',
+      'one hundred ten',
+      'one hundred forty-five',
+      'two hundred',
+      'two hundred ninety',
+      'nine hundred ninety-nine',
+    ]);
+    for (const n of [-1, 1000, 2.5, Number.NaN]) expect(() => numberWords(n)).toThrow(RangeError);
   });
 });

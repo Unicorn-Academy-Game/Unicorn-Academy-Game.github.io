@@ -73,7 +73,7 @@ describe('the fine facings and the memory a device says it has', () => {
   const fire = FIRE['Silk on a Fire HD 10, phone view'];
 
   it('are taken by a device that does not say how much memory it has, as Safari and Firefox do not', () => {
-    expect(chooseProfile('auto', iphone).fineFacings).toBe(true);
+    expect(chooseProfile('auto', iphone).fineFacings).toBe('herd');
     expect(chooseProfile('auto', iphone, undefined)).toBe(PROFILES.standard);
   });
 
@@ -81,12 +81,22 @@ describe('the fine facings and the memory a device says it has', () => {
     expect(chooseProfile('auto', pixel, gigabytes)).toBe(PROFILES.standard);
   });
 
-  it.each([0.25, 0.5, 1, 2])(
+  it.each([2])(
+    'are taken for Wildstar alone by a device with %s GB, which is otherwise drawn the standard way',
+    (gigabytes) => {
+      const chosen = chooseProfile('auto', pixel, gigabytes);
+      expect(chosen.fineFacings).toBe('leader');
+      expect(chosen).toEqual({ ...PROFILES.standard, fineFacings: 'leader' });
+      expect(chosen.id).toBe('standard');
+    },
+  );
+
+  it.each([0.25, 0.5, 1])(
     'are not taken by a device with %s GB, which is otherwise drawn the standard way',
     (gigabytes) => {
       const chosen = chooseProfile('auto', pixel, gigabytes);
-      expect(chosen.fineFacings).toBe(false);
-      expect(chosen).toEqual({ ...PROFILES.standard, fineFacings: false });
+      expect(chosen.fineFacings).toBe('none');
+      expect(chosen).toEqual({ ...PROFILES.standard, fineFacings: 'none' });
       expect(chosen.id).toBe('standard');
     },
   );
@@ -95,7 +105,7 @@ describe('the fine facings and the memory a device says it has', () => {
     expect(chooseProfile('off', pixel, 1)).toBe(PROFILES.standard);
   });
 
-  it('are not taken in low-end mode, with memory or without', () => {
+  it('are taken for Wildstar alone in low-end mode, with memory or without', () => {
     expect(chooseProfile('on', pixel, 8)).toBe(PROFILES.low);
     expect(chooseProfile('auto', fire, 8)).toBe(PROFILES.low);
     expect(chooseProfile('auto', fire, 1)).toBe(PROFILES.low);
@@ -114,7 +124,7 @@ describe('the two profiles', () => {
       glowsLast: false,
       wonderQuality: 2,
       soundBudget: DEFAULT_BUDGET,
-      fineFacings: true,
+      fineFacings: 'herd',
     });
   });
 
@@ -136,9 +146,9 @@ describe('the two profiles', () => {
     expect(low.soundBudget).toBeLessThan(standard.soundBudget);
     expect(low.soundBudget).toBeGreaterThan(0);
     // The fine facings take about 18 MiB of graphics memory for each unicorn who is out, which a
-    // tablet that is already short of frames is not asked for.
-    expect(standard.fineFacings).toBe(true);
-    expect(low.fineFacings).toBe(false);
+    // tablet that is already short of frames is asked for only once, for the unicorn it steers.
+    expect(standard.fineFacings).toBe('herd');
+    expect(low.fineFacings).toBe('leader');
   });
 
   it('give each profile the id it is filed under', () => {

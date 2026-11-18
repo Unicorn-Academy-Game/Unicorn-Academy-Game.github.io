@@ -45,6 +45,14 @@ export const EXIT_ICONS: Readonly<Record<ExitIcon, string>> = {
     '<ellipse cx="12" cy="13.4" rx="9.2" ry="7.2"/>',
     '<path d="M12 6.4V3.6" stroke="#6bcf5a" stroke-width="2.4" stroke-linecap="round" fill="none"/><path d="M8.6 7.6c-2 2.6-2 8 0 11M15.4 7.6c2 2.6 2 8 0 11M12 6.4v14" fill="none" stroke="#e08a2e" stroke-width="1.4" stroke-linecap="round"/>',
   ),
+  wave: picture(
+    '<path d="M2.4 9c2.4-3.4 4.4-3.4 6.8 0s4.4 3.4 6.8 0 4.4-3.4 6.8 0v10.6H2.4z"/>',
+    '<path d="M2.4 14.2c2.4-3.4 4.4-3.4 6.8 0s4.4 3.4 6.8 0 4.4-3.4 6.8 0" fill="none" stroke="#3aa8e8" stroke-width="1.6" stroke-linecap="round"/>',
+  ),
+  shell: picture(
+    '<path d="M12 20.4 3 10.4a10 7.6 0 0 1 18 0z"/><rect x="9" y="19" width="6" height="2.4" rx="1"/>',
+    '<path d="M12 19.6 6.2 9.8M12 19.6 9.2 7.6M12 19.6V6.6M12 19.6l2.8-12M12 19.6l5.8-9.8" fill="none" stroke="#ee77aa" stroke-width="1.3" stroke-linecap="round"/>',
+  ),
   door: picture('<path d="M5 21V8.6a7 7 0 0 1 14 0V21z"/>', '<circle cx="15.6" cy="14.6" r="1.3" fill="#ffd75e"/>'),
 };
 

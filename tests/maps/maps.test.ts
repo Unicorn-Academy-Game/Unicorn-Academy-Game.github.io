@@ -58,9 +58,11 @@ const near = (a: { x: number; y: number }, b: { x: number; y: number }): number 
 describe('the six maps', () => {
   it('exist, at their sizes', () => {
     expect([...MAP_IDS].sort()).toEqual([
+      'beach',
       'crystal-cave',
       'dance-floor',
       'forest',
+      'magic-hall',
       'manor-hall',
       'manor-upper',
       'palace-ballroom',
@@ -75,8 +77,12 @@ describe('the six maps', () => {
       'palace-music',
       'palace-tea',
       'playground',
+      'river',
+      'santa-cabin',
+      'santa-grove',
       'stable',
       'treasure-house',
+      'witch-hut',
     ]);
     const size = (id: MapId) => [logic(id).widthTiles, logic(id).heightTiles];
     expect(size('forest')).toEqual([64, 48]);
@@ -87,6 +93,12 @@ describe('the six maps', () => {
     expect(size('playground')).toEqual([40, 28]);
     expect(size('dance-floor')).toEqual([40, 26]);
     expect(size('crystal-cave')).toEqual([52, 42]);
+    expect(size('river')).toEqual([80, 56]);
+    expect(size('beach')).toEqual([64, 44]);
+    expect(size('magic-hall')).toEqual([40, 18]);
+    expect(size('witch-hut')).toEqual([24, 18]);
+    expect(size('santa-grove')).toEqual([56, 42]);
+    expect(size('santa-cabin')).toEqual([24, 18]);
     for (const [id, tiles] of [
       ['palace-dining', 40],
       ['palace-tea', 24],
@@ -347,11 +359,11 @@ describe('the palace garden', () => {
     }
   });
 
-  it('has the palace door, the doors to both houses, the forest gate and the rainbow gate', () => {
+  it('has the palace door, the doors to both houses, the forest gate, the rainbow gate and the river gate', () => {
     const to = l()
       .portals.map((p) => p.to.mapId)
       .sort();
-    expect(to).toEqual(['forest', 'palace-hall', 'playground', 'stable', 'treasure-house']);
+    expect(to).toEqual(['forest', 'palace-hall', 'playground', 'river', 'stable', 'treasure-house']);
   });
 
   it('grows every kind of produce: a farm of beds, an orchard of both trees, and something to tap for each', () => {
@@ -683,6 +695,12 @@ describe('living in each map with the whole herd, nobody doing anything', () => 
     'palace-music': 'from-gallery',
     'palace-ballroom': 'from-music',
     'palace-jewel': 'from-library',
+    river: 'from-garden',
+    beach: 'from-river',
+    'magic-hall': 'from-river',
+    'witch-hut': 'from-cave',
+    'santa-grove': 'from-forest',
+    'santa-cabin': 'from-grove',
   };
 
   for (const id of MAP_IDS) {
@@ -748,6 +766,60 @@ describe('living in each map with the whole herd, nobody doing anything', () => 
     run(world, 40, () => clips.add(world.npcs[0]!.anim.clip));
     expect(clips.has('brush')).toBe(true);
   }, 120_000);
+
+  const lived = [
+    'palace-garden',
+    'palace-hall',
+    'stable',
+    ...PALACE_ROOM_IDS,
+    'witch-hut',
+    'magic-hall',
+    'beach',
+    'santa-grove',
+    'santa-cabin',
+  ] as const satisfies readonly MapId[];
+  it('has somebody at work in every palace room, the hut, the magic hall, on the beach, in the Santa grove and its cabin', () => {
+    for (const id of lived.filter((m) => m !== 'palace-garden' && m !== 'stable'))
+      expect(logic(id).npcs.length, `${id} has nobody in it`).toBeGreaterThanOrEqual(1);
+  });
+
+  it.each(lived)(
+    'everyone in %s can reach every place their work takes them, and does it',
+    (id) => {
+      const map = logic(id);
+      const world = makeWorld({ map, seed: 9, arrival: { kind: 'spawn', spawnId: spawnOf[id] } });
+      expect(map.npcs.length).toBeLessThanOrEqual(4);
+      const seen = new Map<string, Set<string>>();
+      for (const placed of map.npcs) {
+        const def = NPC_DEFS[placed.npcId];
+        seen.set(placed.npcId, new Set());
+        for (const step of def.routine) {
+          const tag = step.kind === 'work' ? step.tag : step.from;
+          const spots = map.anchors.filter((a) => a.tags.includes(tag));
+          expect(spots.length, `${placed.npcId} needs somewhere tagged ${tag}`).toBeGreaterThanOrEqual(1);
+          for (const a of spots)
+            expect(
+              world.nav.sameComponent(placed.start, a.approach[0]!.pos),
+              `${placed.npcId} cannot walk to ${a.anchorId}`,
+            ).toBe(true);
+        }
+      }
+      run(world, 90, () => {
+        for (const n of world.npcs) seen.get(n.id)!.add(n.anim.clip);
+      });
+      for (const placed of map.npcs) {
+        const clips = seen.get(placed.npcId)!;
+        const worked = NPC_DEFS[placed.npcId].routine.some((s) => s.kind === 'work' && s.clip !== 'idle');
+        expect(clips.has('walk'), `${placed.npcId} never walked`).toBe(true);
+        if (worked)
+          expect(
+            [...clips].some((c) => c !== 'idle' && c !== 'walk' && c !== 'wave'),
+            `${placed.npcId} only did ${[...clips].join(', ')}`,
+          ).toBe(true);
+      }
+    },
+    120_000,
+  );
 
   it('the gardener tends the beds of the real garden', () => {
     const world = makeWorld({
@@ -820,10 +892,13 @@ describe('the palace banner', () => {
     }
   });
 
-  it('shares the camera with the Heart Hall, and no other map pulls it', () => {
+  it('shares the camera with the Heart Hall, the Magic Hall and the lighthouse, and no other map pulls it', () => {
     for (const id of MAP_IDS)
-      if (id !== 'palace-garden' && id !== 'crystal-cave') expect(maps[id].render.vista, id).toBeUndefined();
+      if (!['palace-garden', 'crystal-cave', 'river', 'beach'].includes(id))
+        expect(maps[id].render.vista, id).toBeUndefined();
     expect(maps['crystal-cave'].render.vista?.id).toBe('heart-hall');
+    expect(maps.river.render.vista?.id).toBe('hall');
+    expect(maps.beach.render.vista?.id).toBe('lighthouse');
   });
 });
 
@@ -970,7 +1045,13 @@ describe('the sky', () => {
 
   it('is painted from the top of the map down, so a camera that looks high never finds the ground above it', () => {
     const painted = MAP_IDS.filter((id) => strips(id).length > 0);
-    expect(painted, 'the maps that have a sky').toEqual(['palace-garden', 'playground', 'dance-floor']);
+    expect(painted, 'the maps that have a sky').toEqual([
+      'palace-garden',
+      'playground',
+      'dance-floor',
+      'river',
+      'beach',
+    ]);
     for (const id of painted) {
       const top = Math.min(...strips(id).map((d) => d.y - rise(id, d.sprite)));
       expect(top, `the sky of ${id} starts ${top} units down the map`).toBeLessThanOrEqual(0);
@@ -982,7 +1063,7 @@ describe('the ways out', () => {
   const doors = () => MAP_IDS.flatMap((id) => logic(id).portals.map((portal) => ({ id, portal })));
 
   it('can be walked to by their mark alone: from where the herd arrives, one move there goes through', () => {
-    expect(doors().length).toBe(35);
+    expect(doors().length).toBe(47);
     for (const { id, portal } of doors()) {
       const l = logic(id);
       const world = makeWorld({

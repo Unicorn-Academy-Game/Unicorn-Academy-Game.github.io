@@ -6,7 +6,6 @@ import { Basket } from './basket';
 import { h } from './dom';
 import { Finder, type PortraitSource } from './finder';
 import { logo } from './logo';
-import { bindHold } from './parent/gate';
 import type { StartChoices } from './start-choices';
 import { StartOptions } from './start-options';
 import './style.css';
@@ -52,10 +51,9 @@ const SVG_COMPRESS =
 /** A pair of round glasses, for the badge that says a parent is only looking around. */
 const SVG_GLASSES =
   '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6.5" cy="14" r="3.6"/><circle cx="17.5" cy="14" r="3.6"/><path d="M10.1 13.6c1.2-.9 2.6-.9 3.8 0M3 11.5 5 6h3M21 11.5 19 6h-3"/></svg>';
-/** The ring that fills while the gear is held, drawn around the button. */
-const SVG_HOLD_RING =
-  '<svg class="ring" viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="29" pathLength="100"/></svg>';
-
+/** A folded map, for the button that opens the map of the island. */
+const SVG_MAP =
+  '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.6 9 4l6 2.6L21 4v13.4L15 20.4l-6-2.6-6 2.6z"/><path d="M9 4v13.8M15 6.6v13.8"/></svg>';
 const svgButton = (className: string, label: string, svg: string): HTMLButtonElement => {
   const b = h('button', { type: 'button', class: className, 'aria-label': label });
   b.innerHTML = svg;
@@ -65,12 +63,18 @@ const svgButton = (className: string, label: string, svg: string): HTMLButtonEle
 export interface HudHandlers {
   onSound: () => void;
   /**
+   * The map button was tapped, and it is given so that focus goes back to it when the map shuts: a
+   * tap does not focus a button in Safari. Left out where there is no map, and then there is no
+   * button.
+   */
+  onMap?: (opener: HTMLElement) => void;
+  /**
    * Goes full screen or comes back. Left out where the browser cannot do it, and then there is no
    * button.
    */
   onFullscreen?: () => void;
   /**
-   * The gear was held long enough. `opener` is where focus goes back to when the controls close.
+   * The gear was tapped. `opener` is where focus goes back to when the controls close.
    */
   onParent: (opener: HTMLElement) => void;
 }
@@ -104,12 +108,10 @@ export class Ui {
   private finder: Finder | null = null;
   private basket: Basket | null = null;
   private readonly soundButton: HTMLButtonElement;
+  private readonly mapButton: HTMLButtonElement;
   private readonly fullscreenButton: HTMLButtonElement;
   private readonly settingsButton: HTMLButtonElement;
   private notice: HTMLElement | null = null;
-  private hint: HTMLElement | null = null;
-  private hintTimer = 0;
-
   constructor(private readonly root: HTMLElement) {
     this.bar = h('i');
     this.message = h('div', { class: 'message', role: 'status' });
@@ -120,14 +122,20 @@ export class Ui {
     this.titleEl.hidden = true;
 
     this.soundButton = svgButton('round', 'Sound', SVG_SOUND_ON);
+    this.mapButton = svgButton('round', 'Map', SVG_MAP);
+    this.mapButton.dataset.contentId = 'world.map.open';
+    this.mapButton.hidden = true;
     this.fullscreenButton = svgButton('round', 'Full screen', SVG_EXPAND);
     this.fullscreenButton.hidden = true;
-    this.settingsButton = svgButton(
-      'round',
-      'Parent controls. Press and hold to open.',
-      `${SVG_GEAR}${SVG_HOLD_RING}<i class="dot" aria-hidden="true"></i>`,
+    this.settingsButton = svgButton('round', 'Parent controls', `${SVG_GEAR}<i class="dot" aria-hidden="true"></i>`);
+    this.hudEl = h(
+      'div',
+      { class: 'hud' },
+      this.mapButton,
+      this.soundButton,
+      this.fullscreenButton,
+      this.settingsButton,
     );
-    this.hudEl = h('div', { class: 'hud' }, this.soundButton, this.fullscreenButton, this.settingsButton);
     this.hudEl.dataset.hidden = 'true';
     this.hudEl.hidden = true;
 
@@ -203,14 +211,15 @@ export class Ui {
     this.hudEl.hidden = false;
     requestAnimationFrame(() => delete this.hudEl.dataset.hidden);
     this.soundButton.addEventListener('click', handlers.onSound);
+    if (handlers.onMap) {
+      this.mapButton.hidden = false;
+      this.mapButton.addEventListener('click', () => handlers.onMap?.(this.mapButton));
+    }
     if (handlers.onFullscreen) {
       this.fullscreenButton.hidden = false;
       this.fullscreenButton.addEventListener('click', handlers.onFullscreen);
     }
-    bindHold(this.settingsButton, {
-      onOpen: () => handlers.onParent(this.settingsButton),
-      onHint: () => this.hintParentGate(),
-    });
+    this.settingsButton.addEventListener('click', () => handlers.onParent(this.settingsButton));
   }
 
   /**
@@ -225,16 +234,6 @@ export class Ui {
   /** Where the parent controls are put. */
   get host(): HTMLElement {
     return this.root;
-  }
-
-  /** What a tap on the gear says: it opens by holding, not tapping. Gone again after a moment. */
-  private hintParentGate(): void {
-    this.hint?.remove();
-    window.clearTimeout(this.hintTimer);
-    const hint = h('div', { class: 'hint', role: 'status' }, 'Hold the gear to open parent controls');
-    this.hint = hint;
-    this.root.append(hint);
-    this.hintTimer = window.setTimeout(() => hint.remove(), 3200);
   }
 
   /**

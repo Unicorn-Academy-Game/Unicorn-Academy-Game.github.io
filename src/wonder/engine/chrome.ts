@@ -32,6 +32,20 @@ export interface Chrome {
 const NARROW = 560;
 
 /**
+ * The width in CSS pixels at or under which the buttons in the corner are 44 pixels and not 56
+ * (style.css).
+ */
+const SMALL_BUTTONS = 359;
+
+/**
+ * How far in from the right edge the buttons in the corner reach, in CSS pixels: the map, the
+ * sound, the full screen and the settings, with their gaps and the margin. A phone that cannot go
+ * full screen has one less, and is given the room all the same.
+ */
+const CORNER_REACH = 276;
+const CORNER_REACH_SMALL = 214;
+
+/**
  * What the page draws over a game, in units. The buttons are a fixed size in CSS pixels, so on a
  * big screen they are a small part of the picture and on a phone a big one. A game keeps what must
  * be seen and touched out from under them.
@@ -44,7 +58,12 @@ export function chromeOf(s: Screen): Chrome {
   return {
     wayOut: { x0: 0, y0: 0, x1: px(76), y1: px(76) },
     meter: { x0: s.w / 2 - px(114), y0: narrow ? px(80) : 0, x1: s.w / 2 + px(114), y1: narrow ? px(136) : px(76) },
-    corner: { x0: s.w - px(216), y0: 0, x1: s.w, y1: px(76) },
+    corner: {
+      x0: s.w - px(s.w * s.unit <= SMALL_BUTTONS ? CORNER_REACH_SMALL : CORNER_REACH),
+      y0: 0,
+      x1: s.w,
+      y1: px(76),
+    },
     finish: { x0: s.w - px(196), y0: s.h - px(100), x1: s.w, y1: s.h },
   };
 }

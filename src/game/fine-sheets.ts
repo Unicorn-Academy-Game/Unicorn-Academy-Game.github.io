@@ -1,3 +1,4 @@
+import type { FineReach } from '../render/profile';
 import type { UnicornId } from '../shared/ids';
 import type { Manifest } from '../shared/manifest';
 import type { Textures } from './assets';
@@ -15,8 +16,8 @@ const sleep = (ms: number): Promise<void> => new Promise((resolve) => window.set
  * holding it up. A unicorn is asked for when she first comes on screen and the sheets come one at a
  * time, in the order asked, with a rest between them, so the herd gets its 32 facings over ten
  * seconds or so and a device that cannot take them all at once is never asked to. When a device
- * does not show the fine facings nothing is loaded. A sheet that does not come leaves her with the
- * eight she has, and she is asked for again the next time she is put on screen, which is when the
+ * does not show the fine facings nothing is loaded, and one that shows them for the leader alone
+ * loads hers and no one else's. A sheet that does not come leaves her with the eight she has, and she is asked for again the next time she is put on screen, which is when the
  * world changes.
  */
 export class FineSheets {
@@ -27,7 +28,7 @@ export class FineSheets {
   constructor(
     private readonly textures: Pick<Textures, 'loadUnicornFine'>,
     private readonly manifest: Manifest,
-    private readonly enabled: boolean,
+    private readonly reach: FineReach,
     private readonly rest: (ms: number) => Promise<void> = sleep,
   ) {}
 
@@ -36,10 +37,14 @@ export class FineSheets {
    * nothing.
    */
   want(id: UnicornId): void {
-    if (!this.enabled || this.asked.has(id)) return;
+    if (!this.gets(id) || this.asked.has(id)) return;
     this.asked.add(id);
     this.queue.push(id);
     void this.drain();
+  }
+
+  private gets(id: UnicornId): boolean {
+    return this.reach === 'herd' || (this.reach === 'leader' && id === 'wildstar');
   }
 
   private async drain(): Promise<void> {

@@ -27,11 +27,29 @@
    * it has its bottom row of keys under the bars.
    */
   --vh: 1vh;
+  /*
+   * One percent of the short side of the screen, for the title. A browser that cannot measure its
+   * own boxes gives the screen's, which is as it was.
+   */
+  --u: 1vmin;
 }
 
 @supports (height: 1dvh) {
   :root {
     --vh: 1dvh;
+  }
+}
+
+/*
+ * The title sizes itself by its own box. vmin is the screen with the browser's bars taken away, and
+ * the title is only what is left when they are showing, so a column sized in vmin ran off the
+ * bottom of a tablet and Play went with it. A percent of the short side of the title's own box is
+ * always the room the title has.
+ */
+@supports (width: 1cqmin) {
+  .title {
+    container-type: size;
+    --u: 1cqmin;
   }
 }
 
@@ -165,7 +183,7 @@ button:focus-visible {
 
 .logo {
   margin: 0;
-  width: min(100%, 76vmin, 560px);
+  width: min(100%, calc(76 * var(--u)), 560px);
   line-height: 0;
   filter: drop-shadow(0 10px 14px rgb(0 0 0 / 0.35));
 }
@@ -175,6 +193,15 @@ button:focus-visible {
   width: 100%;
   height: auto;
   overflow: visible;
+}
+
+/*
+ * On the title the lettering is as tall as the room leaves it, up to its own height. It is the one
+ * thing on the screen that gives way, since the switches and Play are as big as a finger needs, and
+ * the picture keeps its shape inside whatever box it is given.
+ */
+.title .logo svg {
+  height: 100%;
 }
 
 .logo .twinkle {
@@ -199,8 +226,9 @@ button:focus-visible {
   position: absolute;
   inset: 0;
   display: grid;
-  padding: calc(var(--safe-top) + 4vmin) calc(var(--safe-right) + 4vmin) calc(var(--safe-bottom) + 4vmin)
-    calc(var(--safe-left) + 4vmin);
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  padding: calc(var(--safe-top) + calc(4 * var(--u))) calc(var(--safe-right) + calc(4 * var(--u)))
+    calc(var(--safe-bottom) + calc(4 * var(--u))) calc(var(--safe-left) + calc(4 * var(--u)));
   transition:
     opacity 500ms ease,
     transform 500ms ease;
@@ -222,11 +250,18 @@ button:focus-visible {
 }
 
 .title .stack {
-  place-self: center end;
+  place-self: stretch end;
   display: grid;
+  grid-template-rows: minmax(0, auto) auto auto auto;
+  align-content: center;
   justify-items: center;
-  gap: 3.2vmin;
+  gap: calc(3.2 * var(--u));
   width: min(46vw, 560px);
+}
+
+.title .logo {
+  width: min(100%, calc(76 * var(--u)), 560px);
+  height: 100%;
 }
 
 /*
@@ -236,18 +271,18 @@ button:focus-visible {
  */
 @media (orientation: landscape) {
   .title {
-    padding-top: calc(var(--safe-top) + 3vmin);
-    padding-bottom: calc(var(--safe-bottom) + 3vmin);
+    padding-top: calc(var(--safe-top) + calc(3 * var(--u)));
+    padding-bottom: calc(var(--safe-bottom) + calc(3 * var(--u)));
   }
   .title .stack {
-    gap: 2.2vmin;
+    gap: calc(2.2 * var(--u));
     width: min(48vw, 560px);
   }
   .title .logo {
-    width: min(100%, 54vmin, 560px);
+    width: min(100%, calc(54 * var(--u)), 560px);
   }
   .title .play {
-    width: clamp(60px, 17vmin, 168px);
+    width: clamp(60px, calc(17 * var(--u)), 168px);
   }
 }
 
@@ -258,13 +293,14 @@ button:focus-visible {
 @media (orientation: landscape) and (max-height: 600px) {
   .title .stack {
     grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: minmax(0, auto) auto auto;
     grid-template-areas: "logo play" "line line" "options options";
-    column-gap: 2.6vmin;
+    column-gap: calc(2.6 * var(--u));
     align-items: center;
   }
   .title .logo {
     grid-area: logo;
-    width: min(100%, 64vmin, 560px);
+    width: min(100%, calc(64 * var(--u)), 560px);
   }
   .title .tagline {
     grid-area: line;
@@ -288,6 +324,13 @@ button:focus-visible {
   }
 }
 
+/* A title box this short has no room for the line, whatever the screen it is on. */
+@container (max-height: 460px) {
+  .tagline {
+    display: none;
+  }
+}
+
 @media (orientation: landscape) and (max-height: 360px) {
   .title .stack {
     width: min(52vw, 560px);
@@ -299,10 +342,10 @@ button:focus-visible {
 
 @media (orientation: portrait) {
   .title .stack {
-    place-self: space-between center;
+    place-self: stretch center;
     width: 100%;
-    height: 100%;
-    grid-template-rows: auto auto auto 1fr;
+    grid-template-rows: minmax(0, auto) auto auto minmax(min-content, 1fr);
+    align-content: start;
     align-items: start;
   }
   .title .stack .play {
@@ -315,7 +358,7 @@ button:focus-visible {
   margin: 0;
   max-width: 24em;
   text-align: center;
-  font-size: clamp(15px, 2.6vmin, 24px);
+  font-size: clamp(15px, calc(2.6 * var(--u)), 24px);
   font-weight: 500;
   line-height: 1.25;
   text-shadow:
@@ -325,17 +368,17 @@ button:focus-visible {
 
 .play {
   position: relative;
-  width: clamp(92px, 20vmin, 168px);
+  width: clamp(92px, calc(20 * var(--u)), 168px);
   aspect-ratio: 1;
   border-radius: 50%;
   display: grid;
   place-items: center;
   background: radial-gradient(circle at 34% 28%, #ffe9fa 0%, var(--pink) 34%, var(--purple) 100%);
-  border: 0.9vmin solid var(--ink);
+  border: calc(0.9 * var(--u)) solid var(--ink);
   box-shadow:
-    0 0 0 0.8vmin rgb(255 255 255 / 0.85),
-    0 1.4vmin 0 0.4vmin rgb(38 24 61 / 0.6),
-    0 2.6vmin 4vmin rgb(0 0 0 / 0.4);
+    0 0 0 calc(0.8 * var(--u)) rgb(255 255 255 / 0.85),
+    0 calc(1.4 * var(--u)) 0 calc(0.4 * var(--u)) rgb(38 24 61 / 0.6),
+    0 calc(2.6 * var(--u)) calc(4 * var(--u)) rgb(0 0 0 / 0.4);
   animation: bob 2.6s ease-in-out infinite;
   transition: transform 140ms ease;
 }
@@ -362,7 +405,7 @@ button:focus-visible {
     transform: translateY(0) scale(1);
   }
   50% {
-    transform: translateY(-1.2vmin) scale(1.03);
+    transform: translateY(calc(-1.2 * var(--u))) scale(1.03);
   }
 }
 
@@ -384,6 +427,20 @@ button:focus-visible {
 
 .hud[data-hidden="true"] {
   opacity: 0;
+}
+
+/*
+ * Four buttons of 56 pixels take 272 of a screen 320 wide, and leave a panel no room for its close
+ * button beside them. On a screen that narrow they are 44 pixels, the least a thumb needs.
+ */
+@media (max-width: 359px) {
+  .hud {
+    gap: 6px;
+  }
+  .hud .round {
+    width: 44px;
+    height: 44px;
+  }
 }
 
 .round {
@@ -420,44 +477,6 @@ button:focus-visible {
 
 .round {
   position: relative;
-}
-
-.round .ring {
-  position: absolute;
-  inset: -7px;
-  width: calc(100% + 14px);
-  height: calc(100% + 14px);
-  transform: rotate(-90deg);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 120ms ease;
-}
-
-.round .ring circle {
-  fill: none;
-  stroke: var(--sun);
-  stroke-width: 5;
-  stroke-linecap: round;
-  stroke-dasharray: 100;
-  stroke-dashoffset: 100;
-}
-
-.round[data-holding="true"] {
-  transform: scale(0.94);
-}
-
-.round[data-holding="true"] .ring {
-  opacity: 1;
-}
-
-.round[data-holding="true"] .ring circle {
-  animation: hold-fill var(--hold-ms, 1100ms) linear forwards;
-}
-
-@keyframes hold-fill {
-  to {
-    stroke-dashoffset: 0;
-  }
 }
 
 .round .dot {
@@ -1038,29 +1057,6 @@ button:focus-visible {
   }
 }
 
-.hint {
-  position: absolute;
-  top: calc(var(--safe-top) + 12px + 56px + 12px);
-  right: calc(var(--safe-right) + 12px);
-  max-width: min(300px, calc(100vw - 24px));
-  padding: 10px 16px;
-  border-radius: 16px;
-  background: rgb(38 24 61 / 0.92);
-  border: 3px solid rgb(255 255 255 / 0.85);
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 1.25;
-  box-shadow: 0 6px 18px rgb(0 0 0 / 0.4);
-  animation: hint-in 200ms ease-out;
-}
-
-@keyframes hint-in {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-}
-
 .notice {
   position: absolute;
   left: 50%;
@@ -1339,6 +1335,40 @@ button:focus-visible {
 }
 
 .guide .survey .icon svg {
+  display: block;
+  width: 38px;
+  height: 38px;
+}
+
+.guide .way-out {
+  position: absolute;
+  left: calc(var(--safe-left) + 14px);
+  bottom: calc(var(--safe-bottom) + 14px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 58px;
+  padding: 6px 20px 6px 10px;
+  border-radius: 99px;
+  color: var(--ink);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.1;
+  background: linear-gradient(180deg, #fffbe0 0%, var(--sun) 100%);
+  border: 3px solid #fff;
+  box-shadow:
+    0 0 0 3px var(--ink),
+    0 5px 0 3px rgb(38 24 61 / 0.6),
+    0 12px 18px rgb(0 0 0 / 0.35);
+  animation: survey-in 340ms cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  transition: transform 120ms ease;
+}
+
+.guide .way-out:active {
+  transform: scale(0.95);
+}
+
+.guide .way-out .icon svg {
   display: block;
   width: 38px;
   height: 38px;

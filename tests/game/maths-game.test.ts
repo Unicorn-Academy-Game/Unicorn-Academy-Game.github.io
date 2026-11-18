@@ -82,8 +82,12 @@ function rig(
       record = next;
     },
   };
+  const apply = (patch: Partial<LearningSettings>): void => {
+    current = { ...current, ...patch };
+  };
   const game = new MathsGame({
     settings: () => current,
+    setSettings: apply,
     play,
     random: seeded(options.seed ?? 5),
     later: clock.later,
@@ -120,9 +124,7 @@ function rig(
     sounds,
     reports,
     record: () => record,
-    setSettings: (patch) => {
-      current = { ...current, ...patch };
-    },
+    setSettings: apply,
     voice,
   };
 }
@@ -182,14 +184,14 @@ describe('sitting down at the maths table', () => {
     expect(r.said).toEqual([[phraseClip('pick')]]);
   });
 
-  it('is never put over itself, and is not wanted with learning off', () => {
+  it('is never put over itself, and sits the player down with learning off as well', () => {
     const r = rig();
     expect(r.game.open()).toBe('up');
     expect(r.game.open()).toBe('busy');
     const off = rig({ settings: { on: false } });
-    expect(off.game.open()).toBe('off');
-    expect(off.screen.views).toHaveLength(0);
-    expect(off.log).toEqual([]);
+    expect(off.game.open()).toBe('up');
+    expect(off.screen.views).toHaveLength(1);
+    expect(off.log).toEqual(['freeze']);
   });
 
   it('stops saying what to do once the player has played a couple of rounds, and says it again when they ask', () => {
@@ -644,16 +646,16 @@ describe('a round', () => {
 });
 
 describe('what a parent changes', () => {
-  it('takes the screen away when learning is turned off, and keeps what was earned', () => {
+  it('leaves the screen up when learning is turned off, and keeps what was earned', () => {
     const r = rig();
     r.game.open();
     playRound(r, 'count');
     const record = r.record();
     r.setSettings({ on: false });
     r.game.settingsChanged();
-    expect(r.game.busy).toBe(false);
-    expect(r.screen.up).toBe(false);
-    expect(r.log[r.log.length - 1]).toBe('thaw');
+    expect(r.game.busy).toBe(true);
+    expect(r.screen.up).toBe(true);
+    expect(r.log).toEqual(['freeze']);
     expect(r.record()).toBe(record);
   });
 
@@ -678,5 +680,170 @@ describe('what a parent changes', () => {
     loud.voice.audible = false;
     loud.screen.handlers.pick('count');
     expect(loud.screen.latest.speech, 'a voice that cannot be heard is not a voice').toBe(false);
+  });
+});
+
+describe("the child's own switch for the voice", () => {
+  it('has a voice to switch only when a parent has it on and it can be heard', () => {
+    const quiet = rig({ settings: { say: false } });
+    quiet.game.open();
+    expect(quiet.screen.latest).toMatchObject({ voice: false, speech: false, say: true });
+    const loud = rig({ settings: { say: true } });
+    loud.game.open();
+    expect(loud.screen.latest).toMatchObject({ voice: true, speech: true, say: true });
+    loud.voice.audible = false;
+    loud.game.settingsChanged();
+    expect(loud.screen.latest).toMatchObject({ voice: false, speech: false });
+  });
+
+  it('turns the voice off at this table, and quiets what is being said, without a parent changing anything', () => {
+    const r = rig({ settings: { say: true } });
+    r.game.open();
+    r.screen.handlers.pick('count');
+    r.said.length = 0;
+    r.screen.handlers.say(false);
+    expect(asking(r)).toMatchObject({ voice: true, say: false, speech: false });
+    r.screen.handlers.hear();
+    expect(r.said, 'it does not say it again when asked').toEqual([]);
+    r.screen.handlers.choose(asking(r).question.answer);
+    expect(r.said, 'it does not say the answer or cheer').toEqual([]);
+    expect(r.sounds).toContain('pair:1');
+  });
+
+  it('does not hold the next question back for a voice that is off, and keeps the switch for next time', () => {
+    const r = rig({ settings: { say: true } });
+    r.game.open();
+    r.screen.handlers.say(false);
+    r.screen.handlers.pick('count');
+    r.screen.handlers.choose(asking(r).question.answer);
+    r.clock.advance(NEXT_AFTER_MS);
+    expect(asking(r).index, 'it went on after the quick wait').toBe(1);
+    r.game.dispose();
+    r.game.open();
+    expect(r.screen.latest).toMatchObject({ say: false, speech: false });
+    r.screen.handlers.say(true);
+    expect(r.screen.latest).toMatchObject({ say: true, speech: true });
+  });
+
+  it('keeps the voice on at every other screen of the table', () => {
+    const r = rig({ settings: { say: true } });
+    r.game.open();
+    r.screen.handlers.say(false);
+    expect(picking(r).speech).toBe(false);
+    r.screen.handlers.pick('count');
+    for (let i = 0; i < ROUND_LENGTH; i++) answer(r);
+    expect(finishing(r)).toMatchObject({ say: false, speech: false });
+  });
+});
+
+describe('typing the answer on the keypad', () => {
+  const keyed = (extra: Partial<LearningSettings> = {}): Rig => {
+    const r = rig({ settings: { mathsKeys: true, ...extra } });
+    r.game.open();
+    r.screen.handlers.pick('count');
+    return r;
+  };
+  const rightNumber = (view: AskView): number => Number(view.keypad!.answer);
+
+  it('is off to start with, and a question then has no keypad', () => {
+    const r = rig();
+    r.game.open();
+    r.screen.handlers.pick('count');
+    expect(asking(r)).toMatchObject({ keys: false, keypad: null });
+  });
+
+  it('takes the place of the choices once it is on, and can be turned off in the middle of a question', () => {
+    const r = keyed();
+    expect(asking(r)).toMatchObject({ keys: true, keypad: { misses: 0 } });
+    expect(asking(r).keypad!.answer).toMatch(/^[0-9]{1,3}$/);
+    r.screen.handlers.keys(false);
+    expect(asking(r)).toMatchObject({ keys: false, keypad: null });
+    expect(asking(r).solved).toBe(false);
+  });
+
+  it('is right at the first number typed in that is the answer, as touching the right choice is', () => {
+    const r = keyed();
+    const view = asking(r);
+    r.sounds.length = 0;
+    r.screen.handlers.enter(rightNumber(view));
+    expect(asking(r)).toMatchObject({ solved: true, rested: [], hint: false });
+    expect(r.sounds).toEqual(['flip', 'pair:1']);
+    r.clock.advance(NEXT_AFTER_MS);
+    expect(asking(r).index).toBe(1);
+  });
+
+  it('says the number typed in, and a cheer, when the voice is on', () => {
+    const r = keyed({ say: true });
+    r.said.length = 0;
+    r.screen.handlers.enter(rightNumber(asking(r)));
+    const said = r.said[0]!;
+    expect(CHEER_CLIPS.has(said[said.length - 1]!), 'it ends on a cheer').toBe(true);
+    expect(said.slice(0, -1).every((clip) => CLIP_IDS.has(clip))).toBe(true);
+    expect(said.length).toBeGreaterThan(1);
+  });
+
+  it('rests a number that is not the answer, softly, and counts it for the hint', () => {
+    const r = keyed();
+    const answerIs = rightNumber(asking(r));
+    r.sounds.length = 0;
+    r.screen.handlers.enter(answerIs === 7 ? 8 : 7);
+    expect(asking(r)).toMatchObject({ solved: false, hint: false, keypad: { misses: 1 } });
+    expect(r.sounds).toEqual(['flip', 'nudge']);
+    for (let i = 1; i < RESTS_TO_HINT; i++) r.screen.handlers.enter(answerIs === 7 ? 8 : 7);
+    expect(asking(r)).toMatchObject({ solved: false, hint: true });
+  });
+
+  it('keeps the question that is up through any number of misses, and is right when the answer comes', () => {
+    const r = keyed();
+    const view = asking(r);
+    for (let i = 0; i < 6; i++) r.screen.handlers.enter(900 + i);
+    expect(asking(r)).toMatchObject({ solved: false, serial: view.serial });
+    r.screen.handlers.enter(rightNumber(view));
+    expect(asking(r).solved).toBe(true);
+  });
+
+  it('does nothing once the question is answered, and a key is only a sound', () => {
+    const r = keyed();
+    const view = asking(r);
+    r.screen.handlers.enter(rightNumber(view));
+    const views = r.screen.views.length;
+    r.screen.handlers.enter(rightNumber(view));
+    r.screen.handlers.enter(1);
+    expect(r.screen.views.length).toBe(views);
+    r.sounds.length = 0;
+    r.screen.handlers.tap();
+    expect(r.sounds).toEqual(['flip']);
+  });
+
+  it('plays a whole round and keeps what it earned', () => {
+    const r = keyed();
+    for (let i = 0; i < ROUND_LENGTH; i++) {
+      r.screen.handlers.enter(rightNumber(asking(r)));
+      r.clock.advance(i === ROUND_LENGTH - 1 ? DONE_AFTER_MS : NEXT_AFTER_MS);
+    }
+    expect(finishing(r)).toMatchObject({ clean: ROUND_LENGTH, stars: 3 });
+    expect(r.record().maths.strands.count?.rounds).toBe(1);
+  });
+
+  it('has no keypad for a question whose answer is not a number, whatever the switch says', () => {
+    const r = rig({ settings: { mathsKeys: true } });
+    r.game.open();
+    r.screen.handlers.pick('clock');
+    for (let i = 0; i < ROUND_LENGTH; i++) {
+      const view = asking(r);
+      expect(view.keypad, 'a clock is answered by touching').toBeNull();
+      r.screen.handlers.choose(view.question.answer);
+      r.clock.advance(i === ROUND_LENGTH - 1 ? DONE_AFTER_MS : NEXT_AFTER_MS);
+    }
+    expect(finishing(r).strand).toBe('clock');
+  });
+
+  it('writes the switch where a parent keeps the rest, so it is there the next time', () => {
+    const r = keyed();
+    r.screen.handlers.keys(false);
+    r.game.dispose();
+    r.game.open();
+    r.screen.handlers.pick('count');
+    expect(asking(r).keys).toBe(false);
   });
 });

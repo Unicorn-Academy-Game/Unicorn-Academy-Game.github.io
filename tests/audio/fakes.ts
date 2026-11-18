@@ -111,6 +111,7 @@ export const FAKE_ASSETS: AudioAssets = {
   loops: {
     'music-forest': loop('music-forest', 'music', 36),
     'music-garden': loop('music-garden', 'music', 36),
+    'music-snow': loop('music-snow', 'music', 32),
     'ambience-forest': loop('ambience-forest', 'ambience', 24),
     'ambience-garden': loop('ambience-garden', 'ambience', 24),
     'ambience-treasure-room': loop('ambience-treasure-room', 'ambience', 16),

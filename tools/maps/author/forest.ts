@@ -601,6 +601,29 @@ export function authorForest(): {
   });
   b.spawn('from-cave', 'south', [pt(896, 461), pt(1056, 461), pt(1419, 824)]);
 
+  // The way to Santa's grove, in the north: a short lane off the ring road that ends at a gate of
+  // candy canes. It is made after the wood is planted, like the cave's mouth.
+  const SNOWY = tp(42, 5.2);
+  const snowCourt = blob(tp(42, 6.7), 3.4 * T, 1.3 * T, { seed: 95, wobble: 0.05 });
+  const snowWay = lane([tp(42, 9.6), tp(42, 5.0)], 1.6 * T, { seed: 96, wobble: 0.02 });
+  b.open(snowCourt, snowWay.region);
+  b.pathBand(
+    blob(tp(42, 7.2), 2.2 * T, 0.8 * T, { seed: 97, wobble: 0.1 }),
+    lane(snowWay.line, 0.7 * T, { seed: 98, wobble: 0.02 }).region,
+  );
+  b.classify();
+  b.clear(union(snowCourt, snowWay.region, rect(SNOWY.x - 340, -200, SNOWY.x + 340, SNOWY.y + 30)));
+  b.place('snow-gate', SNOWY.x, SNOWY.y, 'object-bases', 0);
+  for (const dx of [-98, 98]) b.block({ kind: 'circle', x: SNOWY.x + dx, y: SNOWY.y, r: 12 });
+  b.portal({
+    name: 'grove-gate',
+    bounds: { x: SNOWY.x - 70, y: SNOWY.y - 40, w: 140, h: 90 },
+    approach: pt(SNOWY.x, SNOWY.y + 52),
+    toMap: 'santa-grove',
+    toSpawn: 'from-forest',
+  });
+  b.spawn('from-grove', 'south', [pt(2688, 463), pt(2485, 666), pt(2282, 869)]);
+
   // Where the herd stands, what it can use, and who waits to be found. A spawn is the way the herd
   // came in: Wildstar at its start, the friends along it a gap apart in the order they were found.
   // `tools/maps/herd-line.ts` suggests lines, and the compile step checks that each one holds every

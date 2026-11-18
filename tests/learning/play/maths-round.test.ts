@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { FAMILIES, STRAND_IDS } from '../../../src/learning/play/maths/question';
+import { FAMILIES, STRAND_IDS, typedAnswer } from '../../../src/learning/play/maths/question';
 import {
   begin,
   CLEAN_TO_LEVEL_UP,
   choose,
+  enter,
   familyReached,
   finished,
   hinted,
@@ -87,6 +88,106 @@ describe('a question of a round', () => {
     expect(hinted(round)).toBe(true);
     round = choose(round, round.question.answer).round;
     expect(hinted(round)).toBe(false);
+  });
+});
+
+/** A round at a question whose answer can be typed in. */
+function typable(seed = 1): Round {
+  for (let s = seed; s < seed + 200; s++) {
+    const round = begin('add', 1, seeded(s));
+    if (typedAnswer(round.question) !== null) return round;
+  }
+  throw new Error('no question of adding can be typed in');
+}
+
+describe('a number typed in on the keypad', () => {
+  it('is only for a question that has an answer that is a number and something to work it out from', () => {
+    const typed = new Set<string>();
+    const tiles = new Set<string>();
+    for (const strand of STRAND_IDS) {
+      for (const level of [1, 2, 3] as const) {
+        for (let seed = 1; seed <= 12; seed++) {
+          const { question } = begin(strand, level, seeded(seed * 31 + level));
+          (typedAnswer(question) === null ? tiles : typed).add(strand);
+          const right = question.choices[question.answer]!.visual;
+          if (typedAnswer(question) !== null) {
+            expect(question.show, `${strand} ${level}: something is shown`).not.toBeNull();
+            expect(right.kind).toBe('number');
+          }
+        }
+      }
+    }
+    for (const strand of [
+      'count',
+      'next',
+      'add',
+      'take',
+      'tens',
+      'double',
+      'plus',
+      'minus',
+      'times',
+      'share',
+      'mixed',
+    ] as const)
+      expect(typed.has(strand), `${strand} has questions that can be typed`).toBe(true);
+    // Counting the sides of a shape can be typed, and naming it, telling the time and finishing a
+    // pattern cannot.
+    for (const strand of ['clock', 'pattern'] as const)
+      expect(typed.has(strand), `${strand} is answered by touching`).toBe(false);
+    expect(tiles.has('shape'), 'naming a shape is answered by touching').toBe(true);
+    expect(tiles.size, 'some questions are always tiles').toBeGreaterThan(0);
+  });
+
+  it('solves the question with the right number, and counts as clean when it was the first one typed', () => {
+    const round = typable();
+    const right = typedAnswer(round.question)!;
+    const done = enter(round, right);
+    expect(done.result).toBe('right');
+    expect(done.round).toMatchObject({ solved: true, clean: 1, typed: 0 });
+  });
+
+  it('lets a number that is not the answer rest, and does not count the question as clean', () => {
+    const round = typable();
+    const right = typedAnswer(round.question)!;
+    const slipped = enter(round, right + 1);
+    expect(slipped.result).toBe('rest');
+    expect(slipped.round).toMatchObject({ typed: 1, solved: false, rested: [] });
+    const done = enter(slipped.round, right);
+    expect(done.result).toBe('right');
+    expect(done.round.clean).toBe(0);
+  });
+
+  it('lights the answer after two numbers have missed, counting touched choices and typed numbers together', () => {
+    const round = typable();
+    const right = typedAnswer(round.question)!;
+    const one = enter(round, right + 1).round;
+    expect(hinted(one)).toBe(false);
+    const two = enter(one, right + 2).round;
+    expect(hinted(two)).toBe(RESTS_TO_HINT <= 2);
+    const mixed = enter(choose(round, wrongPlace(round)).round, right + 1).round;
+    expect(hinted(mixed), 'one touched choice and one typed number are two tries').toBe(true);
+    expect(hinted(enter(two, right).round), 'not once it is solved').toBe(false);
+  });
+
+  it('ignores a number that cannot be an answer, a question that is solved, and a question that cannot be typed', () => {
+    const round = typable();
+    for (const value of [-1, 1.5, Number.NaN, Number.POSITIVE_INFINITY])
+      expect(enter(round, value)).toEqual({ round, result: 'ignored' });
+    const solved = enter(round, typedAnswer(round.question)!).round;
+    expect(enter(solved, 0)).toEqual({ round: solved, result: 'ignored' });
+    const shapes = begin('shape', 1, seeded(2));
+    expect(typedAnswer(shapes.question)).toBeNull();
+    expect(enter(shapes, 3)).toEqual({ round: shapes, result: 'ignored' });
+  });
+
+  it('starts the next question with nothing typed', () => {
+    const random = seeded(4);
+    let round = begin('add', 1, random);
+    while (typedAnswer(round.question) === null) round = begin('add', 1, random);
+    round = enter(enter(round, typedAnswer(round.question)! + 1).round, typedAnswer(round.question)!).round;
+    expect(round.typed).toBe(1);
+    expect(next(round, random).typed).toBe(0);
   });
 });
 

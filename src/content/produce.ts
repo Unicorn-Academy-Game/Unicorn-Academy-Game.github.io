@@ -22,8 +22,12 @@ export const GEM_IDS = [
 ] as const;
 export type GemId = (typeof GEM_IDS)[number];
 
-/** The kinds in the order the basket shows them: the food first, then the gems. */
-export const PRODUCE_IDS = [...FOOD_IDS, ...GEM_IDS] as const;
+/** What the beach gives: shells dug from the sand, and pearls from clams. */
+export const SEA_IDS = ['shell', 'pearl'] as const;
+export type SeaId = (typeof SEA_IDS)[number];
+
+/** The kinds in the order the basket shows them: the food first, then the gems, then the sea's. */
+export const PRODUCE_IDS = [...FOOD_IDS, ...GEM_IDS, ...SEA_IDS] as const;
 export type ProduceId = (typeof PRODUCE_IDS)[number];
 
 export interface ProduceDef {
@@ -33,7 +37,7 @@ export interface ProduceDef {
   /** The word for more than one, which is not always the word and an s. */
   plural: string;
   /** Whether it grows on a tree, in a bed or out of a rock, which is where a child finds it. */
-  grows: 'tree' | 'bed' | 'rock';
+  grows: 'tree' | 'bed' | 'rock' | 'sand';
   /** A colour that stands for it in the basket, as a 0xRRGGBB number. */
   tint: number;
   /**
@@ -68,6 +72,16 @@ const gem = (id: GemId, word: string, plural: string, tint: number, sprite: stri
   rest,
 });
 
+const sea = (id: SeaId, word: string, plural: string, tint: number, sprite: string, rest: number): ProduceDef => ({
+  id: `produce.${id}`,
+  word,
+  plural,
+  grows: 'sand',
+  tint,
+  sprite,
+  rest,
+});
+
 export const PRODUCE: Readonly<Record<ProduceId, ProduceDef>> = {
   apple: food('apple', 'apple', 'apples', 'tree', 0xe8403f),
   carrot: food('carrot', 'carrot', 'carrots', 'bed', 0xf2862b),
@@ -86,6 +100,8 @@ export const PRODUCE: Readonly<Record<ProduceId, ProduceDef>> = {
   jade: gem('jade', 'jade', 'jades', 0x3fb58a, 'word-jade', 32),
   onyx: gem('onyx', 'onyx', 'onyxes', 0x4a4560, 'word-onyx', 27),
   rainbow: gem('rainbow', 'rainbow gem', 'rainbow gems', 0xff7ad9, 'produce-rainbow', 28),
+  shell: sea('shell', 'shell', 'shells', 0xf2a0b8, 'word-shell', 26),
+  pearl: sea('pearl', 'pearl', 'pearls', 0xf3eaff, 'word-pearl', 26),
 };
 
 /** The picture of one, in the produce bundle. */

@@ -193,6 +193,8 @@ test.describe('the Learning page', () => {
       help: 'little',
       ask: 'rarely',
       friends: false,
+      mathsSay: true,
+      mathsKeys: false,
     });
 
     // Another page and back again, and the page reads the choices from the game and not from

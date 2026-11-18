@@ -78,6 +78,12 @@ const ARRIVES: Record<string, string> = {
   'palace-ballroom': 'from-music',
   'palace-jewel': 'from-library',
   'dance-floor': 'from-party',
+  river: 'from-garden',
+  beach: 'from-river',
+  'magic-hall': 'from-river',
+  'witch-hut': 'from-cave',
+  'santa-grove': 'from-forest',
+  'santa-cabin': 'from-grove',
 };
 
 const browser = await chromium.launch({

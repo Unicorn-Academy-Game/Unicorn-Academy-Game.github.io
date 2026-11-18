@@ -1,3 +1,4 @@
+import { FOLK_CAST } from './cast';
 import type { ClipSpec } from './clips';
 import { GARDENER_CLIPS, STABLE_WORKER_CLIPS } from './clips';
 import type { Character } from './frame';
@@ -13,4 +14,5 @@ export interface CastMember {
 export const CAST: Record<string, CastMember> = {
   gardener: { character: gardener, clips: GARDENER_CLIPS },
   'stable-worker': { character: stableWorker, clips: STABLE_WORKER_CLIPS },
+  ...FOLK_CAST,
 };

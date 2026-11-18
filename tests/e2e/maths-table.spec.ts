@@ -1,6 +1,6 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 import { type Family, familyOf, STRAND_IDS, type StrandId, strandsOf } from '../../src/learning/play/maths/question';
-import { pastTheLeadIn, spoken, toTheGarden, touch } from './computer';
+import { spoken, toTheGarden, touch } from './computer';
 import {
   learningOn,
   openGame,
@@ -12,7 +12,6 @@ import {
   standBelow,
   step,
   tapWorld,
-  untilDelighted,
   watchConsole,
   worldRuns,
 } from './helpers';
@@ -41,6 +40,9 @@ const tiles = (page: Page): Locator => screen(page).locator('[data-content-id="m
 const tile = (page: Page, strand: StrandId): Locator =>
   screen(page).locator(`[data-content-id="maths.tile"][data-strand="${strand}"]`);
 const control = (page: Page, id: string): Locator => screen(page).locator(`[data-content-id="maths.${id}"]`);
+const keypad = (page: Page): Locator => screen(page).locator('.maths-keypad');
+const keyOf = (page: Page, key: string): Locator => keypad(page).locator(`[data-key="${key}"]`);
+const display = (page: Page): Locator => control(page, 'display');
 /**
  * The button that switches to Level 0 or Level 1, which is in the top bar while the tiles are up.
  */
@@ -234,10 +236,19 @@ const measure = (page: Page) =>
         };
       }),
       buttons: [
-        ...root.querySelectorAll('.read-close, .read-level, .play-menu:not([hidden]), .play-hear:not([hidden])'),
+        ...root.querySelectorAll(
+          '.read-close, .read-level, .play-menu:not([hidden]), .play-hear:not([hidden]), .play-switch:not([hidden])',
+        ),
       ]
         .filter((el) => el.getClientRects().length > 0)
         .map(box),
+      keypad: root.querySelector('.maths-keys')
+        ? {
+            keys: box(root.querySelector('.maths-keys')!),
+            display: box(root.querySelector('.maths-display')!),
+            pressable: [...root.querySelectorAll('.maths-key')].map(box),
+          }
+        : null,
       hud: hud && !hud.hidden ? box(hud) : null,
       what: `${root.querySelector('.maths-ask')?.getAttribute('data-strand')} ${root.querySelector('.maths-prompt')?.textContent}`,
     };
@@ -513,6 +524,205 @@ test.describe('the maths table', () => {
     });
   }
 
+  test("the number keys take the choices' place at the child's own switch, and a number is typed on the keys, rubbed out, sent, and kept for next time", async ({
+    page,
+  }, info) => {
+    test.setTimeout(240_000);
+    const noise = watchConsole(page);
+    await sitDown(page);
+    await expect(control(page, 'keys')).toHaveAttribute('aria-pressed', 'false');
+    await tile(page, 'count').click();
+    await expect(choices(page).first()).toBeVisible();
+    await expect(keypad(page)).toHaveCount(0);
+
+    // The switch is in the top bar, and turning it on changes the question that is up in place.
+    const serial = (await asked(page)).serial;
+    await control(page, 'keys').click();
+    await expect(control(page, 'keys')).toHaveAttribute('aria-pressed', 'true');
+    await expect(keypad(page)).toBeVisible();
+    await expect(choices(page)).toHaveCount(0);
+    expect((await asked(page)).serial, 'the same question stays up').toBe(serial);
+    await expect(display(page)).toHaveText('?');
+    await expect(display(page)).toHaveAttribute('data-state', 'empty');
+    await page.waitForTimeout(700);
+    await shot(page, `${SCRATCH}/maths-keypad-${info.project.name}.png`);
+
+    // Keys by touch: a digit, rubbed out, and two more, sent as a number that is not the answer.
+    const answer = (await asked(page)).keypad!.answer;
+    const wrong = [...'0123456789'].filter((digit) => digit !== answer[0] && !answer.includes(digit));
+    await keyOf(page, wrong[0]!).click();
+    await expect(display(page)).toHaveText(wrong[0]!);
+    await expect(display(page)).toHaveAttribute('data-state', 'typing');
+    await keyOf(page, 'back').click();
+    await expect(display(page)).toHaveText('?');
+    await keyOf(page, wrong[1]!).click();
+    await expect(keyOf(page, 'go')).toHaveAttribute('data-ready', 'true');
+    await keyOf(page, 'go').click();
+    await expect(display(page)).toHaveAttribute('data-state', 'rest');
+    await expect(display(page)).toHaveText(wrong[1]!);
+    expect((await asked(page)).solved).toBe(false);
+    expect((await asked(page)).serial, 'a number that is not the answer leaves the question as it is').toBe(serial);
+    const said = (
+      await screen(page).locator('.read-head, .read-live, .play-tools, .maths-prompt').allTextContents()
+    ).join(' ');
+    expect(said).not.toMatch(/\b(wrong|fail|failed|bad|oops|no|not|mistake|sorry)\b/i);
+
+    // The next key starts a new number, and a second number that is not the answer makes the
+    // answer's keys shine.
+    await keyOf(page, wrong[2]!).click();
+    await expect(display(page)).toHaveText(wrong[2]!);
+    await keyOf(page, 'go').click();
+    await expect(display(page)).toHaveAttribute('data-state', 'rest');
+    for (const digit of answer) await expect(keyOf(page, digit)).toHaveAttribute('data-hint', 'true');
+    await expect(keyOf(page, wrong[0]!)).toHaveAttribute('data-hint', 'false');
+    await page.waitForTimeout(300);
+    await shot(page, `${SCRATCH}/maths-keypad-hint-${info.project.name}.png`);
+
+    // The real keyboard types the same keys, and never reaches Wildstar.
+    const leading = () => page.evaluate(() => ({ ...window.__ua!.controller.world.leader }));
+    const before = await leading();
+    for (const digit of answer) await page.keyboard.press(digit);
+    await expect(display(page)).toHaveText(answer);
+    await page.keyboard.press('Backspace');
+    await page.keyboard.press(answer.slice(-1));
+    await expect(display(page)).toHaveText(answer);
+    await page.keyboard.press('Enter');
+    await expect(display(page)).toHaveAttribute('data-state', 'right');
+    await expect(keypad(page)).toHaveAttribute('data-solved', 'true');
+    await page.waitForTimeout(250);
+    await shot(page, `${SCRATCH}/maths-keypad-right-${info.project.name}.png`);
+    expect(await leading()).toEqual(before);
+    await untilAfter(page, serial);
+    await expect(display(page)).toHaveText('?');
+
+    // The switch stays on for the next question and is kept: a new table sits down with it on.
+    await expect(keypad(page)).toBeVisible();
+    await control(page, 'close').click();
+    await expect(screen(page)).toHaveCount(0);
+    expect(await page.evaluate(() => window.__ua!.settings.get().learning.mathsKeys)).toBe(true);
+    await step(page, 3);
+    await tapTheTable(page);
+    await untilSitting(page);
+    await tile(page, 'count').click();
+    await expect(keypad(page)).toBeVisible();
+    await control(page, 'keys').click();
+    await expect(choices(page).first()).toBeVisible();
+    await expect(keypad(page)).toHaveCount(0);
+    expect(noise).toEqual([]);
+    expect(await spoken(page)).toEqual([]);
+  });
+
+  test('a question that is not answered with a number keeps its choices when the keys are on, and the keys are in the way of nothing at the tiles', async ({
+    page,
+  }) => {
+    await inTheGarden(page);
+    await learningOn(page, { mathsKeys: true });
+    await tapTheTable(page);
+    await untilSitting(page);
+    await expect(control(page, 'keys')).toBeVisible();
+    await tile(page, 'clock').click();
+    await expect(choices(page).first()).toBeVisible();
+    await expect(keypad(page)).toHaveCount(0);
+    await control(page, 'menu').click();
+    await tile(page, 'count').click();
+    await expect(keypad(page)).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(screen(page)).toHaveCount(0);
+  });
+
+  test('the child can turn the voice off at the table, and it stays off, and the button that says it again goes with it', async ({
+    page,
+  }) => {
+    test.setTimeout(240_000);
+    await sitDown(page, true);
+    const heard = (): Promise<string[]> => page.evaluate(() => [...window.__ua!.voice.heard]);
+    await expect(control(page, 'voice')).toBeVisible();
+    await expect(control(page, 'voice')).toHaveAttribute('aria-pressed', 'true');
+    await expect(control(page, 'hear')).toBeVisible();
+    await tile(page, 'add').click();
+    await expect(choices(page).first()).toBeVisible();
+    const view = await asked(page);
+    await expect
+      .poll(async () => (await heard()).includes(view.question.say[0]!), { timeout: 30_000 * PATIENCE })
+      .toBe(true);
+
+    await control(page, 'voice').click();
+    await expect(control(page, 'voice')).toHaveAttribute('aria-pressed', 'false');
+    await expect(control(page, 'hear')).toBeHidden();
+    const so = (await heard()).length;
+    await choose(page, view.question.answer);
+    await expect(choices(page).nth(view.question.answer)).toHaveAttribute('data-state', 'right');
+    await untilAfter(page, view.serial);
+    await page.waitForTimeout(600);
+    expect((await heard()).length, 'nothing is said, not the choice, not a cheer, not the next question').toBe(so);
+    expect(await page.evaluate(() => window.__ua!.settings.get().learning)).toMatchObject({
+      say: true,
+      mathsSay: false,
+    });
+
+    // The parent's voice is untouched, and the child can turn it back on.
+    await control(page, 'voice').click();
+    await expect(control(page, 'voice')).toHaveAttribute('aria-pressed', 'true');
+    await expect(control(page, 'hear')).toBeVisible();
+    expect(await spoken(page)).toEqual([]);
+  });
+
+  test('there is no voice switch to turn off where there is no voice', async ({ page }) => {
+    await sitDown(page);
+    await expect(control(page, 'voice')).toBeHidden();
+    await expect(control(page, 'keys')).toBeVisible();
+  });
+
+  for (const view of VIEWS) {
+    test(`the keypad fits ${view.name}, with keys big enough for a finger, clear of each other and of the top bar`, async ({
+      page,
+    }, info) => {
+      test.setTimeout(900_000);
+      await inTheGarden(page);
+      await learningOn(page, { say: true, mathsKeys: true });
+      await tapTheTable(page);
+      await untilSitting(page);
+      await page.setViewportSize({ width: view.width, height: view.height });
+      for (const strand of ['count', 'next', 'add', 'take', 'tens', 'double', 'times', 'share'] as const) {
+        for (const level of [1, 2, 3] as const) {
+          await reachLevel(page, strand, level);
+          await openTile(page, strand);
+          await expect(screen(page).locator('.maths-ask')).toBeVisible();
+          await expect(screen(page).locator('.maths-ask')).not.toHaveAttribute('data-entering', 'true');
+          const found = await measure(page);
+          const where = `${view.name}, ${strand} level ${level} (${found.what})`;
+          if (!found.keypad) {
+            expect.soft(found.choices.length, `${where}: no keypad means touching the choices`).toBeGreaterThan(1);
+            continue;
+          }
+          const { keypad: pad } = found;
+          expect.soft(found.across, `${where}: nothing to scroll across`).toBeLessThanOrEqual(found.view.width);
+          expect.soft(found.choices, `${where}: the keys are in the choices' place`).toHaveLength(0);
+          expect.soft(inside(pad.keys, found.body), `${where}: the keypad is inside the screen`).toBe(true);
+          expect.soft(pad.display.height, `${where}: the display can be read`).toBeGreaterThanOrEqual(36);
+          for (const [place, key] of pad.pressable.entries()) {
+            expect.soft(key.width, `${where}: key ${place} is wide enough to touch`).toBeGreaterThanOrEqual(40);
+            expect.soft(key.height, `${where}: key ${place} is tall enough to touch`).toBeGreaterThanOrEqual(38);
+            expect.soft(inside(key, pad.keys), `${where}: key ${place} is inside the keypad`).toBe(true);
+            for (const other of pad.pressable.slice(place + 1))
+              expect.soft(apart(key, other), `${where}: two keys are apart`).toBe(true);
+            expect.soft(apart(key, pad.display), `${where}: a key is clear of the display`).toBe(true);
+          }
+          if (found.show)
+            expect.soft(apart(pad.keys, found.show), `${where}: the keys are clear of what is shown`).toBe(true);
+          const everything = found.hud ? [...found.buttons, found.hud] : found.buttons;
+          for (const [place, one] of found.buttons.entries()) {
+            expect.soft(inside(one, found.panel), `${where}: a thing of the top bar is on the screen`).toBe(true);
+            for (const other of everything.slice(place + 1))
+              expect.soft(apart(one, other), `${where}: two things of the top bar are apart`).toBe(true);
+          }
+          if (level === 1)
+            await shot(page, `${SCRATCH}/maths-keypad-fit-${view.name}-${strand}-${info.project.name}.png`);
+        }
+      }
+    });
+  }
+
   test('the cross and the Escape key both put the player back in the world, which runs again', async ({ page }) => {
     await inTheGarden(page);
     await learningOn(page);
@@ -598,18 +808,20 @@ test.describe('the maths table', () => {
     expect((await asked(page)).strand).toBe('mixed');
   });
 
-  test('with learning off a tap on the abacus only makes it sparkle, and no screen comes', async ({ page }) => {
-    await openGame(page);
-    await play(page);
-    await toTheGarden(page);
+  test('with learning off a tap on the abacus sits the player down at the tiles all the same, and nothing is said', async ({
+    page,
+  }) => {
+    await inTheGarden(page);
+    expect(await page.evaluate(() => window.__ua!.settings.get().learning.on), 'learning is off').toBe(false);
     await tapTheTable(page);
-    await untilDelighted(page, 'palace-garden/abacus-1');
-    await pastTheLeadIn(page);
-    await step(page, 1);
-    await expect(screen(page)).toHaveCount(0);
-    expect(await page.evaluate(() => window.__ua!.maths.game), 'nothing was fetched for it').toBeNull();
-    expect(await worldRuns(page)).toBe(true);
+    await untilSitting(page);
+    await tiles(page).first().click();
+    await expect(choices(page).first()).toBeVisible();
+    expect(await page.evaluate(() => [...window.__ua!.voice.heard]), 'the voice belongs to learning').toEqual([]);
     expect(await spoken(page)).toEqual([]);
+    await control(page, 'close').click();
+    await expect(screen(page)).toHaveCount(0);
+    expect(await worldRuns(page)).toBe(true);
   });
 
   test('with the voice on, the first visit says what to play, the button says it again, and a question, the choice the player touches and a cheer are said as they come', async ({
@@ -725,21 +937,18 @@ test.describe('the maths table', () => {
     expect(await spoken(page)).toEqual([]);
   });
 
-  test('its chunk comes down by itself once play has begun with learning on, and not with it off', async ({ page }) => {
-    await openGame(page, 'kept', '', { learning: true });
-    await play(page);
-    expect(await page.evaluate(() => window.__ua!.maths.game), 'the world starts without it').toBeNull();
-    await expect
-      .poll(() => page.evaluate(() => window.__ua!.maths.game !== null), {
-        message: 'the chunk to come down',
-        timeout: 60_000 * PATIENCE,
-      })
-      .toBe(true);
-
-    await page.goto('about:blank');
-    await openGame(page);
-    await play(page);
-    await page.waitForTimeout(7000);
-    expect(await page.evaluate(() => window.__ua!.maths.game), 'with learning off nothing is fetched').toBeNull();
+  test('its chunk comes down by itself once play has begun, with learning on or off', async ({ page }) => {
+    for (const learning of [true, false]) {
+      await openGame(page, 'kept', '', { learning });
+      await play(page);
+      expect(await page.evaluate(() => window.__ua!.maths.game), 'the world starts without it').toBeNull();
+      await expect
+        .poll(() => page.evaluate(() => window.__ua!.maths.game !== null), {
+          message: `the chunk to come down with learning ${learning ? 'on' : 'off'}`,
+          timeout: 60_000 * PATIENCE,
+        })
+        .toBe(true);
+      await page.goto('about:blank');
+    }
   });
 });

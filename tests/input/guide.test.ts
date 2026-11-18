@@ -68,6 +68,15 @@ describe('pointing the way to an exit', () => {
     expect(exitArrows(spots, toScreen, SCREEN, INSET, 9).map((a) => a.portalId)).not.toContain('beside');
   });
 
+  it('shows a main way ahead of a nearer one when there is room for only one', () => {
+    const near = spot('near', 2500, 1000);
+    const far = spot('far', 1000, 4000);
+    expect(exitArrows([near, far], toScreen, SCREEN, INSET, 1).map((a) => a.portalId)).toEqual(['near']);
+    const main = exitArrows([near, { ...far, main: true }], toScreen, SCREEN, INSET, 1);
+    expect(main.map((a) => a.portalId)).toEqual(['far']);
+    expect('main' in main[0]!, 'the flag is for choosing, and is not passed on').toBe(false);
+  });
+
   it('leaves out the bubble of a way out that would sit on a bubble that is already there', () => {
     const spots = [spot('under', 3000, 1000), spot('other', 1000, 3000)];
     const taken = [{ x: SCREEN.w - INSET.right - 10, y: SCREEN.h / 2 + 5 }];

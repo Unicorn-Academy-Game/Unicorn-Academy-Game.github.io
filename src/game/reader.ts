@@ -239,7 +239,6 @@ export class Reader {
   /** Sits the player down at the home screen. It is never put over itself. */
   open(): Started {
     if (this.session) return 'busy';
-    if (!this.deps.settings().on) return 'off';
     this.deps.rest.freeze();
     this.forgetStaleChoice();
     const read = totals(this.deps.book.get());
@@ -254,12 +253,9 @@ export class Reader {
     return 'up';
   }
 
-  /**
-   * A parent changed something. With learning off the screen goes away, and what the player read
-   * still counts.
-   */
+  /** A parent changed something. A screen that is up shows the voice as it is now. */
   settingsChanged(): void {
-    if (this.session && !this.deps.settings().on) this.end();
+    if (this.session) this.render();
   }
 
   /**

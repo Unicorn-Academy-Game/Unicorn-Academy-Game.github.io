@@ -14,6 +14,8 @@ export interface ExitSpot {
   mapId: MapId;
   /** Where its marker hovers, in the world. */
   at: Vec2;
+  /** A way that is shown ahead of nearer ones when there are more ways than bubbles. */
+  main?: boolean;
 }
 
 export interface Screen {
@@ -72,6 +74,11 @@ export interface SurveyOffer {
   active: boolean;
 }
 
+/** The button that takes the herd out of where she is in one tap: what it says. */
+export interface WayOutOffer {
+  label: string;
+}
+
 export interface ExitArrow {
   portalId: string;
   mapId: MapId;
@@ -120,10 +127,11 @@ function edgeToward(p: Vec2, screen: Screen, inset: Inset): (Vec2 & { angle: num
 }
 
 /**
- * The bubbles to show for the ways out that are off the screen, the nearest first, at most `limit`
- * of them. `toScreen` says where a world point is on the screen now. The line from the middle of
- * the screen to a marker is cut where it leaves the inset rectangle, which is where its bubble
- * goes. A bubble that would sit on one of the `taken` places is left out.
+ * The bubbles to show for the ways out that are off the screen, the nearest first but a main way
+ * ahead of the rest, at most `limit` of them. `toScreen` says where a world point is on the screen
+ * now. The line from the middle of the screen to a marker is cut where it leaves the inset
+ * rectangle, which is where its bubble goes. A bubble that would sit on one of the `taken` places
+ * is left out.
  */
 export function exitArrows(
   spots: readonly ExitSpot[],
@@ -133,14 +141,14 @@ export function exitArrows(
   limit = 3,
   taken: readonly Vec2[] = [],
 ): ExitArrow[] {
-  const found: (ExitArrow & { far: number })[] = [];
+  const found: (ExitArrow & { far: number; main: boolean })[] = [];
   for (const s of spots) {
     const p = toScreen(s.at);
     if (onScreen(p, screen)) continue;
     const edge = edgeToward(p, screen, inset);
-    if (edge) found.push({ portalId: s.portalId, mapId: s.mapId, ...edge });
+    if (edge) found.push({ portalId: s.portalId, mapId: s.mapId, main: s.main === true, ...edge });
   }
-  found.sort((a, b) => a.far - b.far);
+  found.sort((a, b) => Number(b.main) - Number(a.main) || a.far - b.far);
   const kept: ExitArrow[] = [];
   for (const f of found) {
     if (kept.length >= limit) break;
@@ -149,7 +157,7 @@ export function exitArrows(
       taken.some((t) => Math.hypot(t.x - f.x, t.y - f.y) < APART)
     )
       continue;
-    const { far: _far, ...arrow } = f;
+    const { far: _far, main: _main, ...arrow } = f;
     kept.push(arrow);
   }
   return kept;

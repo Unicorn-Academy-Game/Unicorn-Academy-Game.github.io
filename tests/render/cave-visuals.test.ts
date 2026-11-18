@@ -59,16 +59,14 @@ describe('how a reaction of the cave comes and goes', () => {
     }
   });
 
-  it('swings the hut door open, holds it, and swings it shut', () => {
-    expect(doorwayOf(0, 3)).toBe(0);
-    expect(doorwayOf(0.7, 3)).toBe(1);
-    expect(doorwayOf(1.5, 3)).toBe(1);
-    expect(doorwayOf(2.3, 3)).toBe(1);
-    expect(doorwayOf(3, 3)).toBe(0);
+  it('swings the hut door open and keeps it open while the herd goes in', () => {
+    expect(doorwayOf(0)).toBe(0);
+    expect(doorwayOf(0.6)).toBe(1);
+    expect(doorwayOf(1.2)).toBe(1);
     let last = 0;
-    for (let t = 0; t <= 0.7; t += 0.05) {
-      expect(doorwayOf(t, 3)).toBeGreaterThanOrEqual(last);
-      last = doorwayOf(t, 3);
+    for (let t = 0; t <= 0.6; t += 0.05) {
+      expect(doorwayOf(t)).toBeGreaterThanOrEqual(last);
+      last = doorwayOf(t);
     }
   });
 });
@@ -278,18 +276,16 @@ describe('the door of the hut', () => {
     expect(glowOf(shut)).toBeNull();
   });
 
-  it('swings open when she touches it, stays open a moment and swings shut', () => {
-    const total = PROP_DEFS['hut-door']!.delight!.seconds;
-    expect(share(doorOf({ moment: moment('delight', 0, total) }))).toBe(0);
-    expect(share(doorOf({ moment: moment('delight', 0.35, total) }))).toBeGreaterThan(0.1);
-    expect(share(doorOf({ moment: moment('delight', 0.35, total) }))).toBeLessThan(0.9);
-    expect(share(doorOf({ moment: moment('delight', total / 2, total) }))).toBe(1);
-    expect(share(doorOf({ moment: moment('delight', total, total) }))).toBe(0);
+  it('swings open when she touches it and stays open while the herd goes in', () => {
+    expect(share(doorOf({ moment: moment('door-opening', 0, 1.2) }))).toBe(0);
+    expect(share(doorOf({ moment: moment('door-opening', 0.3, 1.2) }))).toBeGreaterThan(0.1);
+    expect(share(doorOf({ moment: moment('door-opening', 0.3, 1.2) }))).toBeLessThan(0.9);
+    expect(share(doorOf({ moment: moment('door-opening', 0.6, 1.2) }))).toBe(1);
+    expect(share(doorOf({ moment: moment('door-opening', 1.1, 1.2) }))).toBe(1);
   });
 
   it('lights the floor in front of it while it is open, because she stands in front of it and hides the doorway', () => {
-    const total = PROP_DEFS['hut-door']!.delight!.seconds;
-    const open = doorOf({ moment: moment('delight', total / 2, total) });
+    const open = doorOf({ moment: moment('door-opening', 0.9, 1.2) });
     const light = glowOf(open)!;
     expect(light).toMatchObject({ sprite: 'cc-halo', glow: true });
     expect(light.dy!, 'in front of the door, not behind the hut').toBeGreaterThan(0);
@@ -297,11 +293,11 @@ describe('the door of the hut', () => {
     const [r, g, b] = channels(light.tint!);
     expect(g).toBe(255);
     expect(r).toBeGreaterThan(b);
-    expect(glowOf(doorOf({ moment: moment('delight', total, total) }))).toBeNull();
+    expect(glowOf(doorOf({ moment: moment('door-opening', 0, 1.2) }))).toBeNull();
   });
 
-  it('is only opened by a touch', () => {
-    for (const kind of ['freeze-pool', 'stoke-cauldron', 'door-opening'])
+  it('is only opened as a door, not by the spells or by a delight', () => {
+    for (const kind of ['freeze-pool', 'stoke-cauldron', 'delight'])
       expect(share(doorOf({ moment: moment(kind, 1.5, 3) })), kind).toBe(0);
   });
 });

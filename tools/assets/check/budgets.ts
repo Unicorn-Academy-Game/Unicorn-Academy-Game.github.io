@@ -21,15 +21,20 @@ const MiB = 1024 * 1024;
  * playable download, `offline` is the game kept for play with no connection, and `voice` is the
  * spoken lessons, which are kept as they are heard, or all at once when a parent asks. `gpu` is the
  * memory of a device that shows eight facings, `gpuFine` that of one that also holds the fine
- * facings, and `audio` is the sound a device may hold decoded. The voice is allowed 25 rather
- * than 24 because the Qwen3 voice's masters pack to 24.6 MiB where the Kokoro voice's fit in 24.
+ * facings, and `audio` is the sound a device may hold decoded. The voice is allowed 36: the Qwen3
+ * voice's masters packed to 24.6 MiB, and the two hundred new words, five clips each, with the
+ * milestones to 295 words, took them to 35.1 MiB.
+ * The beach, the river, the magic hall, the witch's hut, the Santa grove, their music, sixteen more
+ * grown-ups and two hundred more words took the offline game from 11.2 to 13.6 MiB of assets and
+ * 14.7 MiB with the app, so it is allowed 15, and the palace's cook and butler in the dining room
+ * took the most graphics memory from 251 to 261 MiB, so the fine facings are allowed 272.
  */
 export const BUDGET = {
   initial: 5 * MiB,
-  offline: 13 * MiB,
-  voice: 25 * MiB,
+  offline: 15 * MiB,
+  voice: 36 * MiB,
   gpu: 160 * MiB,
-  gpuFine: 256 * MiB,
+  gpuFine: 272 * MiB,
   audio: DECODED_BUDGET,
 } as const;
 

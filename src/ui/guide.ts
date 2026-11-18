@@ -8,6 +8,7 @@ import {
   type Screen,
   type SeekBubble,
   type SurveyOffer,
+  type WayOutOffer,
 } from '../game/guide';
 import { h } from './dom';
 import { BACK_ICON, EXIT_ICONS } from './icons';
@@ -19,6 +20,8 @@ export interface GuideHandlers {
   onExit: (portalId: string) => void;
   /** The button for looking at the whole of something was tapped. */
   onSurvey: () => void;
+  /** The button that takes the herd out of where she is was tapped. */
+  onWayOut: () => void;
   /** The bubble for the word the player is looking for was tapped. */
   onSeek: () => void;
   /** The small button that stops the player looking for it was tapped. */
@@ -114,6 +117,8 @@ export class Guide {
   private readonly surveyLabel: HTMLElement;
   private readonly surveyIcon: HTMLElement;
   private surveyShown: string | null = null;
+  private readonly wayOut: HTMLButtonElement;
+  private wayShown: string | null = null;
   private box: { screen: Screen; inset: Inset } = {
     screen: { w: 1, h: 1 },
     inset: { top: TOP, right: EDGE, bottom: BOTTOM, left: EDGE },
@@ -125,7 +130,15 @@ export class Guide {
     this.survey = h('button', { type: 'button', class: 'survey' }, this.surveyIcon, this.surveyLabel);
     this.survey.hidden = true;
     this.survey.addEventListener('click', () => this.handlers.onSurvey());
-    this.node = h('div', { class: 'guide' }, this.survey);
+    const wayIcon = h('span', { class: 'icon', 'aria-hidden': 'true' });
+    wayIcon.innerHTML = EXIT_ICONS.door;
+    this.wayOut = h('button', { type: 'button', class: 'way-out' }, wayIcon, h('span', { class: 'label' }));
+    this.wayOut.hidden = true;
+    this.wayOut.addEventListener('click', (event) => {
+      event.stopPropagation();
+      this.handlers.onWayOut();
+    });
+    this.node = h('div', { class: 'guide' }, this.survey, this.wayOut);
     // The layer's padding is the device's safe area (a notch, a home bar), which only the browser
     // can say.
     const watch = new ResizeObserver(() => this.measure());
@@ -183,7 +196,12 @@ export class Guide {
    * Brings the bubbles and the button up to date. A bubble for an exit that came back on the screen
    * fades away.
    */
-  update(arrows: readonly ExitArrow[], survey: SurveyOffer | null, seek: SeekView | null): void {
+  update(
+    arrows: readonly ExitArrow[],
+    survey: SurveyOffer | null,
+    seek: SeekView | null,
+    wayOut: WayOutOffer | null,
+  ): void {
     const live = new Set<string>();
     for (const a of arrows) {
       live.add(a.portalId);
@@ -197,6 +215,7 @@ export class Guide {
     }
     for (const [id, bubble] of this.bubbles) if (!live.has(id) && bubble.gone === null) this.leave(id, bubble);
     this.showSurvey(survey);
+    this.showWayOut(wayOut);
     this.showSeek(seek);
   }
 
@@ -208,6 +227,7 @@ export class Guide {
     }
     this.bubbles.clear();
     this.showSurvey(null);
+    this.showWayOut(null);
     this.dropSeek();
   }
 
@@ -344,6 +364,20 @@ export class Guide {
     if (b.gone !== null) window.clearTimeout(b.gone);
     b.el.remove();
     this.seek = null;
+  }
+
+  private showWayOut(offer: WayOutOffer | null): void {
+    if (offer === null) {
+      if (this.wayShown === null) return;
+      this.wayOut.hidden = true;
+      this.wayShown = null;
+      return;
+    }
+    if (offer.label === this.wayShown) return;
+    this.wayShown = offer.label;
+    this.wayOut.hidden = false;
+    this.wayOut.querySelector('.label')!.textContent = offer.label;
+    this.wayOut.setAttribute('aria-label', offer.label);
   }
 
   private showSurvey(s: SurveyOffer | null): void {

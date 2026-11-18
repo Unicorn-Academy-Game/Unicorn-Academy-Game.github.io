@@ -10,8 +10,12 @@ import { shuffled } from './random';
  * better for it.
  */
 
-/** How many pairs a game can have: three to eight, which is six to sixteen cards in two rows. */
-export const PAIR_SIZES = [3, 4, 6, 8] as const;
+/**
+ * How many pairs a game can have: three to thirty-two, which is six to sixty-four cards. The sizes
+ * are named by their cards on the screen, so thirty-two pairs is the game of sixty-four, and the
+ * game of thirty-two cards is sixteen pairs.
+ */
+export const PAIR_SIZES = [3, 4, 6, 8, 12, 16, 24, 32] as const;
 export type Pairs = (typeof PAIR_SIZES)[number];
 
 /**

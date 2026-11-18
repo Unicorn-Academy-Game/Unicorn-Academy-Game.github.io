@@ -5,7 +5,6 @@ import {
   COMPUTER,
   control,
   middleOfTheTick,
-  pastTheLeadIn,
   readCount,
   reading,
   screen,
@@ -27,7 +26,6 @@ import {
   play,
   SCRATCH,
   shot,
-  soundsHeard,
   spotOn,
   standBelow,
   step,
@@ -74,10 +72,9 @@ async function sitDown(page: Page, say = false): Promise<void> {
 }
 
 /**
- * A tap on the computer with learning off, from the start of the game to a moment after the screen
- * would have come: it wakes, which is heard, and the time the screen takes to come goes by. With
- * `made` the computer's course and screen are brought down first, which a tap does not do by
- * itself.
+ * A tap on the computer with learning off, from the start of the game to the home screen, with the
+ * computer's code already fetched when `made` says so (a parent who turned learning off in the
+ * middle of a day) and not yet fetched when it does not.
  */
 async function tapItWithLearningOff(page: Page, made: boolean): Promise<void> {
   await openGame(page);
@@ -90,17 +87,7 @@ async function tapItWithLearningOff(page: Page, made: boolean): Promise<void> {
     expect(await page.evaluate(() => window.__ua!.reading.reader), 'the computer is made').not.toBeNull();
   }
   await tapTheComputer(page);
-  await expect
-    .poll(
-      async () => {
-        await step(page, 1);
-        return (await soundsHeard(page)).some((s) => s.family === 'computer-wake' && s.played);
-      },
-      { message: 'the computer to wake', timeout: 30_000 * PATIENCE, intervals: [100] },
-    )
-    .toBe(true);
-  await pastTheLeadIn(page);
-  await step(page, 1);
+  await untilSitting(page);
 }
 
 test.describe('the reading computer', () => {
@@ -289,7 +276,7 @@ test.describe('the reading computer', () => {
     expect(await worldRuns(page)).toBe(true);
   });
 
-  test('a parent turning learning off takes the screen away, and what the player read stays read', async ({ page }) => {
+  test('a parent turning learning off leaves the screen up, and what the player read stays read', async ({ page }) => {
     await sitDown(page);
     await control(page, 'start').click();
     const word = await wordOnScreen(page);
@@ -300,10 +287,12 @@ test.describe('the reading computer', () => {
     await page.evaluate(() =>
       window.__ua!.settings.update({ learning: { ...window.__ua!.settings.get().learning, on: false } }),
     );
+    await expect(screen(page)).toHaveCount(1);
+    expect(await readCount(page, word)).toBe(1);
+    expect(await page.evaluate(() => window.__ua!.reading.reader!.busy)).toBe(true);
+    await page.locator('.read-close').click();
     await expect(screen(page)).toHaveCount(0);
     expect(await worldRuns(page)).toBe(true);
-    expect(await readCount(page, word)).toBe(1);
-    expect(await page.evaluate(() => window.__ua!.reading.reader!.busy)).toBe(false);
   });
 
   test('what the player read is still read after the page is loaded again', async ({ page }) => {
@@ -353,23 +342,23 @@ test.describe('the reading computer', () => {
     expect(await spoken(page)).toEqual([]);
   });
 
-  test('with learning off a tap on the computer only makes it sparkle, and no screen comes', async ({ page }) => {
+  test('with learning off a tap on the computer sits the player down at its home screen all the same, and nothing is said', async ({
+    page,
+  }) => {
     await tapItWithLearningOff(page, false);
-    await expect(screen(page)).toHaveCount(0);
-    expect(await page.evaluate(() => window.__ua!.reading.reader), 'nothing was fetched for it').toBeNull();
-    expect(await worldRuns(page)).toBe(true);
+    await expect(screen(page)).toHaveAttribute('data-screen', 'home');
+    expect(await page.evaluate(() => window.__ua!.reading.reader!.busy)).toBe(true);
+    expect(await page.evaluate(() => [...window.__ua!.voice.heard]), 'the voice belongs to learning').toEqual([]);
     expect(await spoken(page)).toEqual([]);
   });
 
-  test('with learning off and the computer already made, a tap still only makes it sparkle', async ({ page }) => {
-    // The test above passes just as well when the screen is slow to come, because nothing has been
-    // fetched for it. Here it is all there already, as it is for a parent who turns learning off in
-    // the middle of a day, so that the one thing in the way of the screen is learning being off.
+  test('with learning off and the computer already made, a tap sits the player down too', async ({ page }) => {
     await tapItWithLearningOff(page, true);
+    await expect(screen(page)).toHaveAttribute('data-screen', 'home');
+    await control(page, 'close').click();
     await expect(screen(page)).toHaveCount(0);
     expect(await page.evaluate(() => window.__ua!.reading.reader!.busy)).toBe(false);
     expect(await worldRuns(page)).toBe(true);
-    expect(await spoken(page)).toEqual([]);
   });
 
   test('a code chunk that does not come is asked for again, and the screen opens when it does', async ({ page }) => {
@@ -413,21 +402,18 @@ test.describe('the reading computer', () => {
     expect(await spoken(page)).toEqual([]);
   });
 
-  test('its chunk comes down by itself once play has begun with learning on, and not with it off', async ({ page }) => {
-    await openGame(page, 'kept', '', { learning: true });
-    await play(page);
-    expect(await page.evaluate(() => window.__ua!.reading.reader), 'the world starts without it').toBeNull();
-    await expect
-      .poll(() => page.evaluate(() => window.__ua!.reading.reader !== null), {
-        message: 'the chunk to come down',
-        timeout: 60_000 * PATIENCE,
-      })
-      .toBe(true);
-
-    await page.goto('about:blank');
-    await openGame(page);
-    await play(page);
-    await page.waitForTimeout(7000);
-    expect(await page.evaluate(() => window.__ua!.reading.reader), 'with learning off nothing is fetched').toBeNull();
+  test('its chunk comes down by itself once play has begun, with learning on or off', async ({ page }) => {
+    for (const learning of [true, false]) {
+      await openGame(page, 'kept', '', { learning });
+      await play(page);
+      expect(await page.evaluate(() => window.__ua!.reading.reader), 'the world starts without it').toBeNull();
+      await expect
+        .poll(() => page.evaluate(() => window.__ua!.reading.reader !== null), {
+          message: `the chunk to come down with learning ${learning ? 'on' : 'off'}`,
+          timeout: 60_000 * PATIENCE,
+        })
+        .toBe(true);
+      await page.goto('about:blank');
+    }
   });
 });

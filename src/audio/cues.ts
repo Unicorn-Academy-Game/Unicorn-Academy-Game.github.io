@@ -74,6 +74,11 @@ const EFFECT_SOUND: Partial<Record<string, SoundFamilyId>> = {
   'treasure-sparkle': 'gem',
   relocate: 'relocate',
   bubbles: 'splash',
+  wade: 'splash',
+  dive: 'splash',
+  'stone-glint': 'gem',
+  dig: 'hay',
+  glitter: 'fx-glow',
   cloud: 'hop',
   'rainbow-arc': 'fx-rainbow',
 };

@@ -66,6 +66,13 @@ export const EFFECT_IDS = [
   'screen-wake',
   // The palace bedroom: z's float up from Wildstar while she sleeps.
   'dream',
+  // The sea and the river: a hoof in the water, a leap in, and a glint struck from a stone.
+  'wade',
+  'dive',
+  'stone-glint',
+  // The beach: sand flying from a dig, and glitter from a plant by the Magic Hall.
+  'dig',
+  'glitter',
 ] as const;
 export type EffectId = (typeof EFFECT_IDS)[number];
 

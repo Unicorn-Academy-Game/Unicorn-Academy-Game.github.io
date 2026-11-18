@@ -87,6 +87,12 @@ export const PLACE_NAMES: Record<MapId, string> = {
   'palace-flowers': 'the flower room',
   'palace-bedroom': 'the bedroom',
   'palace-jewel': 'the jewel room',
+  river: 'the magic river',
+  beach: 'the beach',
+  'magic-hall': 'the magic hall',
+  'witch-hut': "the witch's hut",
+  'santa-grove': "Santa's grove",
+  'santa-cabin': "Santa's cabin",
 };
 
 export const count = (n: number, one: string, many: string): string => `${n} ${n === 1 ? one : many}`;

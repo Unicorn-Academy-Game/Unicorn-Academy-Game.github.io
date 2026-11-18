@@ -12,7 +12,8 @@ import { silence } from './silence';
  * mode draws. `--go map[,spawn]` goes through a door first (palace-garden, treasure-house, stable).
  * `--fx id[,id]` plays effects at `--fxat x,y` (default: just east of Wildstar) for `--fxsec`
  * seconds. `--clip x,y,w,h` crops the picture to a region in CSS pixels. `--play` presses the play
- * button first. `--tap` taps a world position. `--at` teleports Wildstar there before the shot.
+ * button first. `--click` clicks the first page element that matches a selector, such as the map
+ * button `[data-content-id="world.map.open"]`. `--tap` taps a world position. `--at` teleports Wildstar there before the shot.
  */
 const out = args[0] ?? 'assets/source/_scratch/shot.png';
 const width = Number(flag('w', '844'));
@@ -111,6 +112,8 @@ if (fxId) {
     [fxId, fx ?? NaN, fy ?? NaN, Number(flag('fxsec', '2.4'))] as const,
   );
 }
+const click = flag('click', '');
+if (click) await page.locator(click).first().click();
 const tap = flag('tap', '');
 if (tap) {
   const [x, y] = tap.split(',').map(Number) as [number, number];

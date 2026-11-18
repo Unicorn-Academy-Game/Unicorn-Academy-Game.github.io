@@ -143,7 +143,8 @@ export interface Location {
 export const locationOf = (compiled: CompiledMap): Location => ({
   bundle: compiled.render.bundle,
   tileset: compiled.render.tileset,
-  npcs: compiled.logic.npcs.map((n) => n.npcId),
+  // Two elves are one picture to load.
+  npcs: [...new Set(compiled.logic.npcs.map((n) => n.npcId))],
   open: OPEN_AIR[compiled.logic.id],
 });
 

@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 import { WORD_IDS } from '../../src/content/lexicon';
-import { hush, learningOn, openGame, type Pt, play, pressGear, watchConsole } from './helpers';
+import { GEAR, hush, learningOn, openGame, type Pt, play, watchConsole } from './helpers';
 import { type Fingers, fingers } from './touch';
 
 /**
@@ -469,13 +469,11 @@ const ACTIONS_OF: Action[] = [
     async run(kit) {
       const { page } = kit;
       if (await page.getByRole('dialog', { name: 'Parent controls' }).isVisible()) return;
-      kit.note('parent controls held open');
-      await pressGear(page);
+      kit.note('parent controls tapped open');
       await page
-        .getByRole('dialog', { name: 'Parent controls' })
-        .waitFor({ timeout: 4000 })
+        .getByRole('button', { name: GEAR })
+        .click({ timeout: 4000 })
         .catch(() => undefined);
-      await page.mouse.up();
     },
   },
   {

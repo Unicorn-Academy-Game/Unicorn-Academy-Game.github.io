@@ -12,6 +12,26 @@ export const ICON_GRID = picture(
   '<g><rect x="4.6" y="4.6" width="4.4" height="4.4" rx="1" fill="#ff9fc4"/><rect x="15" y="4.6" width="4.4" height="4.4" rx="1" fill="#ffd75e"/><rect x="4.6" y="15" width="4.4" height="4.4" rx="1" fill="#8fd3ff"/><rect x="15" y="15" width="4.4" height="4.4" rx="1" fill="#a6e86c"/></g>',
 );
 
+/** A speech bubble with sound in it, for the table's voice that is on. */
+const BUBBLE =
+  'M5 3.4h14a2.4 2.4 0 0 1 2.4 2.4v8.4a2.4 2.4 0 0 1-2.4 2.4h-6.2L7.6 20.6v-4H5a2.4 2.4 0 0 1-2.4-2.4V5.8A2.4 2.4 0 0 1 5 3.4z';
+export const ICON_VOICE_ON = picture(
+  `<path d="${BUBBLE}"/>`,
+  '<g fill="none" stroke-linecap="round"><path d="M8.2 10.1v1.8M12 7.9v6.2M15.8 9.2v3.6" stroke="#26183d" stroke-width="2.4"/><path d="M8.2 10.1v1.8M12 7.9v6.2M15.8 9.2v3.6" stroke="#ffb02e" stroke-width="1.2"/></g>',
+);
+
+/** The same bubble with a line through it, for the voice that has been turned off. */
+export const ICON_VOICE_OFF = picture(
+  `<path d="${BUBBLE}"/>`,
+  '<g fill="none" stroke-linecap="round"><path d="M5.4 4.4l13.2 12.4" stroke="#26183d" stroke-width="4.2"/><path d="M5.4 4.4l13.2 12.4" stroke="#ff9fc4" stroke-width="2"/></g>',
+);
+
+/** Nine keys in three rows, for the keypad that answers a sum. */
+export const ICON_KEYPAD = picture(
+  '<rect x="2.8" y="2.8" width="5.4" height="5.4" rx="1.4"/><rect x="9.3" y="2.8" width="5.4" height="5.4" rx="1.4"/><rect x="15.8" y="2.8" width="5.4" height="5.4" rx="1.4"/><rect x="2.8" y="9.3" width="5.4" height="5.4" rx="1.4"/><rect x="9.3" y="9.3" width="5.4" height="5.4" rx="1.4"/><rect x="15.8" y="9.3" width="5.4" height="5.4" rx="1.4"/><rect x="2.8" y="15.8" width="5.4" height="5.4" rx="1.4"/><rect x="9.3" y="15.8" width="5.4" height="5.4" rx="1.4"/><rect x="15.8" y="15.8" width="5.4" height="5.4" rx="1.4"/>',
+  '<g fill="#8fd3ff"><rect x="4.2" y="4.2" width="2.6" height="2.6" rx="0.6"/><rect x="10.7" y="10.7" width="2.6" height="2.6" rx="0.6"/><rect x="17.2" y="17.2" width="2.6" height="2.6" rx="0.6"/></g>',
+);
+
 const plus = 'M9.4 3h5.2v6.4H21v5.2h-6.4V21H9.4v-6.4H3V9.4h6.4z';
 const plusInside = 'M11 6v5H6v2h5v5h2v-5h5v-2h-5V6z';
 

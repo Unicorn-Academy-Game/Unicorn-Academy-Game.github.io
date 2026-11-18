@@ -1,11 +1,12 @@
 import Phaser from 'phaser';
 import { surfaceLookup } from '../audio/surface';
 import type { EffectId } from '../content/activities';
-import { EXIT_ARROW_HEIGHT } from '../content/exits';
+import { EXIT_ARROW_HEIGHT, MAIN_WAYS } from '../content/exits';
 import type { WordId } from '../content/lexicon';
 import type { ProduceId } from '../content/produce';
 import type { MinigameId } from '../content/props';
-import { type Haze, OPEN_AIR, SEASON_FEEL } from '../content/seasons';
+import { type Haze, OPEN_AIR, SEASON_FEEL, SKY_OVER } from '../content/seasons';
+import { WAY_OUT } from '../content/way-out';
 import type { Command, Crown, DomainEvent, LoadPlan, Rules, World } from '../domain';
 import { CONFIG, createWorld, dispatch, drainEvents, step, toSave } from '../domain';
 import { Aim } from '../input/aim';
@@ -38,6 +39,7 @@ import {
   type SeekBubble,
   type SurveyOffer,
   seekBubble,
+  type WayOutOffer,
 } from './guide';
 import { LessonLink } from './lesson-link';
 import { patiently, TOO_LONG } from './patience';
@@ -419,7 +421,12 @@ export class GameController {
     this.survey.reset();
     this.spots = world.map.portals.map((p) => {
       const mark = portalMark(p);
-      return { portalId: p.portalId, mapId: p.to.mapId, at: { x: mark.x, y: mark.y - EXIT_ARROW_HEIGHT } };
+      return {
+        portalId: p.portalId,
+        mapId: p.to.mapId,
+        at: { x: mark.x, y: mark.y - EXIT_ARROW_HEIGHT },
+        main: MAIN_WAYS.has(p.to.mapId),
+      };
     });
     // A finger still down on a new map leads again from the first frame.
     this.led = null;
@@ -428,11 +435,12 @@ export class GameController {
   }
 
   /**
-   * The season a place is in: the one showing if the sky is over it, and summer, which is how it
-   * was drawn, if it has a roof.
+   * The season a place is in: the one it keeps all year if it has one of its own, otherwise the one
+   * showing if the sky is over it, and summer, which is how it was drawn, if it has a roof.
    */
   private seasonHere(compiled: CompiledMap = this.compiled): SeasonId {
-    return OPEN_AIR[compiled.logic.id] ? this.season : 'summer';
+    const id = compiled.logic.id;
+    return SKY_OVER[id] ?? (OPEN_AIR[id] ? this.season : 'summer');
   }
 
   /**
@@ -839,6 +847,25 @@ export class GameController {
     return Math.hypot(herd.x - vista.stand.x, herd.y - vista.stand.y) <= vista.radius * SURVEY_OFFER_REACH
       ? { word: vista.whole.word, active: false }
       : null;
+  }
+
+  /**
+   * The button that takes the herd out of where she is, in one tap. Null where there is no such
+   * button, and while the world is not in play.
+   */
+  wayOutOffer(): WayOutOffer | null {
+    if (this.phase !== 'playing' || this.world.paused) return null;
+    const out = WAY_OUT[this.world.map.id];
+    return out ? { label: out.label } : null;
+  }
+
+  /** Takes the herd out of where she is at once, as the button says. */
+  wayOut(): void {
+    if (this.phase !== 'playing' || this.world.paused) return;
+    const out = WAY_OUT[this.world.map.id];
+    if (!out) return;
+    this.survey.end();
+    void this.transfer(out.to);
   }
 
   /** Stands back to see all of the place beside the herd, or comes home from it. */

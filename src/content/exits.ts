@@ -7,7 +7,17 @@ import type { MapId } from '../shared/ids';
  * outside, so a new map cannot be added without its exit being dressed.
  */
 
-export type ExitIcon = 'tree' | 'flower' | 'gem' | 'horseshoe' | 'castle' | 'star' | 'pumpkin' | 'door';
+export type ExitIcon =
+  | 'tree'
+  | 'flower'
+  | 'gem'
+  | 'horseshoe'
+  | 'castle'
+  | 'star'
+  | 'pumpkin'
+  | 'door'
+  | 'wave'
+  | 'shell';
 
 export interface ExitLook {
   /** A content id, so the word can be read out and spelled later. */
@@ -38,7 +48,21 @@ export const EXIT_LOOKS: Readonly<Record<MapId, ExitLook>> = {
   'palace-flowers': { id: 'exit.palace-flowers', word: 'flower room', tint: 0xff8fb0, icon: 'flower' },
   'palace-bedroom': { id: 'exit.palace-bedroom', word: 'bedroom', tint: 0x9aa2ff, icon: 'castle' },
   'palace-jewel': { id: 'exit.palace-jewel', word: 'jewel room', tint: 0x7ff0ff, icon: 'gem' },
+  river: { id: 'exit.river', word: 'magic river', tint: 0x5fd6ff, icon: 'wave' },
+  beach: { id: 'exit.beach', word: 'beach', tint: 0xffd98a, icon: 'shell' },
+  'magic-hall': { id: 'exit.magic-hall', word: 'magic hall', tint: 0xff8cf0, icon: 'castle' },
+  'witch-hut': { id: 'exit.witch-hut', word: 'witch hut', tint: 0xb8f06a, icon: 'door' },
+  'santa-grove': { id: 'exit.santa-grove', word: 'Santa grove', tint: 0xff5a5a, icon: 'star' },
+  'santa-cabin': { id: 'exit.santa-cabin', word: 'cabin', tint: 0xffb347, icon: 'door' },
 };
+
+/**
+ * The places whose way in is always pointed to, even when nearer ways are not. The garden is where
+ * the game opens out into the palace and everything round it, and the forest has more ways on than
+ * there are bubbles, so without this the farthest of them, which is the garden's gate, goes unseen
+ * on the first screen.
+ */
+export const MAIN_WAYS: ReadonlySet<MapId> = new Set<MapId>(['palace-garden']);
 
 /**
  * The three pictures a way out is drawn with, from the effects bundle: the glowing place, the

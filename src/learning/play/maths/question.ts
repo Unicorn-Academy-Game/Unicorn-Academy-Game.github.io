@@ -118,6 +118,17 @@ export interface Choice {
   readonly clips: readonly ClipId[];
 }
 
+/**
+ * The number that answers a question when the answer can be typed in, and nothing otherwise. A
+ * question can be typed when its answer is a number and there is something shown to work it out
+ * from. A question whose choices are all there is to look at, such as which of three numbers is the
+ * biggest, is not one to type, since the choices are the question.
+ */
+export const typedAnswer = (question: Question): number | null => {
+  const right = question.choices[question.answer]?.visual;
+  return question.show !== null && right?.kind === 'number' ? right.value : null;
+};
+
 export interface Question {
   readonly strand: StrandId;
   readonly level: MathsLevel;

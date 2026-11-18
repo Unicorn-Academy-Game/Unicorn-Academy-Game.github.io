@@ -24,6 +24,8 @@ interface BeginDeps {
   offline: OfflineService | null;
   screens: Pick<Screens, 'portraits' | 'produceIcons'>;
   bookChip: BookChip;
+  /** Opens the map of the island, when nothing else has the screen. */
+  openMap: (opener: HTMLElement) => void;
   fullscreen: Fullscreen;
   panel: ParentPanel;
   tables: Tables;
@@ -38,6 +40,7 @@ export function beginPlay({
   offline,
   screens,
   bookChip,
+  openMap,
   fullscreen,
   panel,
   tables,
@@ -51,10 +54,9 @@ export function beginPlay({
   offline?.keep();
   // The chunks of the tables come down once the world has had a moment to itself, so that they are
   // there when the player first sits down.
-  after(PRELOAD_TABLES_MS, () => {
-    if (settings.get().learning.on) tables.preload();
-  });
+  after(PRELOAD_TABLES_MS, () => tables.preload());
   ui.showHud({
+    onMap: openMap,
     onSound: () => settings.update({ muted: !settings.get().muted }),
     ...(fullscreen.supported ? { onFullscreen: () => void fullscreen.toggle() } : {}),
     onParent: (opener) => panel.open(opener),

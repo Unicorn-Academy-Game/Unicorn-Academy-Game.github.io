@@ -24,7 +24,7 @@ export interface EnvironmentBuild {
  * one differently makes every player download it again. A bundle moves here when it is being
  * rebuilt anyway.
  */
-const FILLED: ReadonlySet<BundleId> = new Set(['garden', 'palace-hall']);
+const FILLED: ReadonlySet<BundleId> = new Set(['garden', 'palace-hall', 'shore', 'magic', 'grove']);
 
 /**
  * Draws what is missing, packs each bundle into pages and writes the tile sheets. Returns the
