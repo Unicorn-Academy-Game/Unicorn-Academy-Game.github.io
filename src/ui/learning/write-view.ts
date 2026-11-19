@@ -1,4 +1,5 @@
 import { boxOf, type Glyph, type Point, RULES, type Stroke, type WriteKind } from '../../content/letters';
+import { along } from '../../game/tracing';
 
 /**
  * What the writing desk draws, worked out from a letter's strokes: the part of the ruled page to
@@ -24,6 +25,22 @@ export function frameOf(glyph: Glyph): Frame {
   const h = Math.max(box.y1, RULES.base) + PAD - y;
   const w = Math.max(box.x1 - box.x0 + PAD * 2, h * LEAST_WIDTH);
   return { x: (box.x0 + box.x1) / 2 - w / 2, y, w, h };
+}
+
+/** How wide the road and the ink are on a capital, in the units of the letter. */
+const ROAD = 16;
+const INK = 11;
+/** The longer side of a capital's page, which is the page every other letter's is measured against. */
+const CAPITAL = RULES.base - RULES.top + PAD * 2;
+
+/**
+ * How wide to draw the road and the ink, in the units of the letter. A small letter fills its page,
+ * so a unit is bigger on the screen than it is for a capital, and its lines are cut down to stay as
+ * wide on the screen as a capital's, which keeps the bowl of an a open.
+ */
+export function lineWidthsOf(frame: Frame): { road: number; ink: number } {
+  const scale = Math.min(1, Math.max(frame.w, frame.h) / CAPITAL);
+  return { road: Math.round(ROAD * scale * 10) / 10, ink: Math.round(INK * scale * 10) / 10 };
 }
 
 export interface Rule {
@@ -56,6 +73,32 @@ export const pathOf = (points: readonly Point[]): string =>
 
 /** Where a stroke starts, for the number that says which stroke it is. */
 export const startOf = (stroke: Stroke): Point => stroke[0] ?? [0, 0];
+
+/** Nearer than this, two numbers hide each other. */
+const CLEAR = 17;
+
+export interface Badge {
+  /** Where the line begins, which is where its number goes when it is the line to write. */
+  start: Point;
+  /** Where its number waits while an earlier line is the one to write, clear of the numbers it would hide. */
+  aside: Point;
+}
+
+/**
+ * Where the number of each line goes. A line that begins close to where an earlier one does keeps
+ * its number a little way along its own line until its turn comes, so that both can be read.
+ */
+export function badgesFor(strokes: readonly Stroke[]): Badge[] {
+  const taken: Point[] = [];
+  return strokes.map((stroke) => {
+    const start = startOf(stroke);
+    const clear = ([px, py]: Point): boolean => taken.every(([x, y]) => Math.hypot(x - px, y - py) >= CLEAR);
+    const way = along(stroke);
+    const aside = clear(start) ? start : (way.find(clear) ?? way.at(-1) ?? start);
+    taken.push(start, aside);
+    return { start, aside };
+  });
+}
 
 /**
  * How far a finger may be from the line and still be on it, in the units of the letter. It is the

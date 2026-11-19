@@ -57,6 +57,50 @@
   pointer-events: none;
 }
 
+/*
+ * The newest sticker catches the light when its page opens: a stroke of gold and white crosses it
+ * twice, over the shine every sticker has, and then it is still. With fewer effects it is plain.
+ */
+.book[data-kind="stickers"] .book-word[data-newest="true"] .book-frame::after {
+  border-radius: inherit;
+  background:
+    linear-gradient(
+      105deg,
+      transparent 32%,
+      rgb(255 214 90 / 0.7) 43%,
+      rgb(255 255 255 / 0.95) 50%,
+      rgb(255 214 90 / 0.7) 57%,
+      transparent 68%
+    )
+    100% 0 / 250% 100% no-repeat,
+    linear-gradient(118deg, rgb(255 255 255 / 0.6) 0 18%, transparent 19%);
+  animation: sticker-glint 900ms 500ms ease-in-out 2 both;
+}
+
+@keyframes sticker-glint {
+  from {
+    background-position:
+      100% 0,
+      0 0;
+  }
+  to {
+    background-position:
+      0 0,
+      0 0;
+  }
+}
+
+/* The rule that stills the book for fewer effects cannot reach a pseudo-element, so the glint is stilled here. */
+.book[data-calm="true"] .book-frame::after {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .book .book-frame::after {
+    animation: none !important;
+  }
+}
+
 .book[data-kind="stickers"] .book-word[data-found="true"] .book-frame[data-kind="thing"]::before,
 .sticker-pic[data-kind="thing"]::before {
   content: "";

@@ -602,8 +602,8 @@ button.book-card:active {
  * written, because the word is the answer.
  */
 .book-word[data-found="false"] .book-card {
-  background: rgb(0 0 0 / 0.18);
-  border: 3px dashed rgb(255 255 255 / 0.22);
+  background: linear-gradient(180deg, rgb(150 110 235 / 0.22), rgb(70 40 130 / 0.34));
+  border: 3px dashed rgb(215 190 255 / 0.42);
 }
 
 /* It can be tapped to be shown where the word is, and a magnifying glass on its corner says so. */
@@ -632,13 +632,13 @@ button.book-card:active {
 }
 
 .book-word[data-found="false"] .book-frame {
-  background: rgb(255 255 255 / 0.07);
-  border: 3px dashed rgb(255 255 255 / 0.32);
+  background: radial-gradient(circle at 50% 38%, rgb(255 255 255 / 0.2), rgb(255 255 255 / 0.05) 72%);
+  border: 3px dashed rgb(215 190 255 / 0.5);
   box-shadow: none;
 }
 
 .book-word[data-found="false"] .book-picture {
-  filter: brightness(0) invert(1) opacity(0.26);
+  filter: brightness(0) invert(1) opacity(0.45) drop-shadow(0 0 5px rgb(200 160 255 / 0.75));
 }
 
 .book-dots {
@@ -653,8 +653,8 @@ button.book-card:active {
   min-width: 3px;
   aspect-ratio: 1;
   border-radius: 30%;
-  background: rgb(0 0 0 / 0.3);
-  border: 2px solid rgb(255 255 255 / 0.32);
+  background: rgb(255 255 255 / 0.12);
+  border: 2px solid rgb(215 190 255 / 0.55);
 }
 
 /* A word that is ready to be spelled again glows. */

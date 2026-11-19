@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { boxOf, glyphOf, RULES, symbolsOf, WRITE_KINDS, type WriteKind } from '../../src/content/letters';
 import {
+  badgesFor,
   frameOf,
   hintSeconds,
   lengthOf,
+  lineWidthsOf,
   pathOf,
   reachFor,
   rulesOf,
@@ -164,5 +166,86 @@ describe('the letters on the grid', () => {
   it('keep the least size, and as many across as the width holds, when they do not all fit', () => {
     expect(tilesFor(26, 200, 120, 8, 44)).toEqual({ columns: 4, tile: 44 });
     expect(tilesFor(26, 10, 10, 8, 44)).toEqual({ columns: 1, tile: 44 });
+  });
+});
+
+describe('where the numbers of the lines go', () => {
+  const at = (x: number, y: number): [number, number] => [x, y];
+
+  it('leaves a number at the start of its line when no other line begins there', () => {
+    const badges = badgesFor([
+      [at(0, 0), at(0, 50)],
+      [at(100, 100), at(100, 150)],
+    ]);
+    expect(badges).toEqual([
+      { start: [0, 0], aside: [0, 0] },
+      { start: [100, 100], aside: [100, 100] },
+    ]);
+  });
+
+  it('moves the number of a line that begins where another does along its own line, until its turn', () => {
+    const [first, second] = badgesFor([
+      [at(0, 0), at(0, 50)],
+      [at(0, 0), at(50, 0)],
+    ]);
+    expect(first).toEqual({ start: [0, 0], aside: [0, 0] });
+    expect(second?.start).toEqual([0, 0]);
+    expect(second?.aside[1]).toBe(0);
+    expect(second?.aside[0]).toBeGreaterThanOrEqual(17);
+    expect(second?.aside[0]).toBeLessThan(20);
+  });
+
+  it('gives a third line from the same spot a place of its own', () => {
+    const [, second, third] = badgesFor([
+      [at(0, 0), at(0, 80)],
+      [at(0, 0), at(80, 0)],
+      [at(0, 0), at(0, -80)],
+    ]);
+    expect(Math.hypot(...third!.aside)).toBeGreaterThanOrEqual(17);
+    expect(Math.hypot(second!.aside[0] - third!.aside[0], second!.aside[1] - third!.aside[1])).toBeGreaterThanOrEqual(
+      17,
+    );
+  });
+
+  it.each(every)(
+    'keeps every number of $letter ($kase) clear of the others while it is waiting',
+    ({ kase, letter }) => {
+      const badges = badgesFor(found(letter, kase).strokes);
+      // While the first line is the one to write, its number is at its start and every other waits aside.
+      const shown = badges.map((badge, i) => (i === 0 ? badge.start : badge.aside));
+      for (let i = 0; i < shown.length; i++)
+        for (let j = i + 1; j < shown.length; j++)
+          expect(
+            Math.hypot(shown[i]![0] - shown[j]![0], shown[i]![1] - shown[j]![1]),
+            `${i + 1} and ${j + 1}`,
+          ).toBeGreaterThan(12);
+    },
+  );
+});
+
+describe('how wide the lines of a letter are drawn', () => {
+  it('keeps a capital at the full width', () => {
+    expect(lineWidthsOf(frameOf(found('a', 'upper')))).toEqual({ road: 16, ink: 11 });
+  });
+
+  it('draws the ink inside the road', () => {
+    for (const { kase, letter } of every) {
+      const { road, ink } = lineWidthsOf(frameOf(found(letter, kase)));
+      expect(ink).toBeLessThan(road);
+    }
+  });
+
+  it('thins a small letter that is drawn bigger, so that every letter has the same width on a page', () => {
+    const onPage = ({ kase, letter }: { kase: WriteKind; letter: string }) => {
+      const frame = frameOf(found(letter, kase));
+      return lineWidthsOf(frame).road * (250 / Math.max(frame.w, frame.h));
+    };
+    const capital = onPage({ kase: 'upper', letter: 'a' });
+    for (const each of every) {
+      expect(onPage(each), `${each.letter} (${each.kase})`).toBeGreaterThan(capital * 0.8);
+      expect(onPage(each), `${each.letter} (${each.kase})`).toBeLessThan(capital * 1.05);
+    }
+    const small = lineWidthsOf(frameOf(found('a', 'lower')));
+    expect(small.road).toBeLessThan(16);
   });
 });

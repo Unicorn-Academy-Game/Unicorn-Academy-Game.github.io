@@ -16,7 +16,19 @@ import {
   wordOf,
   writtenCount,
 } from './write-text';
-import { type Frame, frameOf, hintSeconds, lengthOf, pathOf, reachFor, rulesOf, startOf, tilesFor } from './write-view';
+import {
+  type Badge,
+  badgesFor,
+  type Frame,
+  frameOf,
+  hintSeconds,
+  lengthOf,
+  lineWidthsOf,
+  pathOf,
+  reachFor,
+  rulesOf,
+  tilesFor,
+} from './write-view';
 
 /** What the desk needs of the game. */
 export interface LetterDeskDeps {
@@ -93,6 +105,7 @@ export class LetterDesk {
   private svg: SVGSVGElement | null = null;
   private inks: SVGPathElement[] = [];
   private starts: SVGElement[] = [];
+  private badges: Badge[] = [];
   private hinting: SVGGElement | null = null;
   private finger: SVGCircleElement | null = null;
   private sparks: SVGGElement | null = null;
@@ -349,6 +362,9 @@ export class LetterDesk {
     const svg = document.createElementNS(SVG, 'svg');
     svg.setAttribute('class', 'write-svg');
     svg.style.setProperty('--r', (f.w / f.h).toFixed(4));
+    const widths = lineWidthsOf(f);
+    svg.style.setProperty('--road', String(widths.road));
+    svg.style.setProperty('--ink', String(widths.ink));
     svg.setAttribute('viewBox', `${tenth(f.x)} ${tenth(f.y)} ${tenth(f.w)} ${tenth(f.h)}`);
     svg.setAttribute('role', 'img');
     svg.setAttribute('aria-label', WRITE_LABELS.paper);
@@ -365,9 +381,9 @@ export class LetterDesk {
     const road = paths.map((d) => `<path d="${d}"/>`).join('');
     const ink = paths.map((d) => `<path class="write-ink" d="${d}" pathLength="1"/>`).join('');
     const several = glyph.strokes.length > 1;
-    const starts = glyph.strokes
-      .map((stroke, i) => {
-        const [x, y] = startOf(stroke);
+    this.badges = badgesFor(glyph.strokes);
+    const starts = this.badges
+      .map(({ aside: [x, y] }, i) => {
         return `<g class="write-start" data-state="later" transform="translate(${tenth(x)} ${tenth(y)})"><circle r="9.5"/>${
           several ? `<text y="3.8">${i + 1}</text>` : ''
         }</g>`;
@@ -411,7 +427,14 @@ export class LetterDesk {
       path.dataset.on = String(done > 0);
     });
     this.starts.forEach((node, i) => {
-      node.dataset.state = active === null || i < active ? 'done' : i === active ? 'now' : 'later';
+      const state = active === null || i < active ? 'done' : i === active ? 'now' : 'later';
+      node.dataset.state = state;
+      // A number waits beside the numbers it would hide, and goes to where its line begins when its turn comes.
+      const badge = this.badges[i];
+      if (badge) {
+        const [x, y] = state === 'later' ? badge.aside : badge.start;
+        node.setAttribute('transform', `translate(${tenth(x)} ${tenth(y)})`);
+      }
       // The number of the line being written is above the numbers of lines that start at the same spot.
       if (i === active && active !== this.raised) {
         this.raised = active;

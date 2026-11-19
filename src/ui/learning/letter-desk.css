@@ -296,6 +296,41 @@
   min-width: 0;
 }
 
+/*
+ * The places on the desk take the colours of the unicorn's mane in turn: a hint of the colour while a
+ * letter waits and the full colour once it is written, so the rainbow fills in as the child writes.
+ * White on every full colour holds at least 3.8 to 1.
+ */
+.write-cell:nth-child(6n + 1) {
+  --tile-dim: #522750;
+  --tile-lit: #d03a76;
+}
+
+.write-cell:nth-child(6n + 2) {
+  --tile-dim: #53313a;
+  --tile-lit: #cc650f;
+}
+
+.write-cell:nth-child(6n + 3) {
+  --tile-dim: #533d3a;
+  --tile-lit: #a87800;
+}
+
+.write-cell:nth-child(6n + 4) {
+  --tile-dim: #2e3b47;
+  --tile-lit: #2c8550;
+}
+
+.write-cell:nth-child(6n + 5) {
+  --tile-dim: #2a3b5f;
+  --tile-lit: #1c82aa;
+}
+
+.write-cell:nth-child(6n) {
+  --tile-dim: #3c2961;
+  --tile-lit: #6f4bd0;
+}
+
 .write-tile {
   position: relative;
   display: block;
@@ -305,7 +340,7 @@
   padding: 0;
   border-radius: 22%;
   border: 3px solid rgb(255 255 255 / 0.5);
-  background: rgb(255 255 255 / 0.1);
+  background: var(--tile-dim, rgb(255 255 255 / 0.1));
   box-shadow: var(--lift-button);
   cursor: pointer;
   transition:
@@ -319,7 +354,7 @@
 
 .write-tile[data-written="true"] {
   border-color: var(--sun);
-  background: rgb(255 215 94 / 0.16);
+  background: var(--tile-lit, rgb(255 215 94 / 0.16));
 }
 
 .write-mini {
@@ -340,7 +375,7 @@
 }
 
 .write-tile[data-written="true"] .write-mini path {
-  stroke: var(--sun);
+  stroke: #fff;
 }
 
 .write-tick {
@@ -348,8 +383,8 @@
   right: -7%;
   bottom: -7%;
   display: none;
-  width: 36%;
-  height: 36%;
+  width: 44%;
+  height: 44%;
 }
 
 .write-tile[data-written="true"] .write-tick {
@@ -444,7 +479,7 @@
 /* The road to follow, wide enough for a finger, with dots along its middle. */
 .write-road path {
   stroke: #ddd2f8;
-  stroke-width: 16;
+  stroke-width: var(--road, 16);
 }
 
 .write-way path {
@@ -455,7 +490,7 @@
 
 .write-ink {
   stroke: url("#write-rainbow");
-  stroke-width: 11;
+  stroke-width: var(--ink, 11);
   stroke-dasharray: 1 1;
   stroke-dashoffset: 1;
   opacity: 0;
@@ -471,7 +506,7 @@
 
 @keyframes write-shine {
   40% {
-    stroke-width: 17;
+    stroke-width: calc(var(--ink, 11) * 1.55);
   }
 }
 
