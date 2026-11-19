@@ -16,6 +16,23 @@
   --sun: #ffd75e;
   --ink: #26183d;
   --glass: rgb(18 30 26 / 0.55);
+  /*
+   * How a thing sits up off the page. The game draws every raised thing with a hard shadow of the ink
+   * under it, as a sticker has, and lifts the bigger ones with a soft shadow as well. These are the
+   * lifts it uses again and again.
+   */
+  /* A chip or a small control: a hard shadow of the ink under it, as a sticker has. */
+  --lift-chip: 0 2px 0 rgb(38 24 61 / 0.55);
+  /* A button. */
+  --lift-button: 0 3px 0 rgb(38 24 61 / 0.55);
+  /* A button that leads. */
+  --lift-button-big: 0 4px 0 rgb(38 24 61 / 0.6);
+  /* A card, which the soft shadow lifts off the world as well. */
+  --lift-card: 0 3px 0 rgb(38 24 61 / 0.55), 0 6px 14px rgb(0 0 0 / 0.3);
+  /* A sheet that covers the world, with the gold edge inside. */
+  --lift-sheet: 0 5px 0 rgb(38 24 61 / 0.7), 0 14px 34px rgb(0 0 0 / 0.5), inset 0 0 0 3px rgb(255 215 94 / 0.18);
+  /* A sheet of paper that is written or drawn on. */
+  --lift-paper: 0 0 0 5px #fffdf5, 0 8px 0 5px rgb(38 24 61 / 0.5), 0 10px 16px 5px rgb(0 0 0 / 0.35);
   --safe-top: env(safe-area-inset-top, 0px);
   --safe-right: env(safe-area-inset-right, 0px);
   --safe-bottom: env(safe-area-inset-bottom, 0px);
@@ -451,9 +468,7 @@ button:focus-visible {
   place-items: center;
   background: var(--glass);
   border: 3px solid rgb(255 255 255 / 0.85);
-  box-shadow:
-    0 3px 0 rgb(38 24 61 / 0.55),
-    0 6px 14px rgb(0 0 0 / 0.3);
+  box-shadow: var(--lift-card);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   transition:
@@ -556,9 +571,7 @@ button:focus-visible {
   border-radius: 99px;
   background: var(--glass);
   border: 3px solid rgb(255 255 255 / 0.85);
-  box-shadow:
-    0 3px 0 rgb(38 24 61 / 0.55),
-    0 6px 14px rgb(0 0 0 / 0.3);
+  box-shadow: var(--lift-card);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   transition: opacity 400ms ease;
@@ -760,9 +773,7 @@ button:focus-visible {
   border-radius: 99px;
   background: var(--glass);
   border: 3px solid rgb(255 255 255 / 0.85);
-  box-shadow:
-    0 3px 0 rgb(38 24 61 / 0.55),
-    0 6px 14px rgb(0 0 0 / 0.3);
+  box-shadow: var(--lift-card);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   transition: opacity 500ms ease;
@@ -1506,9 +1517,7 @@ button:focus-visible {
   border-radius: 99px;
   background: var(--glass);
   border: 3px solid rgb(255 255 255 / 0.85);
-  box-shadow:
-    0 3px 0 rgb(38 24 61 / 0.55),
-    0 6px 14px rgb(0 0 0 / 0.3);
+  box-shadow: var(--lift-card);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   pointer-events: none;

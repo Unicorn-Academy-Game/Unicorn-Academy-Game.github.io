@@ -10,11 +10,13 @@ import { ManorWord } from './games/manor-word';
 import { MorphMachine } from './games/morph-machine';
 import { PartyTime } from './games/party-time';
 import { RainbowRide } from './games/rainbow-ride';
+import { SleighRun } from './games/sleigh-run';
 import { SparkleSky } from './games/sparkle-sky';
 import { StarCannon } from './games/star-cannon';
 import { StatuePostcard } from './games/statue-postcard';
 import { ToneMatrix } from './games/tone-matrix';
 import { TreasureRain } from './games/treasure-rain';
+import { TreeTrim } from './games/tree-trim';
 import type { WonderEnv, WonderHandle, WonderMaker } from './wonder';
 
 /** How to make the game of each toy. */
@@ -37,6 +39,8 @@ const MAKERS: Partial<Record<ScreenId, WonderMaker>> = {
   // open to look at.
   'manor-lift': (env) => new ManorLift(env, env.look === 'down' ? 'down' : 'up'),
   'tone-matrix': (env) => new ToneMatrix(env),
+  'tree-trim': (env) => new TreeTrim(env),
+  'sleigh-run': (env) => new SleighRun(env),
 };
 
 /** Which games exist so far. */

@@ -1,0 +1,345 @@
+/*
+ * Drawing on a picture. The editor covers the album's sheet. Held sideways it has the crayon and
+ * stamps on the left and the colours on the right, with the picture between, as big as the space
+ * lets it be. Held upright the picture is on top and the buttons are in rows under it.
+ */
+
+.doodle {
+  --tool: clamp(44px, min(calc(11.4 * var(--vh)), 12vw), 54px);
+  --gap: clamp(4px, calc(1.5 * var(--vh)), 9px);
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    "shut paper done"
+    "tools paper inks";
+  gap: var(--gap) clamp(6px, 1.6vw, 14px);
+  padding: clamp(8px, calc(2.6 * var(--vh)), 14px);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 14% 16%, rgb(255 255 255 / 0.1) 0 2px, transparent 3px),
+    radial-gradient(circle at 86% 78%, rgb(255 255 255 / 0.08) 0 2px, transparent 3px),
+    linear-gradient(180deg, #3f2268, #261540);
+  outline: none;
+  animation: doodle-in 240ms ease-out both;
+}
+
+@keyframes doodle-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+/* The album's own cross sits half outside the sheet, where the editor's corner is. The editor has its own. */
+.book[data-drawing="true"] .book-shut {
+  visibility: hidden;
+}
+
+/* The cross and the check sit in the corners of the grid, and upright they share a row. */
+.doodle-head {
+  display: contents;
+}
+
+.doodle-shut {
+  grid-area: shut;
+  justify-self: start;
+}
+
+.doodle-done {
+  grid-area: done;
+  justify-self: end;
+}
+
+.doodle-shut,
+.doodle-done {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 46px;
+  min-height: 46px;
+  margin: 0;
+  padding: 0;
+  border-radius: 99px;
+  border: 3px solid rgb(255 255 255 / 0.9);
+  box-shadow: var(--lift-button);
+  color: #fff;
+  font-family: var(--font);
+  font-size: clamp(15px, calc(4.4 * var(--vh)), 21px);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+
+.doodle-shut {
+  background: #3b2060;
+}
+
+.doodle-done {
+  padding: 0 16px 0 12px;
+  background: linear-gradient(180deg, #53d983, #2eb45f);
+  text-shadow: 0 2px 0 rgb(23 90 48 / 0.7);
+}
+
+/* The finger can land a little outside either and still press it. */
+.doodle-shut::before,
+.doodle-done::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+}
+
+.doodle-shut:active,
+.doodle-done:active {
+  transform: scale(0.94);
+}
+
+.doodle-shut-icon svg {
+  display: block;
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.doodle-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.doodle-done .doodle-icon {
+  width: 26px;
+  height: 26px;
+}
+
+/* The picture, as big as the space between the buttons allows, and no bigger than it is. */
+.doodle-paper {
+  grid-area: paper;
+  container-type: size;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  /* Room for the white edge round the picture, which is a shadow so that it does not move the picture. */
+  padding: 7px;
+}
+
+.doodle-canvas {
+  display: block;
+  width: min(100cqw, calc(100cqh * var(--r, 2)));
+  height: auto;
+  aspect-ratio: var(--r, 2);
+  border-radius: 2px;
+  background: #2a1d4d;
+  box-shadow: var(--lift-paper);
+  /* The finger draws. It does not scroll, zoom or select. */
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: crosshair;
+  opacity: 0.4;
+  transition: opacity 200ms ease;
+}
+
+.doodle[data-ready="true"] .doodle-canvas {
+  opacity: 1;
+}
+
+.doodle-tools,
+.doodle-inks {
+  display: grid;
+  grid-template-columns: repeat(2, var(--tool));
+  grid-auto-rows: var(--tool);
+  gap: var(--gap);
+  align-content: start;
+  min-height: 0;
+}
+
+.doodle-tools {
+  grid-area: tools;
+  justify-self: start;
+}
+
+.doodle-inks {
+  grid-area: inks;
+  justify-self: end;
+}
+
+.doodle-tool {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--tool);
+  height: var(--tool);
+  margin: 0;
+  padding: 0;
+  border-radius: 50%;
+  border: 3px solid rgb(255 255 255 / 0.55);
+  background: rgb(255 255 255 / 0.1);
+  box-shadow: var(--lift-button);
+  color: #fff;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    background-color 160ms ease;
+}
+
+.doodle-tool .doodle-icon {
+  width: 68%;
+  height: 68%;
+}
+
+.doodle-tool:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
+.doodle-tool:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+/* What is chosen is gold round the edge and a little bigger, which does not rely on its colour. */
+.doodle-tool[aria-pressed="true"] {
+  border-color: var(--sun);
+  background: rgb(255 215 94 / 0.24);
+  box-shadow:
+    0 0 0 3px rgb(255 215 94 / 0.45),
+    0 3px 0 rgb(38 24 61 / 0.55);
+  transform: scale(1.08);
+}
+
+.doodle-ink {
+  background: var(--swatch);
+  border-color: rgb(255 255 255 / 0.85);
+}
+
+.doodle-ink[aria-pressed="true"] {
+  background: var(--swatch);
+  border-color: var(--sun);
+}
+
+/* How big the crayon and the stamps are: a dot of that size. */
+.doodle-dot {
+  display: block;
+  width: 36%;
+  height: 36%;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 0 2px #26183d;
+}
+
+.doodle-size[data-size="bold"] .doodle-dot {
+  width: 62%;
+  height: 62%;
+}
+
+.doodle-undo[data-nudge="true"] {
+  animation: doodle-nudge 520ms ease-out;
+}
+
+@keyframes doodle-nudge {
+  20%,
+  60% {
+    transform: translateX(-4px) scale(1.12);
+  }
+
+  40%,
+  80% {
+    transform: translateX(4px) scale(1.12);
+  }
+}
+
+/* Whether to keep a drawing is asked in the middle, with the way to keep it the bright one. */
+.doodle-ask {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: clamp(8px, calc(2.6 * var(--vh)), 16px);
+  border-radius: 24px;
+  background: rgb(20 10 36 / 0.78);
+  text-align: center;
+}
+
+.doodle-ask b {
+  font-size: clamp(18px, calc(5.4 * var(--vh)), 28px);
+  color: #fff3d6;
+  text-shadow: 0 2px 0 var(--ink);
+}
+
+.doodle-ask-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+}
+
+.doodle-ask .photo-button {
+  min-height: 52px;
+  padding: 3px 22px;
+}
+
+.doodle-shut:focus-visible,
+.doodle-done:focus-visible,
+.doodle-tool:focus-visible,
+.doodle-ask .photo-button:focus-visible {
+  outline: 4px solid var(--sun);
+  outline-offset: 3px;
+}
+
+/* Held upright the picture is on top, and the colours and the stamps are in rows under it. */
+@media (max-aspect-ratio: 1 / 1) {
+  .doodle {
+    --gap: 6px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "head"
+      "paper"
+      "inks"
+      "tools";
+  }
+
+  .doodle-head {
+    grid-area: head;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .doodle-tools,
+  .doodle-inks {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    justify-self: center;
+  }
+
+  /* Ten colours, and ten tools, are two rows of five, and not a row of seven and three left over. */
+  .doodle-tools,
+  .doodle-inks {
+    max-width: calc(5 * var(--tool) + 4 * var(--gap) + 6px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .doodle,
+  .doodle-canvas,
+  .doodle-tool,
+  .doodle-undo[data-nudge="true"],
+  .doodle-shut,
+  .doodle-done {
+    animation: none !important;
+    transition: none !important;
+  }
+}

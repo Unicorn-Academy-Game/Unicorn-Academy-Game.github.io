@@ -32,6 +32,7 @@ export {
   letterClip,
   MILESTONES,
   numberWords,
+  numeralClip,
   saysWord,
   soundClip,
   textOf,

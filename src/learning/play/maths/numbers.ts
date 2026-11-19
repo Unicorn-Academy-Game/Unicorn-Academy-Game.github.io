@@ -1,4 +1,4 @@
-import { type ClipId, numberWords } from '../../lines';
+import { type ClipId, numberWords, numeralClip } from '../../lines';
 
 /** The most a number in the maths game can be. */
 export const NUMBER_TOP = 100;
@@ -18,7 +18,7 @@ export type Place = 'alone' | 'lead' | 'last';
 export function numberClip(n: number, place: Place = 'alone'): ClipId {
   if (!Number.isInteger(n) || n < 0 || n > NUMBER_TOP)
     throw new RangeError(`${n} is not a number from 0 to ${NUMBER_TOP}`);
-  return place === 'alone' ? `num.${n}` : `${place}.${n}`;
+  return place === 'alone' ? numeralClip(n) : `${place}.${n}`;
 }
 
 /** A number from 0 to 100 in words, for the voice to read. */

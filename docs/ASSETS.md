@@ -23,9 +23,9 @@ All sizes are as sent compressed. `pnpm build` prints them for each release, and
 
 | | Size | Files |
 |---|---|---|
-| To the first playable moment: the page, the code, the herd, the forest and its sound | about 4.3 MiB | about 50 |
-| Kept on the device for play with no connection | about 11.2 MiB | about 140 |
-| Spoken lessons, kept as they are heard or all at once | about 23.7 MiB | about 2,560 |
+| To the first playable moment: the page, the code, the herd, the forest and its sound | about 4.5 MiB | about 50 |
+| Kept on the device for play with no connection | about 14.9 MiB | about 170 |
+| Spoken lessons, kept as they are heard or all at once | about 35.1 MiB | about 3,530 |
 
 `pnpm assets:validate` holds the assets to these budgets (`tools/assets/check/budgets.ts`) before the app itself is counted, and `pnpm build` runs it first.
 

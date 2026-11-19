@@ -2,6 +2,7 @@ import type { PageId, WordId } from '../../content/lexicon';
 import type { Kept, Rest } from '../../game/ports';
 import { type LearnerProfile, STARS_PER_WORD } from '../../learning';
 import type { LetterCase } from '../../shared/learning';
+import { bookKeys, centreTab, swipeToTurn, type Turn, tell, wheelAlong } from '../book-chrome';
 import { flag, h, trapFocus } from '../dom';
 import type { OverlayDeps } from '../overlay';
 import { layOut } from './book-fit';
@@ -18,7 +19,18 @@ import {
   type WordView,
 } from './book-view';
 import { flyPicture } from './flight';
-import { ICON_BOOK, ICON_CLOSE, ICON_FIND, ICON_READ, ICON_SPARKLE, ICON_STAR, ICON_STAR_EMPTY } from './icons';
+import {
+  ICON_BOOK,
+  ICON_CLOSE,
+  ICON_FIND,
+  ICON_PENCIL,
+  ICON_READ,
+  ICON_SPARKLE,
+  ICON_STAR,
+  ICON_STAR_EMPTY,
+} from './icons';
+import { LetterDesk, type LetterDeskDeps } from './letter-desk';
+import { WRITE_LABELS } from './write-text';
 
 export interface SpellBookDeps extends OverlayDeps {
   letters: () => LetterCase;
@@ -35,14 +47,10 @@ export interface SpellBookDeps extends OverlayDeps {
    */
   find: (word: WordId) => boolean;
   sounds: { open(): void; turn(): void };
+  /** What the desk for writing the letters needs of the game. */
+  writing: Omit<LetterDeskDeps, 'sheet' | 'letters' | 'calm' | 'closed'>;
 }
 
-/**
- * How far a finger has to move along the page to turn it, and how much more along than across, so a
- * scroll or a slip is not a turn.
- */
-const SWIPE_PX = 56;
-const SWIPE_SLOPE = 1.6;
 /** How long a page takes to turn. */
 const TURN_MS = 260;
 
@@ -57,6 +65,7 @@ interface Cell {
 
 interface Parts {
   sheet: HTMLElement;
+  write: HTMLButtonElement;
   count: HTMLElement;
   of: HTMLElement;
   starCount: HTMLElement;
@@ -88,6 +97,7 @@ export class SpellBook {
   private unlisten: (() => void) | null = null;
   private resizer: ResizeObserver | null = null;
   private opener: HTMLElement | null = null;
+  private desk: LetterDesk | null = null;
 
   constructor(private readonly deps: SpellBookDeps) {}
 
@@ -121,7 +131,11 @@ export class SpellBook {
     this.resizer.observe(parts.grid);
     this.fit();
     this.untrap = trapFocus(parts.sheet);
-    this.unlisten = this.listen();
+    // Whatever is on top of the book has the keys first.
+    this.unlisten = bookKeys({
+      close: () => (this.desk ? this.desk.back() : this.close()),
+      turn: (to) => (this.desk ? this.desk.turn(to) : this.turn(to)),
+    });
     this.deps.rest.freeze();
     parts.sheet.focus({ preventScroll: true });
     this.deps.sounds.open();
@@ -138,6 +152,8 @@ export class SpellBook {
     this.resizer = null;
     for (const flight of [...this.flights]) flight.cancel();
     this.flights.clear();
+    this.desk?.dismiss();
+    this.desk = null;
     this.root.remove();
     this.root = null;
     this.parts = null;
@@ -205,24 +221,29 @@ export class SpellBook {
       h('span', { class: 'book-total' }, count, of),
       h('span', { class: 'book-total' }, star, starCount),
     );
+    const write = h(
+      'button',
+      {
+        type: 'button',
+        class: 'book-write',
+        'aria-label': WRITE_LABELS.open,
+        'data-content-id': 'learning.book.write',
+        onclick: () => this.write(),
+      },
+      h('span', { 'aria-hidden': 'true' }),
+      h('span', { class: 'book-write-text', 'aria-hidden': 'true' }, 'Write'),
+    );
+    write.firstElementChild!.innerHTML = ICON_PENCIL;
     const head = h(
       'header',
       { class: 'book-head' },
       badge,
       h('h2', { class: 'book-title' }, BOOK_LABELS.title),
+      write,
       totals,
     );
     const tablist = h('div', { class: 'book-tabs', role: 'tablist', 'aria-label': BOOK_LABELS.pages });
-    // A mouse wheel turns the row of tabs along, since a mouse cannot swipe it.
-    tablist.addEventListener(
-      'wheel',
-      (event) => {
-        if (Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
-        tablist.scrollLeft += event.deltaY;
-        event.preventDefault();
-      },
-      { passive: false },
-    );
+    wheelAlong(tablist);
     const title = h('h3', { class: 'book-page-title' });
     const progress = h('small', { class: 'book-page-progress' });
     const grid = h('ul', { class: 'book-grid', 'aria-label': BOOK_LABELS.words });
@@ -232,7 +253,7 @@ export class SpellBook {
       h('div', { class: 'book-page-head' }, title, progress),
       grid,
     );
-    this.swipeOn(page);
+    swipeToTurn(page, (by) => this.go(turned(this.page, by)));
     const live = h('p', { class: 'book-live', role: 'status', 'aria-live': 'polite' });
     const sheet = h(
       'div',
@@ -243,7 +264,25 @@ export class SpellBook {
       page,
       live,
     );
-    return { sheet, count, of, starCount, totals, tabs: new Map(), tablist, page, title, progress, grid, live };
+    return { sheet, write, count, of, starCount, totals, tabs: new Map(), tablist, page, title, progress, grid, live };
+  }
+
+  /** Puts the desk for writing the letters over the book. */
+  private write(): void {
+    const parts = this.parts;
+    if (!parts || this.desk?.isOpen) return;
+    const desk = new LetterDesk({
+      ...this.deps.writing,
+      sheet: parts.sheet,
+      letters: this.deps.letters,
+      calm: this.deps.calm,
+      closed: () => {
+        this.desk = null;
+        parts.write.focus({ preventScroll: true });
+      },
+    });
+    this.desk = desk;
+    desk.open();
   }
 
   /**
@@ -446,79 +485,16 @@ export class SpellBook {
     this.showTab(!this.deps.calm());
     flag(parts.page, 'turn', TURN_MS, direction);
     this.deps.sounds.turn();
-    if (now) this.tell(tabLabel(now));
+    if (now) tell(this.parts?.live, tabLabel(now));
   }
 
-  /**
-   * Brings the tab of the open page to the middle of the row of tabs, which is swiped along when
-   * there are more than go across. The row alone is moved, and nothing around it.
-   */
   private showTab(smooth: boolean): void {
-    const strip = this.parts?.tablist;
-    const tab = this.parts?.tabs.get(this.page);
-    if (!strip || !tab) return;
-    const left = tab.offsetLeft - (strip.clientWidth - tab.offsetWidth) / 2;
-    strip.scrollTo({ left: Math.max(0, left), behavior: smooth ? 'smooth' : 'auto' });
+    centreTab(this.parts?.tablist, this.parts?.tabs.get(this.page), smooth);
   }
 
-  /** Says something to a screen reader. */
-  private tell(text: string): void {
-    const live = this.parts?.live;
-    if (!live || text === '') return;
-    live.textContent = '';
-    window.setTimeout(() => {
-      if (live.isConnected) live.textContent = text;
-    }, 30);
-  }
-
-  /** A swipe along the page turns it. */
-  private swipeOn(page: HTMLElement): void {
-    let start: { x: number; y: number } | null = null;
-    page.addEventListener('pointerdown', (event) => (start = { x: event.clientX, y: event.clientY }));
-    page.addEventListener('pointercancel', () => (start = null));
-    page.addEventListener('pointerup', (event) => {
-      const from = start;
-      start = null;
-      if (!from) return;
-      const dx = event.clientX - from.x;
-      const dy = event.clientY - from.y;
-      if (Math.abs(dx) < SWIPE_PX || Math.abs(dx) < Math.abs(dy) * SWIPE_SLOPE) return;
-      this.go(turned(this.page, dx < 0 ? 1 : -1));
-    });
-  }
-
-  /**
-   * Takes the keyboard while the book is open: arrows turn the page, Escape closes, and nothing
-   * steers Wildstar. A card over the book has it first.
-   */
-  private listen(): () => void {
-    const onKey = (event: KeyboardEvent): void => {
-      if (event.ctrlKey || event.metaKey || event.altKey || event.key === 'Tab') return;
-      event.stopPropagation();
-      const parts = this.parts;
-      if (!parts) return;
-      const to =
-        event.key === 'Escape'
-          ? 'close'
-          : event.key === 'ArrowRight'
-            ? turned(this.page, 1)
-            : event.key === 'ArrowLeft'
-              ? turned(this.page, -1)
-              : event.key === 'Home'
-                ? FIRST_PAGE
-                : event.key === 'End'
-                  ? turned(FIRST_PAGE, -1)
-                  : null;
-      if (to === null) return;
-      event.preventDefault();
-      if (to === 'close') {
-        this.close();
-        return;
-      }
-      this.go(to);
-      parts.tabs.get(this.page)?.focus({ preventScroll: true });
-    };
-    document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+  /** Turns to a page from the keyboard, and keeps the keyboard on its tab. */
+  private turn(to: Turn): void {
+    this.go(to === 'first' ? FIRST_PAGE : to === 'last' ? turned(FIRST_PAGE, -1) : turned(this.page, to));
+    this.parts?.tabs.get(this.page)?.focus({ preventScroll: true });
   }
 }

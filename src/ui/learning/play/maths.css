@@ -88,7 +88,7 @@
   color: #fff;
   font: inherit;
   font-weight: 700;
-  box-shadow: 0 4px 0 rgb(38 24 61 / 0.6);
+  box-shadow: var(--lift-button-big);
   cursor: pointer;
   transition:
     transform 120ms ease,
@@ -567,7 +567,7 @@
   font-size: calc(var(--key) * 0.5);
   font-weight: 700;
   line-height: 1;
-  box-shadow: 0 4px 0 rgb(38 24 61 / 0.6);
+  box-shadow: var(--lift-button-big);
   cursor: pointer;
   transition:
     transform 100ms ease,
@@ -755,7 +755,7 @@
   font-size: calc(var(--n) * 0.46);
   font-weight: 800;
   line-height: 1;
-  box-shadow: 0 4px 0 rgb(38 24 61 / 0.6);
+  box-shadow: var(--lift-button-big);
 }
 
 .mv-num.mv-gap,

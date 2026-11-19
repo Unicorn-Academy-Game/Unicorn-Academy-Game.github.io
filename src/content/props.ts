@@ -394,7 +394,8 @@ const defs: PropDef[] = [
   },
   {
     id: 'xmas-tree',
-    tap: 'delight',
+    tap: 'minigame',
+    minigame: 'tree-trim',
     delight: { effect: 'sparkle', sound: 'palace-welcome', seconds: 5, hop: 0, lift: 330 },
   },
   {
@@ -405,7 +406,8 @@ const defs: PropDef[] = [
   },
   {
     id: 'sleigh',
-    tap: 'delight',
+    tap: 'minigame',
+    minigame: 'sleigh-run',
     delight: { effect: 'light-burst', sound: 'fx-glow', seconds: 2.4, hop: 0, lift: 80 },
   },
   { id: 'reindeer', tap: 'delight', delight: { effect: 'hearts', sound: 'hearts', seconds: 2, hop: 8, lift: 140 } },

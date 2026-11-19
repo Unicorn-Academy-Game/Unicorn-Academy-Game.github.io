@@ -289,6 +289,50 @@ export const VAULT: Style = {
 };
 
 /**
+ * A snowy night by the Christmas tree: a music box that climbs the chord over a long pad, sleigh
+ * bells on the off beat that come in with the first ornaments, and a slow harp and a soft kick when
+ * the tree is full. It is quiet at first, so that every ornament the player hangs is a bell of their
+ * own on top of it.
+ */
+export const SNOWY: Style = {
+  name: 'snowy',
+  tempo: 84,
+  swing: 0.06,
+  progression: [CHORDS.C, CHORDS.G, CHORDS.Am, CHORDS.Csus],
+  layers: [
+    pad({ joins: 0, gain: 0.44 }),
+    arpeggio('bell', 'x...x...x...x...', { joins: 0, gain: 0.28, run: 'up', low: 72, pan: -0.15 }),
+    drum('hat', '..o...o...o...o.', { joins: 0.1, gain: 0.16 }),
+    chimes('glass', '..x...x...x...x.', 0.45, { joins: 0.2, gain: 0.26, low: 79, span: 12, pan: 0.3 }),
+    bass('x.......x.......', { joins: 0.34, gain: 0.55 }),
+    arpeggio('harp', 'x.x.x.x.x.x.x.x.', { joins: 0.5, gain: 0.3, run: 'updown', low: 60, pan: 0.2 }),
+    drum('kick', 'x.......x.......', { joins: 0.7, gain: 0.3 }),
+    chimes('chime', '.x...x...x...x..', 0.4, { joins: 0.82, gain: 0.22, low: 84, span: 12, pan: -0.3 }),
+  ],
+};
+
+/**
+ * The sleigh over the rooftops: quick and bright, with sleigh bells in the hats, a marimba that
+ * trots along and a bell tune that grows as the village lights up.
+ */
+export const JINGLE: Style = {
+  name: 'jingle',
+  tempo: 112,
+  swing: 0.08,
+  progression: [CHORDS.C, CHORDS.Am, CHORDS.G, CHORDS.Csus],
+  layers: [
+    pad({ joins: 0, gain: 0.4 }),
+    arpeggio('marimba', 'x.x.x.x.x.x.x.x.', { joins: 0, gain: 0.32, run: 'skip', low: 64, pan: -0.15 }),
+    drum('hat', 'o.o.o.o.o.o.o.o.', { joins: 0.08, gain: 0.2 }),
+    chimes('bell', 'x..x..x..x..x...', 0.55, { joins: 0.18, gain: 0.3, low: 76, span: 12, pan: 0.25 }),
+    bass('x...x.x.x...x.x.', { joins: 0.3, gain: 0.6 }),
+    drum('kick', 'x.......x.......', { joins: 0.5, gain: 0.32 }),
+    arpeggio('pluck', 'x.xx.x.xx.xx.x.x', { joins: 0.7, gain: 0.28, run: 'updown', low: 72, pan: 0.2 }),
+    chimes('glass', '..x...x...x...x.', 0.45, { joins: 0.85, gain: 0.24, low: 84, span: 12, pan: -0.3 }),
+  ],
+};
+
+/**
  * Every style by name, so a tool can render them all. The party's song is made by whoever is
  * dancing, so here it is with every part playing.
  */
@@ -306,5 +350,7 @@ export const STYLES: Readonly<Record<string, Style>> = {
   fountain: FOUNTAIN,
   pond: POND,
   vault: VAULT,
+  snowy: SNOWY,
+  jingle: JINGLE,
   disco: DISCO,
 };

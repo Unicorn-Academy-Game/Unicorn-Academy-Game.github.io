@@ -37,7 +37,9 @@ Open http://localhost:5173/ and press Play. [`docs/GAME_GUIDE.md`](docs/GAME_GUI
 - Nineteen places, a herd that follows you through every door, and critters, fruit, treasure and gems to find.
 - Music and ambience that change with the place, all synthesized by the scripts under `tools/audio`.
 - Mini-games on the playground and in the manor, including a tone matrix adapted from ToneMatrix Redux.
-- An optional learning mode with a spelling card, a Spell Book, a reading computer with an 85-stage course, a memory table and a maths table that goes from counting to the adding, subtracting, times tables and mixed sums of school. A recorded voice reads every word and sentence.
+- Winter games in Santa's grove: dressing a Christmas tree to the last light, and flying the sleigh over a village, with a present for every chimney, on Christmas Eve.
+- A Sticker Book that gives a sticker for each good thing a child does, nothing ever asked for or taken away, and a camera that keeps pictures of the herd in an album on the device, where they can be drawn on with crayons and stamps.
+- An optional learning mode with a spelling card, a Spell Book, a reading computer with an 85-stage course, a memory table, a maths table that goes from counting to the adding, subtracting, times tables and mixed sums of school, and a writing desk where every letter and number is traced stroke by stroke with a finger. A recorded voice reads every word and sentence.
 - Parent controls behind a held button: sound, how each visit starts, learning choices, saving and backups, offline play and recovery.
 
 Almost nothing in it was drawn in an editor. The sprites come from a software 3D renderer written for this project, the maps are written in TypeScript, and the sound is synthesized. [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) says how the parts fit together.
@@ -50,9 +52,9 @@ The automated tests drive the game in Chromium and WebKit at phone, tablet and d
 
 | | Sent compressed |
 |---|---|
-| The first playable moment (page, code, the herd, the forest and its sound) | about 4.3 MiB |
-| The whole game, kept on the device for play with no connection | about 11.2 MiB |
-| The spoken lessons, kept as they are heard or all at once when a parent asks | about 23.7 MiB |
+| The first playable moment (page, code, the herd, the forest and its sound) | about 4.5 MiB |
+| The whole game, kept on the device for play with no connection | about 14.9 MiB |
+| The spoken lessons, kept as they are heard or all at once when a parent asks | about 35.1 MiB |
 
 Pictures are lossless WebP, sound is packed at the rate the audio engine plays at, Phaser is a file of its own that a new release borrows from the one before, and the spoken lessons are never part of what a first visit downloads. [`docs/ASSETS.md`](docs/ASSETS.md) says how each number is kept down, and `pnpm build` fails when the build grows past its budgets.
 

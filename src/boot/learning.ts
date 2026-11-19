@@ -1,9 +1,10 @@
 import { SpellSounds } from '../audio/spell-sounds';
+import { writtenName } from '../content/stickers';
 import type { GameController } from '../game/controller';
 import type { Rest } from '../game/ports';
 import { sharedRest } from '../game/rest';
 import { Teacher } from '../game/teacher';
-import { tally } from '../learning';
+import { letterClip, numeralClip, soundClip, tally } from '../learning';
 import type { LearnerModel } from '../persistence/learner';
 import type { PlayModel } from '../persistence/play';
 import type { SettingsModel } from '../persistence/settings';
@@ -34,6 +35,14 @@ export interface Learning {
   rest: Rest;
   /** True when nothing else has the screen, so another screen may go up. */
   idle: () => boolean;
+  /** The picture of a word, as an image. */
+  picture: ReturnType<typeof wordPictures>;
+}
+
+/** What the album knows of the letters the player has written, and a way to tell it of another. */
+export interface Written {
+  has: (name: string) => boolean;
+  note: (name: string) => void;
 }
 
 interface LearningDeps {
@@ -49,6 +58,7 @@ interface LearningDeps {
   screens: Screens;
   panel: ParentPanel;
   desks: Desks;
+  written: Written;
 }
 
 /**
@@ -69,6 +79,7 @@ export function makeLearning({
   screens,
   panel,
   desks,
+  written,
 }: LearningDeps): Learning {
   const { scene, manifest } = graphics;
   const { engine, synth, voice } = sound;
@@ -130,6 +141,18 @@ export function makeLearning({
       return true;
     },
     sounds: spellSounds,
+    writing: {
+      written: (symbol, kind) => written.has(writtenName(kind, symbol)),
+      wrote: (symbol, kind) => written.note(writtenName(kind, symbol)),
+      // The name of the letter, and then what it sounds like, or the name of the number, when the
+      // player has asked to be spoken to.
+      say: (symbol, both) => {
+        if (!voice.available || !settings.get().learning.say) return;
+        if (/^\d$/.test(symbol)) voice.say([numeralClip(Number(symbol))]);
+        else voice.say(both ? [letterClip(symbol), soundClip(symbol)] : [letterClip(symbol)]);
+      },
+      sounds: spellSounds,
+    },
   });
   const bookChip = new BookChip({
     layer: ui.host,
@@ -178,5 +201,5 @@ export function makeLearning({
     stop: () => lessons.stopSeeking(),
   };
   const idle = (): boolean => free() && !lessons.busy && !spellBook.isOpen;
-  return { lessons, spellBook, bookChip, tables, seeking, rest, idle };
+  return { lessons, spellBook, bookChip, tables, seeking, rest, idle, picture: wordPicture };
 }

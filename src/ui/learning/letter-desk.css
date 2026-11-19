@@ -1,0 +1,746 @@
+/*
+ * Writing the letters. The desk covers the Spell Book's sheet. First it is the twenty six letters
+ * to pick from, and then a page for one. Held sideways the page is in the middle with the arrows, the
+ * voice and the helper down its two sides. Held upright the page is on top and the buttons are in a
+ * row under it. A letter that has been written is gold, and nothing is ever red.
+ */
+
+.book-write {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 14px 0 8px;
+  border-radius: 99px;
+  border: 3px solid rgb(255 255 255 / 0.9);
+  background: linear-gradient(180deg, #ff8fb4, #ff5d8f);
+  box-shadow: var(--lift-button);
+  color: #fff;
+  font-family: var(--font);
+  font-size: clamp(15px, calc(4.6 * var(--vh)), 22px);
+  font-weight: 700;
+  text-shadow: 0 2px 0 rgb(120 20 60 / 0.6);
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+
+/* The finger can land a little outside it and still press it. */
+.book-write::before {
+  content: "";
+  position: absolute;
+  inset: -6px;
+}
+
+.book-write:active {
+  transform: scale(0.94);
+}
+
+.book-write svg {
+  display: block;
+  width: 28px;
+  height: 28px;
+}
+
+.book-write:focus-visible {
+  outline: 4px solid var(--sun);
+  outline-offset: 3px;
+}
+
+/* On a narrow sheet the pencil says it alone. */
+@container book (max-width: 460px) {
+  .book-write {
+    padding: 0 9px 0 8px;
+  }
+
+  .book-write-text {
+    display: none;
+  }
+}
+
+/* The book's own cross sits half outside the sheet, where the desk's corner is. The desk has its own. */
+.book[data-writing="true"] .book-shut {
+  visibility: hidden;
+}
+
+.write {
+  --tool: clamp(44px, min(calc(11.4 * var(--vh)), 12vw), 56px);
+  --gap: clamp(6px, calc(1.8 * var(--vh)), 12px);
+  position: absolute;
+  inset: 0;
+  z-index: 6;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--gap);
+  padding: clamp(8px, calc(2.6 * var(--vh)), 14px);
+  border-radius: 24px;
+  background:
+    radial-gradient(circle at 14% 16%, rgb(255 255 255 / 0.1) 0 2px, transparent 3px),
+    radial-gradient(circle at 86% 78%, rgb(255 255 255 / 0.08) 0 2px, transparent 3px),
+    linear-gradient(180deg, #3f2268, #261540);
+  color: #fff;
+  outline: none;
+  animation: write-in 240ms ease-out both;
+}
+
+@keyframes write-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+.write[data-view="letters"] .write-trace,
+.write[data-view="write"] .write-grid {
+  display: none;
+}
+
+.write-head {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+  min-width: 0;
+}
+
+.write-shut,
+.write-case {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  min-width: 46px;
+  min-height: 46px;
+  margin: 0;
+  padding: 0;
+  border-radius: 99px;
+  border: 3px solid rgb(255 255 255 / 0.9);
+  background: #3b2060;
+  box-shadow: var(--lift-button);
+  color: #fff;
+  font-family: var(--font);
+  font-size: clamp(16px, calc(4.8 * var(--vh)), 22px);
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+
+.write-case {
+  padding: 0 12px;
+  background: linear-gradient(180deg, #8f6bff, #6a43d6);
+  text-shadow: 0 2px 0 rgb(38 24 61 / 0.6);
+}
+
+/* The switch shows the three pages, and the one the desk is on is bright. */
+.write-case-text {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.write-case-text i {
+  font-style: normal;
+  opacity: 0.55;
+}
+
+.write-case[data-case="upper"] i:nth-child(1),
+.write-case[data-case="lower"] i:nth-child(2),
+.write-case[data-case="digits"] i:nth-child(3) {
+  color: var(--sun);
+  opacity: 1;
+}
+
+/* The finger can land a little outside either and still press it. */
+.write-shut::before,
+.write-case::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+}
+
+.write-shut:active,
+.write-case:active {
+  transform: scale(0.94);
+}
+
+.write-shut-icon svg {
+  display: block;
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.write-name {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.write-badge {
+  flex: none;
+  width: clamp(26px, calc(7 * var(--vh)), 38px);
+}
+
+.write-badge svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.write[data-view="write"] .write-badge {
+  display: none;
+}
+
+.write-title {
+  margin: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: clamp(17px, min(calc(5 * var(--vh)), 6vw), 26px);
+  font-weight: 700;
+  line-height: 1.1;
+  color: #fff3d6;
+  text-shadow: 0 2px 0 var(--ink);
+}
+
+.write-count {
+  flex: none;
+  padding: 1px 12px;
+  border-radius: 99px;
+  background: rgb(0 0 0 / 0.3);
+  font-size: clamp(15px, calc(4.4 * var(--vh)), 22px);
+  font-variant-numeric: tabular-nums;
+  color: var(--sun);
+  text-shadow: 0 2px 0 var(--ink);
+}
+
+.write-pair {
+  display: none;
+  gap: 12px;
+  font-size: clamp(26px, calc(8 * var(--vh)), 44px);
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 3px 0 var(--ink);
+}
+
+.write-pair b {
+  color: #fff3d6;
+  opacity: 0.5;
+}
+
+.write-pair b[data-on="true"] {
+  color: var(--sun);
+  opacity: 1;
+}
+
+/* A numeral has its word beside it, smaller, for a child who is learning to read it. */
+.write[data-case="digits"] .write-pair b:last-child {
+  align-self: center;
+  font-size: 0.5em;
+  opacity: 0.8;
+}
+
+/* On a narrow sheet the pencil says what the letters are for, and the words give way to the count. */
+@container book (max-width: 420px) {
+  .write[data-view="letters"] .write-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+}
+
+/* On the page the two forms of the letter say which it is, so the words are only for a screen reader. */
+.write[data-view="write"] .write-title {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.write[data-view="write"] .write-count {
+  display: none;
+}
+
+.write[data-view="write"] .write-pair {
+  display: inline-flex;
+}
+
+/* The twenty six, as big as the room allows. */
+.write-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 7), var(--tile, 64px));
+  grid-auto-rows: var(--tile, 64px);
+  gap: 8px;
+  justify-content: center;
+  align-content: center;
+  min-height: 0;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.write-cell {
+  display: grid;
+  min-width: 0;
+}
+
+.write-tile {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  border-radius: 22%;
+  border: 3px solid rgb(255 255 255 / 0.5);
+  background: rgb(255 255 255 / 0.1);
+  box-shadow: var(--lift-button);
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    background-color 160ms ease;
+}
+
+.write-tile:active {
+  transform: scale(0.94);
+}
+
+.write-tile[data-written="true"] {
+  border-color: var(--sun);
+  background: rgb(255 215 94 / 0.16);
+}
+
+.write-mini {
+  position: absolute;
+  inset: 9%;
+  display: block;
+  width: 82%;
+  height: 82%;
+  overflow: visible;
+}
+
+.write-mini path {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 12;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.write-tile[data-written="true"] .write-mini path {
+  stroke: var(--sun);
+}
+
+.write-tick {
+  position: absolute;
+  right: -7%;
+  bottom: -7%;
+  display: none;
+  width: 36%;
+  height: 36%;
+}
+
+.write-tile[data-written="true"] .write-tick {
+  display: block;
+}
+
+.write-tick svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The page of one letter. */
+.write-trace {
+  display: grid;
+  grid-template-columns: var(--tool) minmax(0, 1fr) var(--tool);
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  grid-template-areas:
+    "prev paper next"
+    "say paper again"
+    "help paper .";
+  gap: 0 clamp(6px, 1.6vw, 14px);
+  min-height: 0;
+}
+
+.write-paper {
+  grid-area: paper;
+  position: relative;
+  container-type: size;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  min-height: 0;
+  /* Room for the white edge round the page, which is a shadow so that it does not move the page. */
+  padding: 7px;
+}
+
+.write-paper[data-turn="next"] {
+  animation: write-turn-next 260ms ease-out both;
+}
+
+.write-paper[data-turn="back"] {
+  animation: write-turn-back 260ms ease-out both;
+}
+
+@keyframes write-turn-next {
+  from {
+    opacity: 0;
+    transform: translateX(7%);
+  }
+}
+
+@keyframes write-turn-back {
+  from {
+    opacity: 0;
+    transform: translateX(-7%);
+  }
+}
+
+.write-svg {
+  display: block;
+  width: min(100cqw, calc(100cqh * var(--r, 0.8)));
+  height: auto;
+  aspect-ratio: var(--r, 0.8);
+  border-radius: 14px;
+  background: #fffdf5;
+  box-shadow: var(--lift-paper);
+  /* The finger writes. It does not scroll, zoom or select. */
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: crosshair;
+}
+
+.write-rule {
+  stroke: #b7c6ea;
+  stroke-width: 1.3;
+}
+
+.write-rule[data-dashed="true"] {
+  stroke-dasharray: 5 5;
+}
+
+.write-road path,
+.write-way path,
+.write-ink {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The road to follow, wide enough for a finger, with dots along its middle. */
+.write-road path {
+  stroke: #ddd2f8;
+  stroke-width: 16;
+}
+
+.write-way path {
+  stroke: #9a83d9;
+  stroke-width: 1.8;
+  stroke-dasharray: 0.1 5;
+}
+
+.write-ink {
+  stroke: url("#write-rainbow");
+  stroke-width: 11;
+  stroke-dasharray: 1 1;
+  stroke-dashoffset: 1;
+  opacity: 0;
+}
+
+.write-ink[data-on="true"] {
+  opacity: 1;
+}
+
+.write[data-done="true"] .write-ink {
+  animation: write-shine 760ms ease-out;
+}
+
+@keyframes write-shine {
+  40% {
+    stroke-width: 17;
+  }
+}
+
+.write-start {
+  transform-box: fill-box;
+  transform-origin: center;
+  pointer-events: none;
+}
+
+.write-start circle {
+  fill: #ff6b8b;
+  stroke: #fff;
+  stroke-width: 2.2;
+}
+
+.write-start text {
+  fill: #fff;
+  font-family: var(--font);
+  font-size: 12px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.write-start[data-state="later"] {
+  opacity: 0.55;
+}
+
+.write-start[data-state="done"] {
+  opacity: 0;
+}
+
+.write-start[data-state="now"] circle {
+  animation: write-beat 1100ms ease-in-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@keyframes write-beat {
+  50% {
+    transform: scale(1.22);
+  }
+}
+
+.write-hint {
+  pointer-events: none;
+}
+
+.write-hint[data-show="false"] {
+  display: none;
+}
+
+.write-hint-glow {
+  fill: rgb(255 215 94 / 0.5);
+}
+
+.write-hint-dot {
+  fill: #ffb400;
+  stroke: #fff;
+  stroke-width: 2.4;
+}
+
+.write-finger {
+  fill: rgb(154 107 255 / 0.3);
+  stroke: #9b6bff;
+  stroke-width: 1.6;
+  pointer-events: none;
+}
+
+.write-finger[data-show="false"] {
+  display: none;
+}
+
+.write-prev {
+  grid-area: prev;
+}
+
+.write-next {
+  grid-area: next;
+}
+
+.write-say {
+  grid-area: say;
+}
+
+.write-again {
+  grid-area: again;
+}
+
+.write-help {
+  grid-area: help;
+}
+
+.write-prev,
+.write-next,
+.write-say,
+.write-again,
+.write-help {
+  position: relative;
+  display: grid;
+  place-items: center;
+  align-self: center;
+  justify-self: center;
+  width: var(--tool);
+  height: var(--tool);
+  margin: 0;
+  padding: 0;
+  border-radius: 50%;
+  border: 3px solid rgb(255 255 255 / 0.6);
+  background: rgb(255 255 255 / 0.12);
+  box-shadow: var(--lift-button);
+  color: #fff;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    background-color 160ms ease,
+    opacity 160ms ease;
+}
+
+.write-next {
+  border-color: #fff;
+  background: linear-gradient(180deg, #53d983, #2eb45f);
+}
+
+.write-prev:active,
+.write-next:active,
+.write-say:active,
+.write-again:active,
+.write-help:active {
+  transform: scale(0.92);
+}
+
+.write-icon {
+  display: block;
+  width: 62%;
+  height: 62%;
+}
+
+.write-icon svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.write-prev .write-icon {
+  transform: scaleX(-1);
+}
+
+.write-help[aria-disabled="true"] {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* A written letter beckons the arrow that goes on. */
+.write[data-done="true"] .write-next {
+  animation: write-nudge 1200ms ease-in-out infinite;
+}
+
+@keyframes write-nudge {
+  50% {
+    transform: translateX(5px) scale(1.08);
+  }
+}
+
+.write-shut:focus-visible,
+.write-case:focus-visible,
+.write-tile:focus-visible,
+.write-prev:focus-visible,
+.write-next:focus-visible,
+.write-say:focus-visible,
+.write-again:focus-visible,
+.write-help:focus-visible {
+  outline: 4px solid var(--sun);
+  outline-offset: 3px;
+}
+
+/* A star at each stretch of the line as it is written, which grows, turns and goes. */
+.write-sparks {
+  pointer-events: none;
+}
+
+.write-spark {
+  fill: var(--c);
+  stroke: #fff;
+  stroke-width: 1.6;
+  stroke-linejoin: round;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: write-spark 700ms ease-out both;
+}
+
+@keyframes write-spark {
+  from {
+    opacity: 1;
+    transform: scale(0.3) rotate(0deg);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-7px) scale(1.5) rotate(80deg);
+  }
+}
+
+/* A shower of stars from the middle of the page when a letter is written. */
+.write-burst {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.write-bit {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  margin: -9px 0 0 -9px;
+  background: var(--c);
+  clip-path: polygon(50% 0, 62% 36%, 100% 38%, 70% 60%, 80% 100%, 50% 76%, 20% 100%, 30% 60%, 0 38%, 38% 36%);
+  animation: write-fly 1200ms ease-out both;
+}
+
+@keyframes write-fly {
+  from {
+    opacity: 1;
+    transform: rotate(var(--a)) translateY(0) scale(0.3);
+  }
+
+  to {
+    opacity: 0;
+    transform: rotate(var(--a)) translateY(calc(-1 * var(--d, 30cqmin))) rotate(220deg) scale(1);
+  }
+}
+
+.write-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+/* Held upright the page is on top, and the buttons are in a row under it. */
+@media (max-aspect-ratio: 1 / 1) {
+  .write {
+    --gap: 6px;
+  }
+
+  .write-trace {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-rows: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "paper paper paper paper paper"
+      "prev say help again next";
+    gap: var(--gap);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .write,
+  .write-paper,
+  .write[data-done="true"] .write-ink,
+  .write[data-done="true"] .write-next,
+  .write-start circle,
+  .write-bit {
+    animation: none;
+  }
+
+  .write-burst,
+  .write-sparks {
+    display: none;
+  }
+}

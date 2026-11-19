@@ -117,5 +117,6 @@ At run time Phaser draws the maps and actors. Everything that stands on the grou
 | stage, chapter | A step of the reading course, and a group of them. |
 | strand, family | A kind of sum, and the set of kinds that make up Level 0 or Level 1. |
 | profile, book | What the learner has done, and the Spell Book that shows it. |
+| sticker, album | A good thing the player did that the game noticed, and the record on the device that keeps them. The Sticker Book shows it. |
 | visit | One opening of the game, `kept`, `fresh` or `incognito`. |
 | release | One build. Its id is a hash of its files. |

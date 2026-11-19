@@ -104,6 +104,15 @@ export interface LessonPort {
   newPlace(): void;
 }
 
+/**
+ * What the world tells the sticker book, and all it tells: what happened, and in which world. The
+ * book decides what that is worth. A game with no book passes none, and then none of this is ever
+ * called.
+ */
+export interface AlbumPort {
+  event(e: DomainEvent, world: World): void;
+}
+
 /** Where something is on the screen, in CSS pixels. */
 export interface Box {
   left: number;

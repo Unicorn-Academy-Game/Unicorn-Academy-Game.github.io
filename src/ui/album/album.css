@@ -1,0 +1,394 @@
+/*
+ * The Sticker Book, the button that opens it and the moment a sticker is earned. The book is drawn
+ * from the Spell Book's own pieces (the sheet, the tabs, the cards: see learning/book.css), and
+ * this is what makes it a book of stickers: each sits a little crooked in a white edge cut round
+ * it, and the ones still to come are shapes. Nothing here is red, and nothing is ever missing: a
+ * sticker that has not come yet is waiting.
+ */
+
+[data-stickerbook="true"] .guide {
+  visibility: hidden;
+}
+
+/* The buttons of the books and the camera share a row, so the corner keeps its height on a phone held sideways. */
+.cornerchips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.book[data-kind="stickers"] .book-page {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+/*
+ * A sticker in the book, in the toast and in the air between them: a card's frame with the corners
+ * of a sticker, the same size at rest and in flight so one is never seen to change into the other.
+ */
+.book[data-kind="stickers"] .book-frame,
+.sticker-pic,
+.book-flyer[data-sticker="true"] {
+  position: relative;
+  border-radius: 24%;
+  background: radial-gradient(circle at 50% 30%, #fffef6 0%, #e9f6ff 56%, #c6e6fb 100%);
+  border: 4px solid #fff;
+  box-shadow:
+    0 0 0 2px rgb(38 24 61 / 0.3),
+    0 4px 0 rgb(38 24 61 / 0.5);
+}
+
+.book[data-kind="stickers"] .book-frame[data-kind="portrait"],
+.sticker-pic[data-kind="portrait"],
+.book-flyer[data-sticker="true"][data-kind="portrait"] {
+  border-radius: 50%;
+}
+
+.book[data-kind="stickers"] .book-word[data-found="true"] .book-frame {
+  rotate: var(--tilt, 0deg);
+}
+
+/* A shine across the corner, and a corner turned back, which is how a sticker looks. */
+.book[data-kind="stickers"] .book-word[data-found="true"] .book-frame::after,
+.sticker-pic::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(118deg, rgb(255 255 255 / 0.6) 0 18%, transparent 19%);
+  pointer-events: none;
+}
+
+.book[data-kind="stickers"] .book-word[data-found="true"] .book-frame[data-kind="thing"]::before,
+.sticker-pic[data-kind="thing"]::before {
+  content: "";
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 22%;
+  height: 22%;
+  border-top-left-radius: 34%;
+  background: linear-gradient(135deg, transparent 50%, #d6caef 50%, #fff 100%);
+  box-shadow: -1px -1px 3px rgb(38 24 61 / 0.3);
+  pointer-events: none;
+}
+
+/* A sticker still to come is a shape: the same edge, cut out and empty. */
+.book[data-kind="stickers"] .book-word[data-found="false"] .book-frame {
+  background: rgb(255 255 255 / 0.07);
+  border: 3px dashed rgb(255 255 255 / 0.32);
+  box-shadow: none;
+}
+
+.sticker-caption {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: clamp(12px, calc(var(--pic) * 0.2), 16px);
+  font-weight: 700;
+  line-height: 1.05;
+  text-align: center;
+  text-wrap: balance;
+  color: #fff;
+  text-shadow: 0 2px 0 var(--ink);
+}
+
+/* How far the player is to a sticker that is still to come, in plain numbers. */
+.book-word[data-found="false"] .sticker-caption {
+  font-variant-numeric: tabular-nums;
+  color: rgb(255 255 255 / 0.72);
+}
+
+/* The sticker the player touched is the one the line under the page is about. */
+.book[data-kind="stickers"] .book-word[data-picked="true"] .book-card {
+  border-color: var(--sun);
+  background: rgb(255 215 94 / 0.14);
+}
+
+/*
+ * The line under the page: what a sticker is for. It is one line on a screen held sideways, where
+ * height is short, and as many as it needs on one held upright.
+ */
+.sticker-note {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 3px 10px;
+  border-radius: 14px;
+  background: rgb(255 255 255 / 0.08);
+  font-size: clamp(12px, calc(3.7 * var(--vh)), 18px);
+  line-height: 1.2;
+  color: #fff3d6;
+}
+
+.sticker-note-mark svg {
+  display: block;
+  width: 1.7em;
+  height: 1.7em;
+}
+
+.sticker-note[data-state="waiting"] .sticker-note-mark {
+  opacity: 0.6;
+}
+
+.sticker-note-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sticker-note-name {
+  margin-right: 0.5em;
+  color: var(--sun);
+  text-shadow: 0 2px 0 var(--ink);
+}
+
+.sticker-note-far {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.sticker-meter {
+  width: clamp(40px, 12vw, 110px);
+  height: 0.7em;
+  overflow: hidden;
+  border-radius: 99px;
+  background: rgb(0 0 0 / 0.35);
+  border: 2px solid rgb(255 255 255 / 0.35);
+}
+
+.sticker-meter i {
+  display: block;
+  height: 100%;
+  border-radius: 99px;
+  background: var(--sun);
+}
+
+/*
+ * Held sideways the screen is short, so the line goes up beside the page's name, where there is
+ * room, and the stickers keep all the height. Held upright it sits under them, as many lines as it
+ * needs, with how far the player is on a line of its own.
+ */
+@media (orientation: landscape) {
+  .book[data-kind="stickers"] .book-page {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr);
+    column-gap: 12px;
+  }
+
+  .book[data-kind="stickers"] .book-page-head {
+    grid-area: 1 / 1;
+  }
+
+  .book[data-kind="stickers"] .book-grid {
+    grid-area: 2 / 1 / 3 / 3;
+  }
+
+  .sticker-note {
+    grid-area: 1 / 2;
+    padding-block: 1px;
+  }
+}
+
+/* On the shortest screens the line has no room for a heading before what to do, so it goes. */
+@media (orientation: landscape) and (max-height: 360px) {
+  .sticker-note[data-state="waiting"] .sticker-note-name {
+    display: none;
+  }
+
+  .sticker-meter {
+    width: clamp(32px, 8vw, 90px);
+  }
+}
+
+@media (orientation: portrait) {
+  .sticker-note {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 2px 8px;
+  }
+
+  .sticker-note-text {
+    white-space: normal;
+  }
+
+  .sticker-note-far {
+    grid-column: 2;
+  }
+
+  .sticker-meter {
+    flex: 1 1 auto;
+    width: auto;
+  }
+}
+
+/*
+ * The moment a sticker is earned. It is held up at the top in the middle, where nothing else is,
+ * and a tap goes through it to the world.
+ */
+.sticker-toast {
+  --art: clamp(88px, calc(30 * var(--vh)), 150px);
+  position: absolute;
+  z-index: 34;
+  left: 50%;
+  top: calc(var(--safe-top) + 72px);
+  translate: -50% 0;
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  max-width: calc(100% - 24px);
+  font-family: var(--font);
+  color: #fff;
+  pointer-events: none;
+  transition: opacity 280ms ease;
+}
+
+.sticker-toast-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: var(--art);
+  height: var(--art);
+}
+
+.sticker-pic {
+  display: grid;
+  place-items: center;
+  width: var(--art);
+  height: var(--art);
+  overflow: hidden;
+  animation: sticker-slap 560ms cubic-bezier(0.2, 1.3, 0.4, 1) both;
+}
+
+.sticker-pic img,
+.book-flyer[data-sticker="true"] img {
+  width: 82%;
+  height: 82%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 4px 0 rgb(38 24 61 / 0.28));
+}
+
+.sticker-pic[data-kind="portrait"] img,
+.book-flyer[data-sticker="true"][data-kind="portrait"] img {
+  width: 100%;
+  height: auto;
+  align-self: start;
+  margin-top: 4%;
+}
+
+.sticker-toast-label {
+  display: grid;
+  justify-items: center;
+  margin: 0;
+  padding: 3px 18px 5px;
+  border-radius: 18px;
+  background: rgb(38 24 61 / 0.9);
+  border: 3px solid #fff;
+  box-shadow: 0 4px 0 rgb(38 24 61 / 0.5);
+  text-align: center;
+  animation: sticker-label-in 360ms 180ms cubic-bezier(0.2, 1.4, 0.4, 1) backwards;
+}
+
+.sticker-toast-label small {
+  font-size: clamp(10px, calc(2.9 * var(--vh)), 14px);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sun);
+}
+
+.sticker-toast-label b {
+  font-size: clamp(16px, calc(5.2 * var(--vh)), 26px);
+  line-height: 1.1;
+  text-shadow: 0 2px 0 var(--ink);
+}
+
+/* Once the sticker flies, the label goes and the place it was held is left to the flyer. */
+.sticker-toast[data-leaving="true"] .sticker-toast-label {
+  opacity: 0;
+  transition: opacity 200ms ease-in;
+}
+
+.sticker-toast[data-leaving="true"]:not([data-calm="true"]) .sticker-pic {
+  visibility: hidden;
+}
+
+.sticker-toast[data-leaving="true"][data-calm="true"] {
+  opacity: 0;
+}
+
+/* A burst of light as it lands. */
+.sticker-spark {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: calc(var(--art) * 0.09);
+  height: calc(var(--art) * 0.09);
+  margin: calc(var(--art) * -0.045);
+  border-radius: 50%;
+  background: var(--sun);
+  box-shadow: 0 0 6px 1px rgb(255 215 94 / 0.8);
+  animation: sticker-spark 760ms 160ms ease-out both;
+}
+
+@keyframes sticker-slap {
+  0% {
+    opacity: 0;
+    transform: scale(2.6) rotate(-16deg);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(0.86) rotate(5deg);
+  }
+  68% {
+    transform: scale(1.08) rotate(-3deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+@keyframes sticker-label-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes sticker-spark {
+  0% {
+    opacity: 1;
+    transform: rotate(var(--a)) translateY(calc(var(--art) * -0.45)) scale(0.4);
+  }
+  100% {
+    opacity: 0;
+    transform: rotate(var(--a)) translateY(calc(var(--art) * -0.9)) scale(1);
+  }
+}
+
+/* Fewer effects, by the parent's choice or the device's: it comes and goes, and nothing moves. */
+.sticker-toast[data-calm="true"] * {
+  animation: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sticker-toast * {
+    animation: none !important;
+  }
+}

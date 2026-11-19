@@ -44,6 +44,7 @@ import {
 import { LessonLink } from './lesson-link';
 import { patiently, TOO_LONG } from './patience';
 import {
+  type AlbumPort,
   type AudioPlace,
   type AudioPort,
   forgetfulSaves,
@@ -215,6 +216,7 @@ export class GameController {
    * given with `setLesson`.
    */
   private readonly lesson = new LessonLink(() => this.world);
+  private album: AlbumPort | undefined;
   private readonly onNotice: (notice: Notice) => void;
   private readonly onSky: (haze: Haze | null) => void;
   private readonly onFriendFound: (unicornId: UnicornId, found: readonly UnicornId[]) => void;
@@ -1037,6 +1039,7 @@ export class GameController {
 
   private onEvent(e: DomainEvent): void {
     this.lesson.event(e);
+    this.album?.event(e, this.world);
     switch (e.type) {
       case 'command-accepted':
         this.effects.play({ id: 'tap', at: e.at, seconds: 0.4 });
@@ -1102,6 +1105,11 @@ export class GameController {
       default:
         break;
     }
+  }
+
+  /** From now on what happens in the world is counted towards stickers. */
+  setAlbum(album: AlbumPort): void {
+    this.album = album;
   }
 
   /** From now on the player is asked to spell the names of what they touch. */

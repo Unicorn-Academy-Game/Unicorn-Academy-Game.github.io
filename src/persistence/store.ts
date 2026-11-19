@@ -1,4 +1,6 @@
+import type { AlbumRecord } from '../shared/album';
 import { LearnerProfile } from '../shared/learning';
+import type { PhotosRecord } from '../shared/photos';
 import type { PlayRecord } from '../shared/play';
 import { DEFAULT_SETTINGS, DeviceSettings, MAX_SAVE_BYTES, readSettings, WorldSaveV1 } from '../shared/save';
 import {
@@ -240,19 +242,67 @@ export class LocalStore {
    * nothing was.
    */
   async updatePlay(change: (stored: unknown) => PlayRecord | null): Promise<PlayRecord | null> {
-    const tx = this.db.transaction('learner', 'readwrite');
-    const done = tx.done;
-    done.catch(() => undefined);
-    const store = tx.objectStore('learner');
-    const next = change(await store.get('play'));
-    if (next) await store.put(next, 'play');
-    await done;
-    return next;
+    return await this.updateKept('play', change);
   }
 
   /** Forgets what the player has done at the tables. */
   async clearPlay(): Promise<void> {
     await this.db.delete('learner', 'play');
+  }
+
+  /**
+   * What is stored of the sticker book, as it is and unchecked, or nothing. Callers read it with
+   * `readAlbum`.
+   */
+  async album(): Promise<unknown> {
+    return await this.db.get('learner', 'album');
+  }
+
+  /** As `updatePlay`, for the sticker book. */
+  async updateAlbum(change: (stored: unknown) => AlbumRecord | null): Promise<AlbumRecord | null> {
+    return await this.updateKept('album', change);
+  }
+
+  /** Forgets the sticker book. */
+  async clearAlbum(): Promise<void> {
+    await this.db.delete('learner', 'album');
+  }
+
+  /**
+   * What is stored of the pictures the player took, as it is and unchecked, or nothing. Callers
+   * read it with `readPhotos`.
+   */
+  async photos(): Promise<unknown> {
+    return await this.db.get('learner', 'photos');
+  }
+
+  /** As `updatePlay`, for the pictures. */
+  async updatePhotos(change: (stored: unknown) => PhotosRecord | null): Promise<PhotosRecord | null> {
+    return await this.updateKept('photos', change);
+  }
+
+  /** Forgets the pictures. */
+  async clearPhotos(): Promise<void> {
+    await this.db.delete('learner', 'photos');
+  }
+
+  /**
+   * Reads one of the records that the player keeps beside the book, hands it to `change`, and
+   * stores what `change` gives back, in one transaction. Nothing is written before the last thing
+   * that can throw.
+   */
+  private async updateKept<T>(
+    key: 'play' | 'album' | 'photos',
+    change: (stored: unknown) => T | null,
+  ): Promise<T | null> {
+    const tx = this.db.transaction('learner', 'readwrite');
+    const done = tx.done;
+    done.catch(() => undefined);
+    const store = tx.objectStore('learner');
+    const next = change(await store.get(key));
+    if (next) await store.put(next, key);
+    await done;
+    return next;
   }
 
   /** Keeps unreadable data as text for the parent to export, newest few only. */

@@ -9,6 +9,8 @@ export interface Flyer {
   picture: string;
   /** A friend's head and shoulders, which sits in a round frame. */
   portrait: boolean;
+  /** It is a sticker, which has a white edge cut round it and not the card's frame. */
+  sticker?: boolean;
 }
 
 /** The middle of a box, which is where something flying to it should end up. */
@@ -28,7 +30,12 @@ export function flyPicture(layer: HTMLElement, what: Flyer, from: Box, to: Box, 
   const bounds = layer.getBoundingClientRect();
   const flyer = h(
     'span',
-    { class: 'book-flyer', 'data-kind': what.portrait ? 'portrait' : 'thing', 'aria-hidden': 'true' },
+    {
+      class: 'book-flyer',
+      'data-kind': what.portrait ? 'portrait' : 'thing',
+      'data-sticker': what.sticker ? 'true' : undefined,
+      'aria-hidden': 'true',
+    },
     h('img', { src: what.picture, alt: '', draggable: 'false' }),
   );
   flyer.style.cssText = `left:${from.left - bounds.left}px;top:${from.top - bounds.top}px;width:${from.width}px;height:${from.height}px`;

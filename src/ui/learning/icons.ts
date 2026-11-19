@@ -122,3 +122,13 @@ export const ICON_AGAIN =
 
 /** A tick, for being done. */
 export const ICON_DONE = picture('<path d="M2.8 12.8l2.8-2.8 4 4 8.8-8.8 2.8 2.8-11.6 11.6z"/>');
+
+/** A fat pencil on the slant, with a pink rubber at the top and a point at the bottom, for writing. */
+export const ICON_PENCIL = picture(
+  '<g transform="rotate(-45 12 12)"><path d="M1.4 12 5.4 8.6h15.2a1.4 1.4 0 0 1 1.4 1.4v4a1.4 1.4 0 0 1-1.4 1.4H5.4z"/></g>',
+  '<g transform="rotate(-45 12 12)"><rect x="5.4" y="8.6" width="11" height="6.8" fill="#ffd75e"/>' +
+    '<rect x="16.4" y="8.6" width="1.8" height="6.8" fill="#c9c3d6"/>' +
+    '<path d="M18.2 8.6h2.4a1.4 1.4 0 0 1 1.4 1.4v4a1.4 1.4 0 0 1-1.4 1.4h-2.4z" fill="#ff8fc8"/>' +
+    '<path d="M1.4 12 5.4 8.6v6.8z" fill="#ffd9a8" stroke="#26183d" stroke-width="1" stroke-linejoin="round"/>' +
+    '<path d="M1.4 12 3 10.6v2.8z" fill="#26183d"/></g>',
+);

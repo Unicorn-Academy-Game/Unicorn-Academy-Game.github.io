@@ -319,7 +319,7 @@
   place-items: center;
   border-radius: clamp(10px, calc(2.6 * var(--vh)), 18px);
   border: 3px solid #fff;
-  box-shadow: 0 4px 0 rgb(38 24 61 / 0.6);
+  box-shadow: var(--lift-button-big);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
 }

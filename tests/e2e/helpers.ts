@@ -156,6 +156,10 @@ interface Ua {
     current(): Promise<{ save: { recruited: string[]; wildstar: { position: Pt }; mapId: string } } | null>;
     /** What the player has learned, as the device holds it. */
     learner(): Promise<{ words: Record<string, unknown> } | undefined>;
+    /** What the player has earned for the sticker book, as the device holds it. */
+    album(): Promise<unknown>;
+    /** What the player has kept of the pictures, as the device holds it. */
+    photos(): Promise<unknown>;
     history(): Promise<unknown[]>;
     quarantined(): Promise<unknown[]>;
     settings(): Promise<Settings>;
@@ -175,7 +179,8 @@ interface Ua {
        * picture is drawn.
        */
       events: { once(event: string, listener: () => void): unknown };
-      loop: { running: boolean; frame: number; actualFps: number };
+      /** `sleep` stops the engine drawing, as a page in the background does, and `wake` starts it again. */
+      loop: { running: boolean; frame: number; actualFps: number; sleep(): void; wake(): void };
       renderer: { contextLost: boolean; gl: WebGL2RenderingContext };
       textures: { list: Record<string, { source: { width: number; height: number }[] }> };
     };
@@ -265,6 +270,30 @@ interface Ua {
   /** The Spell Book and the button in the corner that opens it. */
   spellBook: { isOpen: boolean; open(): void; close(): void };
   bookChip: { node: HTMLElement };
+  /**
+   * The sticker album: what the player has earned and the facts the rules read, and a way to say
+   * that something happened which the world does not say.
+   */
+  album: {
+    got(): Record<string, number>;
+    have(): number;
+    facts(): Record<string, number>;
+    unseen(): ReadonlySet<string>;
+    note(name: string): void;
+  };
+  /** What the device keeps of the album. */
+  albumModel: {
+    get(): { v: number; counts: Record<string, number>; got: Record<string, number> };
+    set(next: unknown): void;
+    flush(): Promise<void>;
+  };
+  stickerBook: { isOpen: boolean; open(): void; close(): void };
+  /** The pictures the player took, as the game holds them (oldest first), and what was put away. */
+  photos: {
+    get(): { shots: { id: string; at: number; image: string; place: string; w: number; h: number }[]; gone: string[] };
+    set(next: unknown): void;
+    flush(): Promise<void>;
+  };
   /**
    * The reading computer: `seat` brings down what it is made of, and `reader` is the session once
    * it is made, and nothing before.
@@ -1206,6 +1235,63 @@ export const bookChip = (page: Page): Locator => page.getByRole('button', { name
 
 /** A word's place in the book, found or not. */
 export const bookWord = (page: Page, word: string): Locator => page.locator(`.book-word[data-word="${word}"]`);
+
+/** The Sticker Book, as a screen reader finds it. */
+export const stickerBook = (page: Page): Locator => page.getByRole('dialog', { name: 'My Sticker Book' });
+
+/** The button in the corner that opens it. */
+export const stickerChip = (page: Page): Locator => page.getByRole('button', { name: /^Open my Sticker Book/ });
+
+/** A sticker's place in the Sticker Book, in colour or a shape. */
+export const stickerPlace = (page: Page, id: string): Locator => page.locator(`.book-word[data-sticker="${id}"]`);
+
+/** The stickers the album has, which is how many the corner button says. */
+export const stickersHad = (page: Page): Promise<number> => page.evaluate(() => window.__ua!.album.have());
+
+/** The camera in the corner: the button that takes a picture. */
+export const cameraButton = (page: Page): Locator => page.getByRole('button', { name: 'Take a picture' });
+
+/** The newest picture beside it, which opens the pictures. It is not there before the first. */
+export const cameraThumb = (page: Page): Locator => page.getByRole('button', { name: /^Open my Pictures/ });
+
+/** The album of pictures, as a screen reader finds it. */
+export const photoAlbum = (page: Page): Locator => page.getByRole('dialog', { name: 'My Pictures' });
+
+/** How many pictures the game holds. */
+export const photosHad = (page: Page): Promise<number> => page.evaluate(() => window.__ua!.photos.get().shots.length);
+
+/**
+ * Starts writing down what the moment of an earned sticker shows, which is over in a couple of
+ * seconds: the names that came up, in order, how many were up at once, and how many stickers flew
+ * to the button. Call it before play.
+ */
+export const watchStickers = (page: Page): Promise<void> =>
+  page.evaluate(() => {
+    const seen = { names: [] as string[], most: 0, flights: 0, calm: [] as boolean[] };
+    (window as unknown as { __stickers: typeof seen }).__stickers = seen;
+    new MutationObserver(() => {
+      const up = document.querySelectorAll('.sticker-toast');
+      seen.most = Math.max(seen.most, up.length);
+      for (const toast of up) {
+        const name = toast.querySelector('.sticker-toast-label b')?.textContent;
+        if (name && !seen.names.includes(name)) {
+          seen.names.push(name);
+          seen.calm.push((toast as HTMLElement).dataset.calm === 'true');
+        }
+      }
+      seen.flights = Math.max(seen.flights, document.querySelectorAll('.book-flyer[data-sticker="true"]').length);
+    }).observe(document.body, { childList: true, subtree: true });
+  });
+
+/** What `watchStickers` has written down so far. */
+export const stickersShown = (
+  page: Page,
+): Promise<{ names: string[]; most: number; flights: number; calm: boolean[] }> =>
+  page.evaluate(
+    () =>
+      (window as unknown as { __stickers: { names: string[]; most: number; flights: number; calm: boolean[] } })
+        .__stickers,
+  );
 
 /**
  * The word the player has asked to be shown the way to, or null while they are not looking for one.

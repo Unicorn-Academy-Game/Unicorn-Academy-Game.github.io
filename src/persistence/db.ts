@@ -38,9 +38,11 @@ interface UnicornDb extends DBSchema {
    * What the player has learned, under `profile`. It is not part of the world, so a world that
    * starts again does not take it away. Whatever is stored is read with `readProfile`, which is why
    * the type says nothing about it. Under `play` is what they have done at the memory and maths
-   * tables, read with `readPlay`.
+   * tables, read with `readPlay`, under `album` the sticker book, read with `readAlbum`, and under
+   * `photos` the pictures, read with `readPhotos`. A release from before a key was added does not
+   * know it and leaves it alone, so none of them needed a new version of the database.
    */
-  learner: { key: 'profile' | 'play'; value: unknown };
+  learner: { key: 'profile' | 'play' | 'album' | 'photos'; value: unknown };
 }
 
 export type Db = IDBPDatabase<UnicornDb>;

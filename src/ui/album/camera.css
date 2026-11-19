@@ -1,0 +1,615 @@
+/*
+ * The camera in the corner, the moment a picture is taken, and the album the pictures go to. The
+ * album is drawn from the Spell Book's own pieces (the sheet, the head, the page: see
+ * learning/book.css), and this is what makes it a book of prints: each is a picture with a white
+ * edge, a little crooked, and the one the player touched is shown big. Nothing here is red, and
+ * a picture is only put away after the player is asked.
+ */
+
+[data-photoalbum="true"] .guide {
+  visibility: hidden;
+}
+
+/*
+ * The camera and the newest picture share one pill, so the corner keeps its width on a phone held
+ * sideways. The pill is the one button chips are, and what is inside it are the two buttons.
+ */
+.camerachip {
+  gap: 4px;
+  padding: 0 3px;
+  cursor: default;
+}
+
+.camerachip::before {
+  content: none;
+}
+
+.camera-take,
+.camera-thumb {
+  position: relative;
+  display: grid;
+  place-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: transform 120ms ease;
+}
+
+/* The finger can land a little outside either one and still reach it. */
+.camera-take::before,
+.camera-thumb::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
+  border-radius: 99px;
+}
+
+.camera-take {
+  width: 48px;
+  height: 44px;
+  border-radius: 99px;
+}
+
+.camera-take:active,
+.camera-thumb:active {
+  transform: scale(0.9);
+}
+
+.camera-take .bookchip-icon svg {
+  display: block;
+  width: 32px;
+  height: 32px;
+}
+
+.camera-thumb {
+  width: 56px;
+  height: 44px;
+  overflow: visible;
+  rotate: -4deg;
+}
+
+.camera-thumb[hidden] {
+  display: none;
+}
+
+.camera-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 5px;
+  border: 3px solid #fffdf5;
+  box-shadow: var(--lift-chip);
+  pointer-events: none;
+}
+
+.camerachip[data-snap="true"] .camera-take {
+  animation: camera-click 420ms ease-out;
+}
+
+.camera-take[data-gain="true"],
+.camera-thumb[data-gain="true"] {
+  animation: camera-gain 800ms cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+
+/* A tap that came to no picture: a small shake, as a way to say that the camera was heard. */
+.camera-take[data-miss="true"] {
+  animation: camera-miss 520ms ease-in-out;
+}
+
+/* The same, with fewer effects: nothing moves, and a ring says that the camera was heard. */
+.camera-take[data-miss="still"] {
+  outline: 4px solid var(--sun);
+  outline-offset: 2px;
+}
+
+@keyframes camera-miss {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-5px);
+  }
+  40% {
+    transform: translateX(5px);
+  }
+  60% {
+    transform: translateX(-3px);
+  }
+  80% {
+    transform: translateX(3px);
+  }
+}
+
+@keyframes camera-click {
+  0% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(0.8);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes camera-gain {
+  0% {
+    transform: scale(1);
+  }
+  35% {
+    transform: scale(1.3) rotate(-5deg);
+    filter: drop-shadow(0 0 8px rgb(255 215 94 / 0.9));
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/*
+ * The flash and the print live in a layer of their own over the world and under the buttons, and
+ * nothing in it takes a touch except the print.
+ */
+.camera-stage {
+  position: absolute;
+  inset: 0;
+  z-index: 34;
+  pointer-events: none;
+}
+
+/* One soft flash, and not a hard one: it is the light of the camera, not a strobe. */
+.camera-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+}
+
+.camera-flash[data-on="true"] {
+  animation: camera-flash 420ms ease-out;
+}
+
+@keyframes camera-flash {
+  0% {
+    opacity: 0;
+  }
+  14% {
+    opacity: 0.62;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+/*
+ * The print: a picture in a white edge that slides up from the bottom, develops, and then flies to
+ * the corner. It does not hold its animation once it is done, so that the flight can take over.
+ */
+.camera-print {
+  --w: clamp(120px, calc(36 * var(--vh)), 220px);
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--safe-bottom) + 14px);
+  translate: -50% 0;
+  rotate: -3deg;
+  display: grid;
+  gap: 4px;
+  width: var(--w);
+  margin: 0;
+  padding: 6px 6px 4px;
+  border: 0;
+  border-radius: 4px;
+  background: #fffdf5;
+  box-shadow:
+    0 4px 0 rgb(38 24 61 / 0.5),
+    0 10px 22px rgb(0 0 0 / 0.4);
+  color: #4a3a2a;
+  font-family: var(--font);
+  cursor: pointer;
+  pointer-events: auto;
+  animation: camera-print-in 460ms cubic-bezier(0.2, 1.3, 0.4, 1) backwards;
+  transition:
+    translate 560ms cubic-bezier(0.5, -0.1, 0.7, 0.9),
+    scale 560ms ease-in,
+    rotate 560ms ease-in,
+    opacity 560ms ease-in;
+}
+
+.camera-print img {
+  display: block;
+  width: 100%;
+  aspect-ratio: var(--ratio, 2 / 1);
+  object-fit: cover;
+  border-radius: 2px;
+  background: #2a1d4d;
+  pointer-events: none;
+  animation: camera-develop 1300ms ease-out both;
+}
+
+.camera-print-place {
+  font-size: clamp(12px, calc(3.2 * var(--vh)), 15px);
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+}
+
+/* In a full album the print also says where the room came from, in a softer hand than the place. */
+.camera-print-room {
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.15;
+  text-align: center;
+  color: #6b5a7d;
+}
+
+.camera-print[data-leaving="true"] {
+  translate: calc(-50% + var(--dx, 0px)) var(--dy, 0px);
+  scale: var(--shrink, 0.2);
+  rotate: 0deg;
+  opacity: 0.25;
+  pointer-events: none;
+}
+
+@keyframes camera-print-in {
+  from {
+    translate: -50% 70px;
+    scale: 0.6;
+    rotate: -14deg;
+    opacity: 0;
+  }
+}
+
+/* A print comes out pale and takes its colours as it dries. */
+@keyframes camera-develop {
+  from {
+    filter: brightness(2.2) saturate(0) contrast(0.55);
+  }
+  to {
+    filter: none;
+  }
+}
+
+/* With fewer effects the print stays still and fades. */
+.camera-print[data-calm="true"],
+.camera-print[data-calm="true"] img {
+  animation: none;
+}
+
+.camera-print[data-calm="true"][data-leaving="true"] {
+  translate: -50% 0;
+  scale: 1;
+  rotate: -3deg;
+  opacity: 0;
+  transition: opacity 280ms ease;
+}
+
+/* The album */
+
+.book[data-kind="photos"] .book-sheet {
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.book[data-kind="photos"] .book-page {
+  position: relative;
+  grid-template-rows: minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.photo-grid {
+  --photo-w: clamp(120px, calc(36 * var(--vh)), 230px);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(var(--photo-w), 100%), calc(var(--photo-w) * 1.25)));
+  justify-content: center;
+  align-content: start;
+  gap: clamp(8px, calc(2.6 * var(--vh)), 18px) clamp(8px, 2vw, 18px);
+  min-height: 0;
+  margin: 0;
+  padding: clamp(6px, calc(1.6 * var(--vh)), 12px) 8px;
+  list-style: none;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.photo-grid::-webkit-scrollbar {
+  display: none;
+}
+
+/* An album that has only begun shows its pictures big and in the middle, so that it does not look empty. */
+@media (orientation: landscape) {
+  .photo-grid[data-count="few"] {
+    --photo-w: clamp(180px, calc(60 * var(--vh)), 360px);
+  }
+
+  .photo-grid[data-count="some"] {
+    --photo-w: clamp(150px, calc(46 * var(--vh)), 300px);
+  }
+}
+
+.book-full[hidden] {
+  display: none;
+}
+
+.book-full {
+  color: #fff3d6;
+}
+
+.photo-grid[hidden],
+.photo-empty[hidden] {
+  display: none;
+}
+
+.photo {
+  display: grid;
+  justify-items: center;
+  padding: 3px;
+}
+
+.photo-card {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  rotate: var(--tilt, 0deg);
+  transition: scale 120ms ease;
+}
+
+.photo-card:active {
+  scale: 0.96;
+}
+
+.photo-print {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  padding: 5px 5px 3px;
+  border-radius: 3px;
+  background: #fffdf5;
+  box-shadow:
+    0 3px 0 rgb(38 24 61 / 0.5),
+    0 6px 12px rgb(0 0 0 / 0.35);
+  color: #4a3a2a;
+}
+
+.photo-print img {
+  display: block;
+  width: 100%;
+  aspect-ratio: var(--ratio, 2 / 1);
+  object-fit: cover;
+  border-radius: 2px;
+  background: #2a1d4d;
+  pointer-events: none;
+}
+
+.photo-place {
+  font-size: clamp(12px, calc(3.2 * var(--vh)), 15px);
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+}
+
+/* The pictures taken since the album was last open glow gold. */
+.photo[data-newest="true"] .photo-print {
+  box-shadow:
+    0 3px 0 rgb(38 24 61 / 0.5),
+    0 0 0 3px var(--sun),
+    0 0 16px 4px rgb(255 215 94 / 0.55);
+}
+
+.photo-empty {
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 6px;
+  text-align: center;
+  color: #fff3d6;
+}
+
+.photo-empty-icon svg {
+  display: block;
+  width: clamp(48px, calc(16 * var(--vh)), 84px);
+  height: auto;
+}
+
+.photo-empty b {
+  font-size: clamp(16px, calc(5 * var(--vh)), 26px);
+  text-shadow: 0 2px 0 var(--ink);
+}
+
+.photo-empty small {
+  font-size: clamp(13px, calc(3.8 * var(--vh)), 20px);
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+/* One picture, big, over the grid. */
+.photo-view {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  gap: clamp(4px, calc(1.4 * var(--vh)), 10px);
+  padding: clamp(6px, calc(1.8 * var(--vh)), 12px);
+  border-radius: 17px;
+  background: linear-gradient(180deg, #3a2160, #281646);
+}
+
+.photo-stage {
+  container-type: size;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  touch-action: pan-y;
+}
+
+.photo-print-big {
+  --edge: 12px;
+  width: min(calc(100cqw - var(--edge)), calc((100cqh - 46px) * var(--r, 2)));
+  rotate: -1deg;
+}
+
+.photo-print-big img {
+  width: 100%;
+}
+
+.photo-page[data-turn="next"] .photo-stage {
+  animation: book-in-next 260ms ease-out both;
+}
+
+.photo-page[data-turn="back"] .photo-stage {
+  animation: book-in-back 260ms ease-out both;
+}
+
+.photo-bar,
+.photo-ask {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/*
+ * On a narrow sheet the buttons under a picture are only their pictures, so that all six stand in
+ * one row with the arrows at the ends, and not three and two and one. Each still says what it does
+ * to a screen reader, and the question about putting a picture away keeps its words.
+ */
+@container book (max-width: 600px) {
+  .photo-view {
+    padding-inline: 6px;
+  }
+
+  .photo-bar {
+    flex-wrap: nowrap;
+    gap: 4px;
+  }
+
+  .photo-bar .photo-button {
+    min-width: 44px;
+    padding: 3px 4px;
+  }
+
+  .photo-bar .photo-button-text {
+    display: none;
+  }
+}
+
+/* The narrowest phones have room for six buttons of 44 pixels only with nothing between them but a hair. */
+@container book (max-width: 300px) {
+  .photo-view {
+    padding-inline: 0;
+  }
+
+  .photo-bar {
+    gap: 2px;
+  }
+}
+
+.photo-ask b {
+  font-size: clamp(15px, calc(4.4 * var(--vh)), 24px);
+  color: #fff3d6;
+  text-shadow: 0 2px 0 var(--ink);
+}
+
+.photo-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 46px;
+  min-height: 46px;
+  margin: 0;
+  padding: 3px 14px 3px 10px;
+  border-radius: 99px;
+  background: rgb(255 255 255 / 0.1);
+  border: 3px solid rgb(255 255 255 / 0.55);
+  box-shadow: var(--lift-button);
+  color: #fff;
+  font-family: var(--font);
+  font-size: clamp(14px, calc(4 * var(--vh)), 20px);
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 120ms ease,
+    background-color 160ms ease;
+}
+
+.photo-button:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.photo-button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.photo-button[data-kind="newer"],
+.photo-button[data-kind="older"] {
+  padding: 3px 8px;
+}
+
+.photo-button-icon svg {
+  display: block;
+  width: 26px;
+  height: 26px;
+}
+
+.photo-button[data-kind="newer"] svg,
+.photo-button[data-kind="older"] svg {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 3.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Keeping a picture is the bright way, and putting it away is as big and as easy to touch. */
+.photo-button[data-kind="keep"] {
+  border-color: var(--sun);
+  background: rgb(255 215 94 / 0.2);
+}
+
+.photo-button[data-kind="yes"] {
+  background: rgb(155 107 255 / 0.3);
+}
+
+.photo-button:focus-visible,
+.camera-take:focus-visible,
+.camera-thumb:focus-visible,
+.photo-card:focus-visible {
+  outline: 4px solid var(--sun);
+  outline-offset: 3px;
+}
+
+@media (max-height: 340px) {
+  .photo-button {
+    min-height: 44px;
+    padding: 1px 12px 1px 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .camera-flash {
+    display: none;
+  }
+
+  .camera-print,
+  .camera-print img,
+  .camerachip *,
+  .photo-card,
+  .photo-button {
+    animation: none !important;
+    transition: none !important;
+  }
+}

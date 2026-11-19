@@ -92,6 +92,8 @@ export const letterClip = (letter: string): ClipId => `letter.${letter}`;
  */
 export const soundClip = (letter: string): ClipId => `sound.${letter}`;
 export const wordClip = (word: WordId): ClipId => `word.${word}`;
+/** A number said on its own, as an answer is. The maths tables keep this clip for every number too. */
+export const numeralClip = (n: number): ClipId => `num.${n}`;
 /** The word with a shout, said before a bigger thing is said about it. */
 export const shoutClip = (word: WordId): ClipId => `shout.${word}`;
 /** Whether a clip is this word said on its own, or shouted. */

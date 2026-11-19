@@ -7,6 +7,7 @@ import {
   LADDER,
   lengthOf,
   letterScore,
+  lineScore,
   missScore,
   openScore,
   play,
@@ -14,6 +15,7 @@ import {
   type Sound,
   SpellSounds,
   turnScore,
+  writtenScore,
 } from '../../src/audio/spell-sounds';
 import { TONIC } from '../../src/audio/synth/sfx';
 import { WonderSynth } from '../../src/audio/synth/synth';
@@ -36,7 +38,9 @@ function everyScore(): [string, Score][] {
     ['faded', fadedScore()],
     ['hint', hintScore()],
     ['fly', flyScore()],
+    ['written', writtenScore()],
   ];
+  for (let i = 1; i <= 5; i++) scores.push([`line ${i}`, lineScore(i)]);
   for (let i = 0; i < 24; i++)
     for (const last of [false, true]) scores.push([`letter ${i}${last ? ' last' : ''}`, letterScore(i, last)]);
   const rewards: [string, Done][] = [
@@ -60,6 +64,21 @@ const notes = (score: Score): Extract<Sound, { voice: string }>[] =>
   score.filter((s): s is Extract<Sound, { voice: string }> => 'voice' in s);
 const effects = (score: Score): Extract<Sound, { fx: string }>[] =>
   score.filter((s): s is Extract<Sound, { fx: string }> => 'fx' in s);
+
+describe('the notes of writing', () => {
+  it('give each line of a letter a note a step higher than the line before', () => {
+    const marimba = (done: number): number => notes(lineScore(done))[0]!.midi;
+    expect(marimba(2)).toBeGreaterThan(marimba(1));
+    expect(marimba(3)).toBeGreaterThan(marimba(2));
+  });
+
+  it('finish a letter with a climb that ends in a chord, and nothing louder than a word', () => {
+    const score = writtenScore();
+    expect(notes(score).length).toBeGreaterThan(4);
+    for (const n of notes(score)) expect(n.gain).toBeLessThanOrEqual(1);
+    expect(lengthOf(score)).toBeLessThan(1);
+  });
+});
 
 describe('the notes of spelling', () => {
   it('open the card with two small bells, one after the other and the second higher', () => {

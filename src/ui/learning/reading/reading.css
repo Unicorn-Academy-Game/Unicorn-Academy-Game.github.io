@@ -133,10 +133,7 @@
     radial-gradient(circle at 90% 70%, rgb(255 255 255 / 0.08) 0 2px, transparent 3px),
     linear-gradient(180deg, #402469, #25143f);
   border: 4px solid var(--sun);
-  box-shadow:
-    0 5px 0 rgb(38 24 61 / 0.7),
-    0 14px 34px rgb(0 0 0 / 0.5),
-    inset 0 0 0 3px rgb(255 215 94 / 0.18);
+  box-shadow: var(--lift-sheet);
   outline: none;
 }
 
@@ -874,7 +871,7 @@
   border-radius: 50%;
   background: rgb(255 255 255 / 0.12);
   border: 3px solid rgb(255 255 255 / 0.7);
-  box-shadow: 0 3px 0 rgb(38 24 61 / 0.55);
+  box-shadow: var(--lift-button);
   font-size: clamp(18px, calc(4.4 * var(--vh)), 26px);
   font-weight: 700;
   transition:

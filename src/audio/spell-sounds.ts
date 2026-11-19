@@ -89,6 +89,18 @@ export const fadedScore = (): Score => [{ at: 0, fx: 'tap', gain: 0.3 }];
 /** The right key starts to glow. */
 export const hintScore = (): Score => [{ at: 0, fx: 'twinkle', gain: 0.5, size: 0.2 }];
 
+/** A line of a letter is written: a marimba note, a step higher for each line the letter has had. */
+export const lineScore = (done: number): Score => [
+  { at: 0, voice: 'marimba', midi: note(2 + (done % LADDER)), gain: 0.7 },
+];
+
+/** A letter is written: a short climb of harp and a bright chord, a little less than a word. */
+export const writtenScore = (): Score => [
+  ...run('harp', 0, 5, 0.07, 0.6, 0.9),
+  ...chord('chime', [4, 7], 0.55, 0.4, 1),
+  { at: 0.4, fx: 'twinkle', gain: 0.5, size: 0.3 },
+];
+
 /** The picture sets off for the book, and arrives. */
 export const flyScore = (): Score => [
   { at: 0, fx: 'whoosh', gain: 0.3, size: 0.25 },
@@ -182,6 +194,16 @@ export class SpellSounds {
 
   fly(): void {
     play(this.sound(), flyScore());
+  }
+
+  /** The player has written `done` lines of a letter. */
+  stroke(done: number): void {
+    play(this.sound(), lineScore(done));
+  }
+
+  /** The player has written a letter. */
+  written(): void {
+    play(this.sound(), writtenScore());
   }
 
   done(reward: Worth): void {

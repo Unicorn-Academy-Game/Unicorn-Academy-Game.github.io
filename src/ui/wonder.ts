@@ -8,7 +8,7 @@ import { type Quality, Stage } from '../wonder/engine/stage';
 import { createWonder } from '../wonder/registry';
 import { SILENT, type WonderSound } from '../wonder/sound';
 import type { WonderHandle, WonderPhase } from '../wonder/wonder';
-import { h, trapFocus } from './dom';
+import { deviceCalm, h, trapFocus } from './dom';
 import type { OverlayDeps } from './overlay';
 
 export interface WonderDeps extends OverlayDeps {
@@ -455,8 +455,7 @@ export class WonderOverlay {
     const x = clamp(site.at.x, 0, box.width);
     const y = clamp(site.at.y, 0, box.height);
     const reach = Math.hypot(Math.max(x, box.width - x), Math.max(y, box.height - y)) + 8;
-    const calm =
-      this.deps.calm() || (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches);
+    const calm = this.deps.calm() || deviceCalm();
     const used: Animation[] = [];
     let ended = false;
     const end = (): void => {

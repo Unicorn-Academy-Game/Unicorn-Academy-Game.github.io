@@ -1,6 +1,7 @@
 import { MANOR_CODE } from '../content/manor';
 import { lineOf } from '../content/unicorns';
 import { isQuiet, isWonder, WONDERS } from '../content/wonders';
+import type { AlbumSession } from '../game/album';
 import type { GameController } from '../game/controller';
 import { wordSaid } from '../learning';
 import { drawPortraits } from '../render/portraits';
@@ -29,13 +30,15 @@ interface ScreensDeps {
   sound: Sound;
   controller: GameController;
   gate: InputGate;
+  /** Told when a game is seen through to its end. */
+  album: Pick<AlbumSession, 'note'>;
 }
 
 /**
  * The pictures the interface draws from the world's sheets, and the two screens that take the whole
  * game: the playground games and the code pad.
  */
-export function makeScreens({ overlay, graphics, sound, controller, gate }: ScreensDeps): Screens {
+export function makeScreens({ overlay, graphics, sound, controller, gate, album }: ScreensDeps): Screens {
   const { scene, manifest, profile } = graphics;
   const { engine, audio, synth, voice } = sound;
   const portraits = drawPortraits(scene, manifest);
@@ -67,6 +70,7 @@ export function makeScreens({ overlay, graphics, sound, controller, gate }: Scre
       gate.give();
       engine?.duck(1);
       const next = game && isWonder(game) ? WONDERS[game].continueTo : undefined;
+      if (finished && game && isWonder(game)) album.note(`finale:${game}`);
       if (finished && next && controller.world.map.id !== next.mapId) void controller.travel(next);
     },
   });

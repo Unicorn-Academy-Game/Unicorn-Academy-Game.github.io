@@ -1,6 +1,8 @@
+import { AlbumModel } from '../persistence/album';
 import { Durability } from '../persistence/durable';
 import { LearnerModel } from '../persistence/learner';
 import { type LoadOutcome, loadWorld } from '../persistence/load';
+import { PhotosModel } from '../persistence/photos';
 import { PlayModel } from '../persistence/play';
 import { SaveService } from '../persistence/save-service';
 import { SettingsModel } from '../persistence/settings';
@@ -52,6 +54,8 @@ export interface Kept {
   settings: SettingsModel;
   learner: LearnerModel;
   play: PlayModel;
+  album: AlbumModel;
+  photos: PhotosModel;
   durable: Durability;
   saves: SaveService;
   /** What the saved world turned out to be, for the world to start from. */
@@ -68,6 +72,8 @@ export async function readKept({ store, openError, settings: stored }: Stored, m
   const settings = forVisit(stored);
   const learner = forVisit(await LearnerModel.load(store));
   const play = forVisit(await PlayModel.load(store));
+  const album = forVisit(await AlbumModel.load(store));
+  const photos = forVisit(await PhotosModel.load(store));
   // What the browser says about keeping it, for the parent controls to tell. The game asks for that
   // once when it first saves.
   const durable = new Durability(navigator.storage);
@@ -86,5 +92,5 @@ export async function readKept({ store, openError, settings: stored }: Stored, m
       : store
         ? await loadWorld(store, known, Date.now())
         : { kind: 'fresh', damaged: false };
-  return { visit, tab, settings, learner, play, durable, saves, outcome };
+  return { visit, tab, settings, learner, play, album, photos, durable, saves, outcome };
 }

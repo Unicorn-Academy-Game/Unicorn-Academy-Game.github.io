@@ -1,9 +1,11 @@
+import { AlbumSession } from '../game/album';
 import { faults } from '../game/faults';
 import { browserOffline } from '../offline/browser';
 import { chooseVisit, firstPlan, hasBegun, openingOf } from '../persistence/visit';
 import { GAME_NAME } from '../shared/brand';
 import type { OverlayDeps } from '../ui/overlay';
 import type { Ui } from '../ui/ui';
+import { makeAlbum } from './album';
 import { beginPlay } from './begin';
 import { newId, offlineEnabled, randomSeed } from './browser';
 import { exposeForTests } from './debug';
@@ -42,7 +44,7 @@ export async function boot(ui: Ui): Promise<void> {
 
   ui.progress(0.64, 'Finding your unicorns');
   const kept = await readKept(stored, manifest);
-  const { visit, tab, settings, learner, play, durable, saves, outcome } = kept;
+  const { visit, tab, settings, learner, play, album, photos, durable, saves, outcome } = kept;
   if (outcome.kind === 'too-new') {
     ui.failed(`This world was saved by a newer version of ${GAME_NAME}. Please update the app to keep playing.`, () =>
       location.reload(),
@@ -52,7 +54,20 @@ export async function boot(ui: Ui): Promise<void> {
 
   const session = createSession(saves);
   const sound = makeSound({ manifest, profile, settings, ui });
-  watchPage({ offline, session, saves, settings, learner, play, audio: sound.audio, voice: sound.voice, visit, tab });
+  watchPage({
+    offline,
+    session,
+    saves,
+    settings,
+    learner,
+    play,
+    album,
+    photos,
+    audio: sound.audio,
+    voice: sound.voice,
+    visit,
+    tab,
+  });
 
   // The world waits on the title screen at the place the player begins at. A tab that is carrying a
   // game on begins where the player stood.
@@ -61,6 +76,15 @@ export async function boot(ui: Ui): Promise<void> {
   const plan = firstPlan(opening, settings.get().startPlace);
   const controller = await startWorld({ ui, graphics, settings, saves, sound, plan, overlays });
   session.begin(controller);
+  // What the player does becomes stickers. A player who already has a game here finds the ones they
+  // have earned in the book without a fuss.
+  const stickers = new AlbumSession({
+    model: album,
+    world: () => controller.world,
+    now: () => Date.now(),
+    settled: outcome.kind === 'resume',
+  });
+  controller.setAlbum(stickers);
 
   const input = listenForInput(scene, controller);
   const seeking = noSeeking();
@@ -89,7 +113,7 @@ export async function boot(ui: Ui): Promise<void> {
     mount: (node) => ui.underlay(node),
     calm: () => settings.get().reducedEffects,
   };
-  const screens = makeScreens({ overlay, graphics, sound, controller, gate: input.gate });
+  const screens = makeScreens({ overlay, graphics, sound, controller, gate: input.gate, album: stickers });
   overlays.wonders = screens.wonders;
   overlays.pad = screens.pad;
   const desks = noDesks();
@@ -106,8 +130,22 @@ export async function boot(ui: Ui): Promise<void> {
     screens,
     panel,
     desks,
+    written: { has: (name) => (album.get().counts[name] ?? 0) > 0, note: (name) => stickers.note(name) },
   });
   overlays.sitDown = learning.tables.sitDown;
+  const keepsakes = makeAlbum({
+    ui,
+    overlay,
+    graphics,
+    sound,
+    session: stickers,
+    model: album,
+    photos,
+    controller,
+    learner,
+    play,
+    learning,
+  });
   const { map: worldMap, openMap } = makeWorldMap({ overlay, controller, sound, learning });
   Object.assign(seeking, learning.seeking);
 
@@ -127,6 +165,8 @@ export async function boot(ui: Ui): Promise<void> {
         offline,
         screens,
         bookChip: learning.bookChip,
+        stickerChip: keepsakes.chip,
+        cameraChip: keepsakes.pictures.chip,
         openMap,
         fullscreen: input.fullscreen,
         panel,
@@ -161,6 +201,16 @@ export async function boot(ui: Ui): Promise<void> {
     voice: sound.voice,
     spellBook: learning.spellBook,
     bookChip: learning.bookChip,
+    album: stickers,
+    albumModel: album,
+    stickerBook: keepsakes.book,
+    stickerChip: keepsakes.chip,
+    stickerToast: keepsakes.toast,
+    photos,
+    camera: keepsakes.pictures.camera,
+    cameraChip: keepsakes.pictures.chip,
+    photoAlbum: keepsakes.pictures.album,
+    shutter: keepsakes.pictures.shutter,
     worldMap,
     durable,
     play,

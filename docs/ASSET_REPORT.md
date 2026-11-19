@@ -8,13 +8,13 @@ Content version 1.0.0.
 
 | What | Measured | Target |
 |---|---|---|
-| First playable download, assets only | 3.24 MiB | 5.00 MiB |
-| The game kept for offline play, assets only | 10.16 MiB | 13.00 MiB |
-| The spoken lessons, kept as they are heard or all at once | 23.75 MiB | 24.00 MiB |
-| Graphics memory at its peak, between palace-garden and stable, showing eight facings | 140.21 MiB | 160.00 MiB |
-| The same with the fine facings of all six unicorns loaded | 251.23 MiB | 256.00 MiB |
-| Decoded audio in a crossfade at 32 kHz, the rate the game asks for, with the voice's share | 47.17 MiB | 48.00 MiB |
-| Decoded audio at the least it can get down to at 48 kHz | 46.07 MiB | 48.00 MiB |
+| First playable download, assets only | 3.39 MiB | 5.00 MiB |
+| The game kept for offline play, assets only | 13.75 MiB | 15.00 MiB |
+| The spoken lessons, kept as they are heard or all at once | 35.13 MiB | 36.00 MiB |
+| Graphics memory at its peak, between palace-garden and palace-dining, showing eight facings | 149.96 MiB | 160.00 MiB |
+| The same with the fine facings of all six unicorns loaded | 260.98 MiB | 272.00 MiB |
+| Decoded audio in a crossfade at 32 kHz, the rate the game asks for, with the voice's share | 47.23 MiB | 48.00 MiB |
+| Decoded audio at the least it can get down to at 48 kHz | 46.16 MiB | 48.00 MiB |
 
 The app itself (scripts, styles, fonts) is not counted here, and neither is graphics memory for the canvas. Sizes of text are as sent compressed; pictures and sound are already compressed. Memory is counted from the actual dimensions as RGBA8 with no mipmaps and from decoded float samples, not from file sizes. Nothing here is a measurement of a running browser.
 
@@ -23,39 +23,45 @@ The app itself (scripts, styles, fonts) is not counted here, and neither is grap
 | Kind | Files | Bytes sent |
 |---|---|---|
 | Unicorn atlases | 42 | 4,228,288 |
-| Grown-up atlases | 2 | 380,792 |
-| Scenery and tile sheets | 28 | 2,146,148 |
-| Compiled maps | 19 | 66,909 |
-| Music and ambience | 9 | 2,913,480 |
-| Sound effect sheets | 3 | 753,036 |
-| Spoken clips | 2556 | 24,900,288 |
-| Manifest | 1 | 168,697 |
+| Grown-up atlases | 18 | 1,869,454 |
+| Scenery and tile sheets | 39 | 3,679,524 |
+| Compiled maps | 25 | 99,922 |
+| Music and ambience | 10 | 3,567,824 |
+| Sound effect sheets | 3 | 753,288 |
+| Spoken clips | 3534 | 36,831,792 |
+| Manifest | 1 | 217,564 |
 
 ## Graphics memory
 
-The six unicorns and the effects stay in memory: 69.87 MiB. A device that shows the fine facings holds 111.02 MiB more for the six. Each map adds its own while it is shown.
+The six unicorns and the effects stay in memory: 71.65 MiB. A device that shows the fine facings holds 111.02 MiB more for the six. Each map adds its own while it is shown.
 
 | Map | Adds |
 |---|---|
-| forest | 15.84 MiB |
+| forest | 16.39 MiB |
 | palace-garden | 44.29 MiB |
 | treasure-house | 13.98 MiB |
-| palace-hall | 25.45 MiB |
+| palace-hall | 33.88 MiB |
 | stable | 26.05 MiB |
 | playground | 20.03 MiB |
 | dance-floor | 16.04 MiB |
 | manor-hall | 21.51 MiB |
 | manor-upper | 21.51 MiB |
-| crystal-cave | 13.29 MiB |
-| palace-dining | 25.45 MiB |
-| palace-tea | 25.45 MiB |
-| palace-gallery | 25.45 MiB |
-| palace-library | 25.45 MiB |
-| palace-music | 25.45 MiB |
-| palace-ballroom | 25.45 MiB |
-| palace-flowers | 25.45 MiB |
-| palace-bedroom | 25.45 MiB |
-| palace-jewel | 25.45 MiB |
+| crystal-cave | 26.77 MiB |
+| palace-dining | 34.03 MiB |
+| palace-tea | 29.48 MiB |
+| palace-gallery | 29.82 MiB |
+| palace-library | 29.57 MiB |
+| palace-music | 29.47 MiB |
+| palace-ballroom | 30.51 MiB |
+| palace-flowers | 29.48 MiB |
+| palace-bedroom | 29.58 MiB |
+| palace-jewel | 29.41 MiB |
+| river | 20.88 MiB |
+| beach | 30.05 MiB |
+| magic-hall | 20.87 MiB |
+| witch-hut | 27.36 MiB |
+| santa-grove | 20.62 MiB |
+| santa-cabin | 16.12 MiB |
 
 ## Audio
 
@@ -63,6 +69,7 @@ The six unicorns and the effects stay in memory: 69.87 MiB. A device that shows 
 |---|---|---|---|---|---|
 | music-forest | 36 | -20.0 | -7.9 dBTP | 1.0000 | 0 |
 | music-garden | 36 | -20.0 | -8.1 dBTP | 1.0000 | 0 |
+| music-snow | 32 | -20.0 | -8.7 dBTP | 0.9987 | 0 |
 | ambience-forest | 24 | -27.5 | -14.9 dBTP | 0.8568 | 0 |
 | ambience-garden | 24 | -26.5 | -13.6 dBTP | 0.8371 | 0 |
 | ambience-treasure-room | 16 | -32.9 | -19.1 dBTP | 0.9991 | 0 |
@@ -75,18 +82,18 @@ The six unicorns and the effects stay in memory: 69.87 MiB. A device that shows 
 |---|---|---|---|
 | core | 37 | 31.8 | 216,332 |
 | magic | 14 | 31.7 | 235,772 |
-| objects | 26 | 46.6 | 300,932 |
+| objects | 26 | 47.0 | 301,184 |
 
 Loudness, true peak, loop joins and sound windows were measured on the decoded MP3 files, not on the masters.
 Nobody has listened to these sounds yet. The measurements say they are the right loudness and join cleanly; they do not say they sound good.
 
 ## Voice
 
-The game speaks from 2556 clips made by a speech model offline and shipped as files, in the voice af_heart. No voice of the device is used.
+The game speaks from 3534 clips made by a speech model offline and shipped as files, in the voice qwen3-tts-1.7b-base. No voice of the device is used.
 
 | Clips | Seconds of speech | Bytes | Quietest | Loudest | Longest |
 |---|---|---|---|---|---|
-| 2556 | 3486.7 | 24,900,288 | last.86 -17.8 LUFS | lead.29 -11.0 LUFS | line.a-unicorn-can-fly-over-the-rainbow-and-then-it-can-rest-on-a-cloud 6.71 s |
+| 3534 | 5799.0 | 36,831,792 | last.63 -17.9 LUFS | last.77 -11.4 LUFS | line.a-unicorn-can-fly-over-the-rainbow-and-then-it-can-rest-on-a-cloud 8.12 s |
 
 Size, length, loudness, peak and the quiet at both ends of every clip were measured on the decoded MP3 files.
 Nobody has listened to the voice yet. Two recognisers heard each clip say what it should when it was made, which is evidence it is clear and not that it is pleasant.

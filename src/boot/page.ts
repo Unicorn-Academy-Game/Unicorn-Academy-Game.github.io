@@ -1,7 +1,9 @@
 import type { GameAudio } from '../audio/service';
 import type { VoiceBank } from '../audio/voice-bank';
 import type { OfflineService } from '../offline/service';
+import type { AlbumModel } from '../persistence/album';
 import type { LearnerModel } from '../persistence/learner';
+import type { PhotosModel } from '../persistence/photos';
 import type { PlayModel } from '../persistence/play';
 import type { SaveService } from '../persistence/save-service';
 import type { SettingsModel } from '../persistence/settings';
@@ -46,6 +48,8 @@ interface PageDeps {
   settings: SettingsModel;
   learner: LearnerModel;
   play: PlayModel;
+  album: AlbumModel;
+  photos: PhotosModel;
   audio: GameAudio | null;
   voice: VoiceBank;
   visit: VisitKind;
@@ -64,6 +68,8 @@ export function watchPage({
   settings,
   learner,
   play,
+  album,
+  photos,
   audio,
   voice,
   visit,
@@ -74,6 +80,8 @@ export function watchPage({
     void settings.flush();
     void learner.flush();
     void play.flush();
+    void album.flush();
+    void photos.flush();
   };
   // The visit is written first, and the note of it is dropped only once the new version has really
   // taken over.

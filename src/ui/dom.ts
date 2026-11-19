@@ -27,6 +27,10 @@ export function h<K extends keyof HTMLElementTagNameMap>(
 /** Where the element with the keyboard focus sits among `nodes`, or -1 when it is none of them. */
 export const focusedIndex = (nodes: readonly Element[]): number => nodes.indexOf(document.activeElement!);
 
+/** Whether the device asked for less motion, which goes along with a parent's switch for fewer effects. */
+export const deviceCalm = (): boolean =>
+  typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+
 /** Replaces what is inside `node`, skipping children that are `null`, `false` or `undefined`. */
 export function fill(node: HTMLElement, ...children: Child[]): void {
   node.replaceChildren(

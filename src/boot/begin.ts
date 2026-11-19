@@ -2,6 +2,9 @@ import type { GameController } from '../game/controller';
 import type { OfflineService } from '../offline/service';
 import type { SettingsModel } from '../persistence/settings';
 import { markBegun } from '../persistence/visit';
+import type { CameraChip } from '../ui/album/camera-chip';
+import type { StickerChip } from '../ui/album/sticker-chip';
+import { h } from '../ui/dom';
 import type { Fullscreen } from '../ui/fullscreen';
 import type { BookChip } from '../ui/learning/book-chip';
 import type { ParentPanel } from '../ui/parent/panel';
@@ -24,6 +27,8 @@ interface BeginDeps {
   offline: OfflineService | null;
   screens: Pick<Screens, 'portraits' | 'produceIcons'>;
   bookChip: BookChip;
+  stickerChip: StickerChip;
+  cameraChip: CameraChip;
   /** Opens the map of the island, when nothing else has the screen. */
   openMap: (opener: HTMLElement) => void;
   fullscreen: Fullscreen;
@@ -40,6 +45,8 @@ export function beginPlay({
   offline,
   screens,
   bookChip,
+  stickerChip,
+  cameraChip,
   openMap,
   fullscreen,
   panel,
@@ -48,7 +55,7 @@ export function beginPlay({
   markBegun(tab);
   controller.begin();
   ui.showFinder(screens.portraits, controller.world.persistent.recruited, () => settings.get().reducedEffects);
-  ui.cornerNode.append(bookChip.node);
+  ui.cornerNode.append(h('div', { class: 'cornerchips' }, bookChip.node, stickerChip.node, cameraChip.node));
   ui.showBasket(screens.produceIcons, () => settings.get().reducedEffects);
   // With the game under way, the rest of it can be kept for offline play in the background.
   offline?.keep();

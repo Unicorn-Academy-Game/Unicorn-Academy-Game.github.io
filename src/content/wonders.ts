@@ -20,6 +20,8 @@ export const WONDER_IDS = [
   'lily-hop',
   'treasure-rain',
   'tone-matrix',
+  'tree-trim',
+  'sleigh-run',
 ] as const;
 export type WonderId = (typeof WONDER_IDS)[number];
 
@@ -106,6 +108,8 @@ export const WONDERS: Readonly<Record<WonderId, WonderDef>> = {
     quiet: true,
     free: true,
   },
+  'tree-trim': { id: 'tree-trim', toy: 'xmas-tree', looks: [], label: 'Dressing the Christmas tree' },
+  'sleigh-run': { id: 'sleigh-run', toy: 'sleigh', looks: [], label: "Flying Santa's sleigh over the village" },
 };
 
 export const isWonder = (id: string): id is WonderId => (WONDER_IDS as readonly string[]).includes(id);
